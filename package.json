@@ -19,7 +19,6 @@
     "express-rate-limit": "^8.2.1",
     "helmet": "^8.1.0",
     "joi": "^18.0.2",
-    "libsodium-wrappers": "^0.7.15",
     "lucide-react": "^0.546.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

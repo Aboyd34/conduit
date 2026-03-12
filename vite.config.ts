@@ -14,16 +14,5 @@ export default defineConfig({
   },
   build: {
     outDir: "dist",
-    commonjsOptions: {
-      transformMixedEsModules: true,
-    },
-  },
-  optimizeDeps: {
-    exclude: ["libsodium-wrappers"],
-  },
-  resolve: {
-    alias: {
-      "libsodium-wrappers": "libsodium-wrappers",
-    },
   },
 });

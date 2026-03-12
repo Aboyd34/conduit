@@ -1,46 +1,87 @@
-// Using CJS-compatible libsodium import for Vite compatibility
-let sodiumReady = null;
-
-async function getSodium() {
-  if (!sodiumReady) {
-    const sodium = await import("libsodium-wrappers");
-    await sodium.default.ready;
-    sodiumReady = sodium.default;
-  }
-  return sodiumReady;
-}
+// Native Web Crypto API - no external dependencies, built into every browser
 
 const KEY_STORE = "conduit_keypair";
 
 export async function generateAndStoreKeys() {
-  const sodium = await getSodium();
-  const keypair = sodium.crypto_box_keypair();
+  const keyPair = await window.crypto.subtle.generateKey(
+    { name: "ECDH", namedCurve: "P-256" },
+    true,
+    ["deriveKey", "deriveBits"]
+  );
+
+  const publicKeyExported = await window.crypto.subtle.exportKey("jwk", keyPair.publicKey);
+  const privateKeyExported = await window.crypto.subtle.exportKey("jwk", keyPair.privateKey);
+
   const stored = {
-    publicKey: sodium.to_base64(keypair.publicKey),
-    privateKey: sodium.to_base64(keypair.privateKey),
+    publicKey: JSON.stringify(publicKeyExported),
+    privateKey: JSON.stringify(privateKeyExported),
   };
+
   localStorage.setItem(KEY_STORE, JSON.stringify(stored));
-  return stored.publicKey;
+  return btoa(JSON.stringify(publicKeyExported)).slice(0, 32);
 }
 
 export async function encryptMessage(message) {
-  const sodium = await getSodium();
   const stored = JSON.parse(localStorage.getItem(KEY_STORE));
   if (!stored) throw new Error("No keys found. Generate keys first.");
-  const pubKey = sodium.from_base64(stored.publicKey);
-  const encrypted = sodium.crypto_box_seal(sodium.from_string(message), pubKey);
-  return sodium.to_base64(encrypted);
+
+  const pubJwk = JSON.parse(stored.publicKey);
+  const publicKey = await window.crypto.subtle.importKey(
+    "jwk", pubJwk, { name: "ECDH", namedCurve: "P-256" }, false, []
+  );
+
+  const privJwk = JSON.parse(stored.privateKey);
+  const privateKey = await window.crypto.subtle.importKey(
+    "jwk", privJwk, { name: "ECDH", namedCurve: "P-256" }, false, ["deriveKey", "deriveBits"]
+  );
+
+  const sharedKey = await window.crypto.subtle.deriveKey(
+    { name: "ECDH", public: publicKey },
+    privateKey,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt"]
+  );
+
+  const iv = window.crypto.getRandomValues(new Uint8Array(12));
+  const encoded = new TextEncoder().encode(message);
+  const ciphertext = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, sharedKey, encoded);
+
+  const combined = new Uint8Array(iv.byteLength + ciphertext.byteLength);
+  combined.set(iv, 0);
+  combined.set(new Uint8Array(ciphertext), iv.byteLength);
+
+  return btoa(String.fromCharCode(...combined));
 }
 
 export async function decryptMessage(cipherB64) {
-  const sodium = await getSodium();
   const stored = JSON.parse(localStorage.getItem(KEY_STORE));
   if (!stored) throw new Error("No keys found.");
-  const pub = sodium.from_base64(stored.publicKey);
-  const priv = sodium.from_base64(stored.privateKey);
-  const cipher = sodium.from_base64(cipherB64);
-  const decrypted = sodium.crypto_box_seal_open(cipher, pub, priv);
-  return sodium.to_string(decrypted);
+
+  const combined = Uint8Array.from(atob(cipherB64), c => c.charCodeAt(0));
+  const iv = combined.slice(0, 12);
+  const ciphertext = combined.slice(12);
+
+  const pubJwk = JSON.parse(stored.publicKey);
+  const publicKey = await window.crypto.subtle.importKey(
+    "jwk", pubJwk, { name: "ECDH", namedCurve: "P-256" }, false, []
+  );
+
+  const privJwk = JSON.parse(stored.privateKey);
+  const privateKey = await window.crypto.subtle.importKey(
+    "jwk", privJwk, { name: "ECDH", namedCurve: "P-256" }, false, ["deriveKey", "deriveBits"]
+  );
+
+  const sharedKey = await window.crypto.subtle.deriveKey(
+    { name: "ECDH", public: publicKey },
+    privateKey,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["decrypt"]
+  );
+
+  const decrypted = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv }, sharedKey, ciphertext);
+  return new TextDecoder().decode(decrypted);
 }
 
 export function deleteKeys() {
@@ -49,5 +90,6 @@ export function deleteKeys() {
 
 export function getPublicKey() {
   const stored = JSON.parse(localStorage.getItem(KEY_STORE));
-  return stored ? stored.publicKey : null;
+  if (!stored) return null;
+  return btoa(stored.publicKey).slice(0, 44);
 }
