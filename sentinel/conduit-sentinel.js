@@ -2,22 +2,10 @@
 /**
  * Conduit Sentinel
  * Watchdog agent that monitors, diagnoses, and auto-heals the Conduit stack.
- *
- * Watches:
- *   - Server process (port 3000 HTTP + /ws WebSocket)
- *   - Vite dev server (port 5173)
- *   - Dependency integrity (node_modules vs package.json)
- *   - Log stream for known fatal error patterns
- *
- * Heals:
- *   - Restarts crashed server process
- *   - Runs npm install on missing dependency errors
- *   - Restarts Vite if HMR dies
- *   - Reports all events to sentinel.log
  */
 
 import { spawn, exec } from 'child_process';
-import { createWriteStream, existsSync, readFileSync } from 'fs';
+import { createWriteStream } from 'fs';
 import { WebSocket } from 'ws';
 import http from 'http';
 import path from 'path';
@@ -32,10 +20,10 @@ const CONFIG = {
   vitePort: 5173,
   healthEndpoint: 'http://localhost:3000/api/health',
   wsEndpoint: 'ws://localhost:3000/ws',
-  checkIntervalMs: 10_000,   // check every 10s
-  restartDelayMs: 3_000,     // wait 3s before restart
-  maxRestarts: 5,            // max restarts before giving up
-  restartWindowMs: 60_000,   // restart count resets after 1 min
+  checkIntervalMs: 15_000,
+  restartDelayMs: 4_000,
+  maxRestarts: 5,
+  restartWindowMs: 60_000,
 };
 
 const log = createWriteStream(LOG_FILE, { flags: 'a' });
@@ -47,15 +35,46 @@ function sentinel(msg, level = 'INFO') {
 }
 
 // ---------------------------------------------------------------------------
+// Kill process on a port before restarting
+// ---------------------------------------------------------------------------
+
+function killPort(port) {
+  return new Promise((resolve) => {
+    // Windows: find and kill the PID using the port
+    exec(`netstat -ano | findstr :${port}`, (err, stdout) => {
+      if (err || !stdout.trim()) return resolve();
+      const lines = stdout.trim().split('\n');
+      const pids = new Set();
+      for (const line of lines) {
+        const parts = line.trim().split(/\s+/);
+        const pid = parts[parts.length - 1];
+        if (pid && pid !== '0' && /^\d+$/.test(pid)) pids.add(pid);
+      }
+      if (pids.size === 0) return resolve();
+      let done = 0;
+      for (const pid of pids) {
+        exec(`taskkill /PID ${pid} /F`, () => {
+          done++;
+          if (done === pids.size) {
+            sentinel(`Killed ${pids.size} process(es) on port ${port}`, 'HEAL');
+            resolve();
+          }
+        });
+      }
+    });
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Diagnosis Engine
 // ---------------------------------------------------------------------------
 
 const KNOWN_ERRORS = [
   { pattern: /Cannot find module '([^']+)'/, action: 'npm_install', label: 'Missing module' },
   { pattern: /EADDRINUSE/, action: 'port_conflict', label: 'Port already in use' },
-  { pattern: /ECONNREFUSED/, action: 'restart_server', label: 'Connection refused' },
-  { pattern: /SyntaxError/, action: 'report_only', label: 'Syntax error — manual fix required' },
   { pattern: /Cannot find package/, action: 'npm_install', label: 'Missing package' },
+  { pattern: /SyntaxError/, action: 'report_only', label: 'Syntax error — manual fix required' },
+  { pattern: /ENOENT.*tsx/, action: 'set_temp', label: 'tsx temp dir missing' },
 ];
 
 function diagnose(errorText) {
@@ -68,19 +87,12 @@ function diagnose(errorText) {
   return 'restart_server';
 }
 
-// ---------------------------------------------------------------------------
-// Heal Actions
-// ---------------------------------------------------------------------------
-
 function runNpmInstall() {
   return new Promise((resolve) => {
     sentinel('Running npm install...', 'HEAL');
     exec('npm install', { cwd: ROOT }, (err, stdout, stderr) => {
-      if (err) {
-        sentinel(`npm install failed: ${stderr}`, 'ERROR');
-      } else {
-        sentinel('npm install completed successfully.', 'HEAL');
-      }
+      if (err) sentinel(`npm install failed: ${stderr}`, 'ERROR');
+      else sentinel('npm install completed.', 'HEAL');
       resolve();
     });
   });
@@ -91,22 +103,28 @@ function runNpmInstall() {
 // ---------------------------------------------------------------------------
 
 class ConduitProcess {
-  constructor(name, command, args) {
+  constructor(name, command, args, env = {}) {
     this.name = name;
     this.command = command;
     this.args = args;
+    this.env = env;
     this.process = null;
     this.restartCount = 0;
     this.restartWindowStart = Date.now();
     this.errorBuffer = '';
+    this._stopping = false;
   }
 
   start() {
+    if (this._stopping) return;
     sentinel(`Starting ${this.name}...`, 'PROC');
+
     this.process = spawn(this.command, this.args, {
       cwd: ROOT,
       stdio: ['ignore', 'pipe', 'pipe'],
-      shell: true,
+      env: { ...process.env, ...this.env },
+      shell: false,  // avoid shell injection warning
+      windowsVerbatimArguments: false,
     });
 
     this.process.stdout.on('data', (d) => {
@@ -117,24 +135,28 @@ class ConduitProcess {
     this.process.stderr.on('data', (d) => {
       const msg = d.toString();
       this.errorBuffer += msg;
-      sentinel(`[${this.name}] ${msg.trim()}`, 'ERR');
+      const trimmed = msg.trim();
+      if (trimmed) sentinel(`[${this.name}] ${trimmed}`, 'ERR');
     });
 
     this.process.on('exit', (code) => {
+      if (this._stopping) return;
       sentinel(`${this.name} exited with code ${code}`, code === 0 ? 'INFO' : 'WARN');
-      if (code !== 0) this.handleCrash();
+      if (code !== 0 || code === null) this.handleCrash();
     });
   }
 
   async handleCrash() {
-    // Reset restart counter after window
+    if (this._stopping) return;
+
     if (Date.now() - this.restartWindowStart > CONFIG.restartWindowMs) {
       this.restartCount = 0;
       this.restartWindowStart = Date.now();
     }
 
     if (this.restartCount >= CONFIG.maxRestarts) {
-      sentinel(`${this.name} exceeded max restarts (${CONFIG.maxRestarts}). Manual intervention required.`, 'FATAL');
+      sentinel(`${this.name} exceeded max restarts. Manual intervention required.`, 'FATAL');
+      this.restartCount = 0; // reset so Sentinel keeps trying
       return;
     }
 
@@ -143,6 +165,13 @@ class ConduitProcess {
 
     if (action === 'npm_install') await runNpmInstall();
     if (action === 'report_only') return;
+    if (action === 'port_conflict') {
+      await killPort(CONFIG.serverPort);
+    }
+    if (action === 'set_temp') {
+      process.env.TEMP = `C:\\Users\\${process.env.USERNAME}\\AppData\\Local\\Temp`;
+      process.env.TMP = process.env.TEMP;
+    }
 
     this.restartCount++;
     sentinel(`Restarting ${this.name} in ${CONFIG.restartDelayMs}ms (attempt ${this.restartCount}/${CONFIG.maxRestarts})...`, 'HEAL');
@@ -150,14 +179,20 @@ class ConduitProcess {
   }
 
   stop() {
+    this._stopping = true;
     if (this.process) {
-      this.process.kill();
+      this.process.kill('SIGTERM');
       this.process = null;
     }
   }
 
+  resume() {
+    this._stopping = false;
+    this.restartCount = 0;
+  }
+
   isRunning() {
-    return this.process && !this.process.killed;
+    return this.process && !this.process.killed && this.process.exitCode === null;
   }
 }
 
@@ -185,8 +220,23 @@ function checkWebSocket(url) {
 // Sentinel Main Loop
 // ---------------------------------------------------------------------------
 
-const serverProc = new ConduitProcess('conduit-server', 'npx', ['tsx', 'server.ts']);
-const viteProc = new ConduitProcess('conduit-vite', 'npx', ['vite']);
+const userTemp = `C:\\Users\\${process.env.USERNAME || 'Anthony Boyd'}\\AppData\\Local\\Temp`;
+process.env.TEMP = userTemp;
+process.env.TMP = userTemp;
+
+const serverProc = new ConduitProcess(
+  'conduit-server',
+  'node',
+  ['--import', 'tsx/esm', 'server.ts'],
+  { TEMP: userTemp, TMP: userTemp }
+);
+
+const viteProc = new ConduitProcess(
+  'conduit-vite',
+  'node',
+  ['node_modules/.bin/vite'],
+  { TEMP: userTemp, TMP: userTemp }
+);
 
 async function healthLoop() {
   const httpOk = await checkHttp(CONFIG.healthEndpoint);
@@ -195,30 +245,45 @@ async function healthLoop() {
   sentinel(`Health: HTTP=${httpOk ? 'OK' : 'FAIL'} WS=${wsOk ? 'OK' : 'FAIL'}`, 'CHECK');
 
   if (!httpOk && !serverProc.isRunning()) {
-    sentinel('Server not running and HTTP down — restarting...', 'HEAL');
+    sentinel('Server down — restarting...', 'HEAL');
+    await killPort(CONFIG.serverPort);
+    serverProc.resume();
     serverProc.start();
+    return;
   }
 
   if (!wsOk && serverProc.isRunning()) {
-    sentinel('Server running but WebSocket unreachable — restarting server...', 'HEAL');
+    sentinel('WS unreachable — killing port and restarting server...', 'HEAL');
     serverProc.stop();
-    setTimeout(() => serverProc.start(), CONFIG.restartDelayMs);
+    await killPort(CONFIG.serverPort);
+    await new Promise(r => setTimeout(r, 1000));
+    serverProc.resume();
+    serverProc.start();
   }
 }
 
 async function main() {
   sentinel('Conduit Sentinel starting ⚡', 'BOOT');
   sentinel(`Monitoring: HTTP ${CONFIG.healthEndpoint} | WS ${CONFIG.wsEndpoint}`, 'BOOT');
-  sentinel(`Check interval: ${CONFIG.checkIntervalMs / 1000}s | Max restarts: ${CONFIG.maxRestarts}`, 'BOOT');
+  sentinel(`TEMP set to: ${userTemp}`, 'BOOT');
+
+  // Kill any stale processes on startup
+  await killPort(CONFIG.serverPort);
 
   serverProc.start();
   viteProc.start();
 
-  // Wait for processes to initialize before first health check
   setTimeout(() => {
     healthLoop();
     setInterval(healthLoop, CONFIG.checkIntervalMs);
-  }, 8000);
+  }, 10000);
 }
+
+process.on('SIGINT', () => {
+  sentinel('Sentinel shutting down...', 'BOOT');
+  serverProc.stop();
+  viteProc.stop();
+  process.exit(0);
+});
 
 main();
