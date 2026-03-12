@@ -1,16 +1,33 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import AgeGate from "./components/AgeGate.jsx";
 import Feed from "./components/Feed.jsx";
 import PostBox from "./components/PostBox.jsx";
 import KeyManager from "./components/KeyManager.jsx";
 import { registerPeer } from "./api/gateway.js";
-import { getPublicKey } from "./ConduitKeyManager.js";
+import { getPublicKey, isAgeVerifiedIdentity } from "./ConduitKeyManager.js";
+import { isAgeVerified } from "./hooks/useAgeVerification.js";
 import "./index.css";
 
 export default function App() {
+  const [verified, setVerified] = useState(false);
+
   useEffect(() => {
-    const pubKey = getPublicKey();
-    if (pubKey) registerPeer(pubKey).catch(() => {});
+    // Check if already age verified from a previous session
+    if (isAgeVerified() && getPublicKey()) {
+      setVerified(true);
+    }
   }, []);
+
+  useEffect(() => {
+    if (verified) {
+      const pubKey = getPublicKey();
+      if (pubKey) registerPeer(pubKey).catch(() => {});
+    }
+  }, [verified]);
+
+  if (!verified) {
+    return <AgeGate onVerified={() => setVerified(true)} />;
+  }
 
   return (
     <div className="app">
