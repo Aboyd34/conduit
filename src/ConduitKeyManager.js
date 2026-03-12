@@ -1,10 +1,19 @@
-import _sodium from "libsodium-wrappers";
+// Using CJS-compatible libsodium import for Vite compatibility
+let sodiumReady = null;
+
+async function getSodium() {
+  if (!sodiumReady) {
+    const sodium = await import("libsodium-wrappers");
+    await sodium.default.ready;
+    sodiumReady = sodium.default;
+  }
+  return sodiumReady;
+}
 
 const KEY_STORE = "conduit_keypair";
 
 export async function generateAndStoreKeys() {
-  await _sodium.ready;
-  const sodium = _sodium;
+  const sodium = await getSodium();
   const keypair = sodium.crypto_box_keypair();
   const stored = {
     publicKey: sodium.to_base64(keypair.publicKey),
@@ -15,8 +24,7 @@ export async function generateAndStoreKeys() {
 }
 
 export async function encryptMessage(message) {
-  await _sodium.ready;
-  const sodium = _sodium;
+  const sodium = await getSodium();
   const stored = JSON.parse(localStorage.getItem(KEY_STORE));
   if (!stored) throw new Error("No keys found. Generate keys first.");
   const pubKey = sodium.from_base64(stored.publicKey);
@@ -25,8 +33,7 @@ export async function encryptMessage(message) {
 }
 
 export async function decryptMessage(cipherB64) {
-  await _sodium.ready;
-  const sodium = _sodium;
+  const sodium = await getSodium();
   const stored = JSON.parse(localStorage.getItem(KEY_STORE));
   if (!stored) throw new Error("No keys found.");
   const pub = sodium.from_base64(stored.publicKey);
