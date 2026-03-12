@@ -6,6 +6,12 @@ import KeyManager from "./components/KeyManager.jsx";
 import { registerPeer } from "./api/gateway.js";
 import { getPublicKey, isAgeVerifiedIdentity } from "./ConduitKeyManager.js";
 import { isAgeVerified } from "./hooks/useAgeVerification.js";
+import { AgeGate } from './identity';
+
+<AgeGate minAge={18}>
+  <YourProtectedContent />
+</AgeGate>
+
 import "./index.css";
 
 export default function App() {
