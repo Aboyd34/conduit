@@ -1,37 +1,70 @@
-const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || "http://localhost:4000";
+/**
+ * Conduit Gateway API Client
+ * Automatically attaches X-Age-Token to all protected requests.
+ */
 
-export async function fetchFeed() {
-  const res = await fetch(`${GATEWAY_URL}/api/feed`);
-  if (!res.ok) throw new Error("Feed fetch failed");
+const BASE = import.meta.env?.VITE_GATEWAY_URL || 'http://localhost:3000';
+
+function getAgeTokenHeader() {
+  const raw = localStorage.getItem('conduit_age_token');
+  return raw ? { 'X-Age-Token': raw } : {};
+}
+
+const baseHeaders = () => ({
+  'Content-Type': 'application/json',
+  ...getAgeTokenHeader(),
+});
+
+export async function registerPeer(pubkey) {
+  const res = await fetch(`${BASE}/api/peers`, {
+    method: 'POST',
+    headers: baseHeaders(),
+    body: JSON.stringify({ pubkey, status: 'online' }),
+  });
+  if (!res.ok) throw new Error(`registerPeer failed: ${res.status}`);
   return res.json();
 }
 
-export async function publishPost(content, signature, senderPubKey) {
-  const res = await fetch(`${GATEWAY_URL}/api/posts`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      content,
-      signature,
-      sender: senderPubKey,
-      timestamp: Date.now(),
-      id: crypto.randomUUID(),
-      topic: "public",
-    }),
+export async function fetchFeed() {
+  const res = await fetch(`${BASE}/api/relay/feed`, {
+    headers: baseHeaders(),
   });
+  if (!res.ok) throw new Error(`fetchFeed failed: ${res.status}`);
+  return res.json();
+}
+
+export async function broadcastPost(post) {
+  const res = await fetch(`${BASE}/api/relay/broadcast`, {
+    method: 'POST',
+    headers: baseHeaders(),
+    body: JSON.stringify(post),
+  });
+  if (!res.ok) throw new Error(`broadcastPost failed: ${res.status}`);
   return res.json();
 }
 
 export async function fetchPeers() {
-  const res = await fetch(`${GATEWAY_URL}/api/peers`);
+  const res = await fetch(`${BASE}/api/peers`, {
+    headers: baseHeaders(),
+  });
+  if (!res.ok) throw new Error(`fetchPeers failed: ${res.status}`);
   return res.json();
 }
 
-export async function registerPeer(pubKey) {
-  const res = await fetch(`${GATEWAY_URL}/api/peers`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ pubkey: pubKey, status: "online" }),
+export async function fetchCommunities() {
+  const res = await fetch(`${BASE}/api/communities`, {
+    headers: baseHeaders(),
   });
+  if (!res.ok) throw new Error(`fetchCommunities failed: ${res.status}`);
+  return res.json();
+}
+
+export async function createCommunity(community) {
+  const res = await fetch(`${BASE}/api/communities`, {
+    method: 'POST',
+    headers: baseHeaders(),
+    body: JSON.stringify(community),
+  });
+  if (!res.ok) throw new Error(`createCommunity failed: ${res.status}`);
   return res.json();
 }
