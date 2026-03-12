@@ -10,9 +10,16 @@ export default function PostBox() {
   const handleSubmit = async () => {
     if (!content.trim()) return;
     const stored = JSON.parse(localStorage.getItem("conduit_keypair"));
-    if (!stored) { setStatus("⚠️ Generate keys first."); return; }
+    if (!stored) {
+      setStatus("⚠️ Generate keys first.");
+      return;
+    }
+    if (!stored.signingPrivateKey) {
+      setStatus("⚠️ Old keys found. Click Delete Keys then Generate Keys again.");
+      return;
+    }
     try {
-      const signature = await signMessage(content, stored.privateKey);
+      const signature = await signMessage(content, stored.signingPrivateKey);
       const pubKey = getPublicKey();
       await publishPost(content, signature, pubKey);
       setContent("");

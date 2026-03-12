@@ -10,9 +10,13 @@ export default function KeyManager() {
   }, []);
 
   const handleGenerate = async () => {
-    const key = await generateAndStoreKeys();
-    setPubKey(key);
-    setStatus("✅ New key pair generated.");
+    try {
+      const key = await generateAndStoreKeys();
+      setPubKey(key);
+      setStatus("✅ New key pair generated.");
+    } catch (e) {
+      setStatus("❌ " + e.message);
+    }
   };
 
   const handleDelete = () => {
@@ -26,7 +30,7 @@ export default function KeyManager() {
       <h3>🔐 Identity</h3>
       {pubKey ? (
         <>
-          <p className="pubkey">Public Key: {pubKey.slice(0, 24)}...</p>
+          <p className="pubkey">Public Key: {pubKey}</p>
           <button onClick={handleDelete}>Delete Keys</button>
         </>
       ) : (

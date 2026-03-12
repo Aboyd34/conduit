@@ -1,5 +1,3 @@
-// Native Web Crypto API signing using ECDSA
-
 export async function generateSigningKeys() {
   const keyPair = await window.crypto.subtle.generateKey(
     { name: "ECDSA", namedCurve: "P-256" },
@@ -14,13 +12,12 @@ export async function generateSigningKeys() {
   };
 }
 
-export async function signMessage(message, privateKeyJwk) {
+export async function signMessage(message, signingPrivateKeyJson) {
+  const jwk = JSON.parse(signingPrivateKeyJson);
   const privKey = await window.crypto.subtle.importKey(
-    "jwk",
-    JSON.parse(privateKeyJwk),
+    "jwk", jwk,
     { name: "ECDSA", namedCurve: "P-256" },
-    false,
-    ["sign"]
+    false, ["sign"]
   );
   const encoded = new TextEncoder().encode(message);
   const signature = await window.crypto.subtle.sign(
@@ -31,13 +28,12 @@ export async function signMessage(message, privateKeyJwk) {
   return btoa(String.fromCharCode(...new Uint8Array(signature)));
 }
 
-export async function verifyMessage(message, signatureB64, publicKeyJwk) {
+export async function verifyMessage(message, signatureB64, signingPublicKeyJson) {
+  const jwk = JSON.parse(signingPublicKeyJson);
   const pubKey = await window.crypto.subtle.importKey(
-    "jwk",
-    JSON.parse(publicKeyJwk),
+    "jwk", jwk,
     { name: "ECDSA", namedCurve: "P-256" },
-    false,
-    ["verify"]
+    false, ["verify"]
   );
   const encoded = new TextEncoder().encode(message);
   const signature = Uint8Array.from(atob(signatureB64), c => c.charCodeAt(0));
