@@ -1,5 +1,5 @@
-import React from "react";
-import { useConduitSocket } from "../hooks/useConduitSocket.js";
+import React from 'react';
+import { useConduitSocket } from '../hooks/useConduitSocket.js';
 
 export default function Feed() {
   const { posts, connected } = useConduitSocket();
@@ -7,8 +7,8 @@ export default function Feed() {
   return (
     <div className="feed-container">
       <div className="feed-header">
-        <span className={`conn-dot ${connected ? "online" : "offline"}`} />
-        <span className="conn-label">{connected ? "Live" : "Reconnecting..."}</span>
+        <span className={`conn-dot ${connected ? 'online' : 'offline'}`} />
+        <span className="conn-label">{connected ? 'Live' : 'Reconnecting...'}</span>
       </div>
 
       {!posts.length ? (
