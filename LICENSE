@@ -1,9 +1,26 @@
-MIT License
+Conduit Source Available License v1.0
 
-Copyright (c) 2026 Aboyd34
+Copyright (c) 2026 Aboyd34. All rights reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+This software and all associated source code, documentation, and files (the "Software") are the exclusive property of Aboyd34.
 
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+PERMITTED:
+- You MAY read and study the source code.
+- You MAY report bugs, vulnerabilities, or improvements via GitHub Issues or Pull Requests.
+- You MAY fork the repository solely to submit a Pull Request back to the original project.
+- Approved Pull Requests become part of the project under this same license and credit will be given to the contributor.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+NOT PERMITTED:
+- You MAY NOT modify, alter, or create derivative works of the Software for personal or public use outside of contributing back.
+- You MAY NOT redistribute, republish, or host copies of the Software or any modified version.
+- You MAY NOT use the Software, in whole or in part, in any commercial product or service without explicit written permission from Aboyd34.
+- You MAY NOT remove or alter this license, copyright notices, or author attribution.
+- You MAY NOT rebrand, rename, or represent this Software as your own project.
+
+CONTRIBUTIONS:
+Contributions are welcome but all final decisions on what is merged remain solely with Aboyd34. By submitting a contribution you agree that your changes become part of this project under this license and that Aboyd34 retains full ownership and control.
+
+DISCLAIMER:
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. ABOYD34 SHALL NOT BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM USE OF THIS SOFTWARE.
+
+For permissions beyond the scope of this license contact the author directly via GitHub.
