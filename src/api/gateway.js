@@ -1,6 +1,6 @@
 /**
  * Conduit Gateway API Client
- * Automatically attaches X-Age-Token to all protected requests.
+ * Auto-attaches X-Age-Token to all protected requests.
  */
 
 const BASE = import.meta.env?.VITE_GATEWAY_URL || 'http://localhost:3000';
@@ -41,6 +41,22 @@ export async function broadcastPost(post) {
   });
   if (!res.ok) throw new Error(`broadcastPost failed: ${res.status}`);
   return res.json();
+}
+
+/**
+ * publishPost — builds and broadcasts a signed post.
+ * Called by PostBox with (content, signature, pubkey).
+ */
+export async function publishPost(content, signature, senderPubkey) {
+  const post = {
+    id: crypto.randomUUID(),
+    topic: 'public',
+    sender: senderPubkey,
+    content,
+    signature,
+    timestamp: Date.now(),
+  };
+  return broadcastPost(post);
 }
 
 export async function fetchPeers() {
