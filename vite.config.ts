@@ -1,6 +1,20 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline'",
+  "font-src 'self'",
+  "connect-src 'self' ws://localhost:24678 ws://localhost:5173 ws://localhost:3000 http://localhost:3000",
+  "img-src 'self' data:",
+  "media-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+].join('; ');
+
 export default defineConfig({
   plugins: [react()],
   server: {
@@ -12,14 +26,7 @@ export default defineConfig({
       },
     },
     headers: {
-      'Content-Security-Policy':
-        "default-src 'self'; " +
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-        "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-        "connect-src 'self' ws://localhost:24678 ws://localhost:5173 ws://localhost:3000 http://localhost:3000; " +
-        "img-src 'self' data:; " +
-        "font-src 'self' data: https://fonts.gstatic.com",
+      'Content-Security-Policy': CSP,
     },
   },
   build: {
