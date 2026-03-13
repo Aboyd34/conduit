@@ -13,7 +13,13 @@ export default defineConfig({
     },
     headers: {
       'Content-Security-Policy':
-        "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' ws://localhost:24678 ws://localhost:5173 http://localhost:3000; img-src 'self' data:; font-src 'self' data:",
+        "default-src 'self'; " +
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+        "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+        "connect-src 'self' ws://localhost:24678 ws://localhost:5173 ws://localhost:3000 http://localhost:3000; " +
+        "img-src 'self' data:; " +
+        "font-src 'self' data: https://fonts.gstatic.com",
     },
   },
   build: {
