@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Feed from "./components/Feed.jsx";
 import PostBox from "./components/PostBox.jsx";
 import KeyManager from "./components/KeyManager.jsx";
+import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import { registerPeer } from "./api/gateway.js";
 import { getPublicKey } from "./ConduitKeyManager.js";
 import { AgeGate, isAgeVerified } from "./identity";
@@ -29,9 +30,15 @@ export default function App() {
           <p className="tagline">Communication without witnesses.</p>
         </header>
         <main>
-          <KeyManager />
-          <PostBox />
-          <Feed />
+          <ErrorBoundary>
+            <KeyManager />
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <PostBox />
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <Feed />
+          </ErrorBoundary>
         </main>
       </div>
     </AgeGate>

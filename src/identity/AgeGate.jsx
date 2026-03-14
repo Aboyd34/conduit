@@ -10,7 +10,14 @@ import './AgeGate.css';
 export function AgeGate({ children, minAge = 18 }) {
   const { verified, confirm, pending } = useAgeGate();
 
-  if (pending) return null; // avoid flash
+  // Show a minimal loading state instead of null to prevent white flash
+  if (pending) {
+    return (
+      <div className="age-gate-overlay" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ color: '#7c6af7', fontSize: '2rem' }}>⚡</div>
+      </div>
+    );
+  }
 
   if (verified) return <>{children}</>;
 
