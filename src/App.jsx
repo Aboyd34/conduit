@@ -3,6 +3,8 @@ import Feed from "./components/Feed.jsx";
 import PostBox from "./components/PostBox.jsx";
 import KeyManager from "./components/KeyManager.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
+import WalletConnect from "./components/WalletConnect.jsx";
+import { Web3Provider } from "./providers/Web3Provider.jsx";
 import { registerPeer } from "./api/gateway.js";
 import { getPublicKey } from "./ConduitKeyManager.js";
 import { AgeGate, isAgeVerified } from "./identity";
@@ -23,24 +25,29 @@ export default function App() {
   }, []);
 
   return (
-    <AgeGate minAge={18}>
-      <div className="app">
-        <header>
-          <h1>⚡ Conduit</h1>
-          <p className="tagline">Communication without witnesses.</p>
-        </header>
-        <main>
+    <Web3Provider>
+      <AgeGate minAge={18}>
+        <div className="app">
+          <header>
+            <h1>⚡ Conduit</h1>
+            <p className="tagline">Communication without witnesses.</p>
+          </header>
           <ErrorBoundary>
-            <KeyManager />
+            <WalletConnect />
           </ErrorBoundary>
-          <ErrorBoundary>
-            <PostBox />
-          </ErrorBoundary>
-          <ErrorBoundary>
-            <Feed />
-          </ErrorBoundary>
-        </main>
-      </div>
-    </AgeGate>
+          <main>
+            <ErrorBoundary>
+              <KeyManager />
+            </ErrorBoundary>
+            <ErrorBoundary>
+              <PostBox />
+            </ErrorBoundary>
+            <ErrorBoundary>
+              <Feed />
+            </ErrorBoundary>
+          </main>
+        </div>
+      </AgeGate>
+    </Web3Provider>
   );
 }
