@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 
 const CSP = [
   "default-src 'self'",
-  "script-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "style-src 'self' 'unsafe-inline'",
   "font-src 'self'",
   "connect-src 'self' ws://localhost:24678 ws://localhost:5173 ws://localhost:3000 http://localhost:3000",
@@ -12,7 +12,6 @@ const CSP = [
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
-  "frame-ancestors 'none'",
 ].join('; ');
 
 export default defineConfig({
