@@ -5,6 +5,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import Database from 'better-sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -24,7 +25,16 @@ const logger = winston.createLogger({
   ],
 });
 
-const db = new Database(':memory:');
+// Use persistent file in production, memory in dev
+const DB_PATH = process.env.NODE_ENV === 'production'
+  ? path.join(__dirname, 'conduit.db')
+  : ':memory:';
+
+if (process.env.NODE_ENV === 'production') {
+  logger.info(`Database path: ${DB_PATH}`);
+}
+
+const db = new Database(DB_PATH);
 db.exec(`
   CREATE TABLE IF NOT EXISTS storage (key TEXT PRIMARY KEY, value TEXT);
   CREATE TABLE IF NOT EXISTS messages (
@@ -40,6 +50,9 @@ db.exec(`
     owner_pubkey TEXT, created_at INTEGER
   );
 `);
+
+// WAL mode for better concurrent read performance
+db.pragma('journal_mode = WAL');
 
 // ---------------------------------------------------------------------------
 // Age Verification Middleware
@@ -115,7 +128,7 @@ function broadcastToClients(payload: object) {
 async function startServer() {
   const app = express();
   const httpServer = createHttpServer(app);
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 3000;
 
   // WebSocket on /ws
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
@@ -148,7 +161,7 @@ async function startServer() {
   app.use('/api/', apiLimiter);
 
   app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', uptime: process.uptime(), timestamp: Date.now(), ws_clients: clients.size });
+    res.json({ status: 'ok', uptime: process.uptime(), timestamp: Date.now(), ws_clients: clients.size, db: DB_PATH });
   });
 
   app.get('/api/relay/feed', requireAgeVerified, (req, res) => {
@@ -208,10 +221,10 @@ async function startServer() {
     res.status(201).json({ status: 'ok' });
   });
 
+  // Cleanup old peers only — keep all messages permanently
   setInterval(() => {
-    const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+    const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
     db.prepare('DELETE FROM peers WHERE last_seen < ?').run(cutoff);
-    db.prepare('DELETE FROM messages WHERE timestamp < ?').run(cutoff);
   }, 60 * 60 * 1000);
 
   app.use((err: any, req: Request, res: Response, next: NextFunction) => {
