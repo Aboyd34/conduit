@@ -255,6 +255,21 @@ button:hover { background: #6a59e0; }
   margin-bottom: 0.4rem;
 }
 
+.post-sender--clickable {
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.post-sender--clickable:hover {
+  color: #a594ff;
+  text-decoration: underline;
+}
+
+.post-sender-name {
+  font-size: 0.75rem;
+  font-family: monospace;
+}
+
 .post-content {
   font-size: 0.95rem;
   line-height: 1.5;
@@ -267,3 +282,133 @@ button:hover { background: #6a59e0; }
 }
 
 .text-muted { color: #555; font-size: 0.9rem; text-align: center; padding: 2rem 0; }
+
+/* Room Selector */
+.room-selector {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.room-btn {
+  background: #13131a;
+  border: 1px solid #2a2a3e;
+  color: #888;
+  border-radius: 8px;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.room-btn:hover {
+  background: #1e1e2e;
+  color: #e0e0e0;
+}
+
+.room-btn--active {
+  background: #1e1e2e;
+  border-color: #7c6af7;
+  color: #7c6af7;
+}
+
+.post-box-room-select {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+/* Profile Page */
+.profile-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+  backdrop-filter: blur(4px);
+}
+
+.profile-card {
+  background: #13131a;
+  border: 1px solid #2a2a3e;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 1.5rem;
+  position: relative;
+}
+
+.profile-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #1e1e2e;
+}
+
+.profile-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: transparent;
+  border: none;
+  color: #666;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+}
+
+.profile-close:hover {
+  background: #1e1e2e;
+  color: #e0e0e0;
+}
+
+.profile-avatar {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.profile-identity {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+  font-size: 1rem;
+  color: #7c6af7;
+  font-weight: 600;
+}
+
+.profile-you-badge {
+  background: #7c6af7;
+  color: #fff;
+  font-size: 0.65rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.profile-pubkey {
+  font-size: 0.7rem;
+  color: #555;
+  font-family: monospace;
+  margin-bottom: 0.4rem;
+}
+
+.profile-post-count {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.profile-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
