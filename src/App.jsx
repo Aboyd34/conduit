@@ -7,35 +7,49 @@ import WalletConnect from "./components/WalletConnect.jsx";
 import { PulseView } from "./components/PulseView.jsx";
 import { RoomsView } from "./components/RoomsView.jsx";
 import { YouView } from "./components/YouView.jsx";
+import { SearchView } from "./components/SearchView.jsx";
+import { NotificationsView } from "./components/NotificationsView.jsx";
 import { ProfilePage } from "./components/ProfilePage.jsx";
 import { Web3Provider } from "./providers/Web3Provider.jsx";
 import { registerPeer } from "./api/gateway.js";
 import { getPublicKey } from "./ConduitKeyManager.js";
 import { AgeGate, isAgeVerified } from "./identity";
+import { useConduitSocket } from "./hooks/useConduitSocket.js";
+import { useNotifications } from "./hooks/useNotifications.js";
 import "./index.css";
 
 const NAV_ITEMS = [
-  { id: 'home',  icon: '🏠', label: 'Home'  },
-  { id: 'rooms', icon: '📡', label: 'Rooms' },
-  { id: 'pulse', icon: '⚡',    label: 'Pulse' },
-  { id: 'you',   icon: '👤', label: 'You'   },
+  { id: 'home',          icon: '🏠', label: 'Home'          },
+  { id: 'rooms',         icon: '📡', label: 'Rooms'         },
+  { id: 'pulse',         icon: '⚡',    label: 'Pulse'         },
+  { id: 'search',        icon: '🔍', label: 'Search'        },
+  { id: 'notifications', icon: '🔔', label: 'Alerts'        },
+  { id: 'you',           icon: '👤', label: 'You'           },
 ];
 
 export default function App() {
   const [peerRegistered, setPeerRegistered] = useState(false);
   const [activeNav, setActiveNav] = useState('home');
+  const [activeRoom, setActiveRoom] = useState('public');
   const [viewingProfile, setViewingProfile] = useState(null);
+
+  const myPubkey = getPublicKey();
+  const { notifications, unread, addNotification, markAllRead, clearAll } = useNotifications(myPubkey);
+  const { allPosts } = useConduitSocket(addNotification);
 
   useEffect(() => {
     if (isAgeVerified()) {
       const pubKey = getPublicKey();
       if (pubKey && !peerRegistered) {
-        registerPeer(pubKey)
-          .then(() => setPeerRegistered(true))
-          .catch(() => {});
+        registerPeer(pubKey).then(() => setPeerRegistered(true)).catch(() => {});
       }
     }
   }, []);
+
+  function handleNavClick(id) {
+    setActiveNav(id);
+    if (id === 'notifications') markAllRead();
+  }
 
   function renderView() {
     switch (activeNav) {
@@ -44,27 +58,34 @@ export default function App() {
           <>
             <ErrorBoundary><KeyManager /></ErrorBoundary>
             <ErrorBoundary><PostBox /></ErrorBoundary>
-            <ErrorBoundary><Feed onViewProfile={setViewingProfile} /></ErrorBoundary>
+            <ErrorBoundary>
+              <Feed
+                onViewProfile={setViewingProfile}
+                activeRoom={activeRoom}
+                onRoomChange={setActiveRoom}
+                onNotification={addNotification}
+              />
+            </ErrorBoundary>
           </>
         );
       case 'rooms':
-        return (
-          <ErrorBoundary>
-            <RoomsView onViewProfile={setViewingProfile} />
-          </ErrorBoundary>
-        );
+        return <ErrorBoundary><RoomsView onViewProfile={setViewingProfile} /></ErrorBoundary>;
       case 'pulse':
+        return <ErrorBoundary><PulseView /></ErrorBoundary>;
+      case 'search':
+        return <ErrorBoundary><SearchView allPosts={allPosts} onViewProfile={setViewingProfile} /></ErrorBoundary>;
+      case 'notifications':
         return (
           <ErrorBoundary>
-            <PulseView />
+            <NotificationsView
+              notifications={notifications}
+              onClear={clearAll}
+              onMarkRead={markAllRead}
+            />
           </ErrorBoundary>
         );
       case 'you':
-        return (
-          <ErrorBoundary>
-            <YouView onViewProfile={setViewingProfile} />
-          </ErrorBoundary>
-        );
+        return <ErrorBoundary><YouView onViewProfile={setViewingProfile} /></ErrorBoundary>;
       default:
         return null;
     }
@@ -87,24 +108,22 @@ export default function App() {
               <button
                 key={item.id}
                 className={`nav-item ${activeNav === item.id ? 'nav-item--active' : ''}`}
-                onClick={() => setActiveNav(item.id)}
+                onClick={() => handleNavClick(item.id)}
               >
                 <span className="nav-icon">{item.icon}</span>
-                <span>{item.label}</span>
+                <span className="nav-label">{item.label}</span>
+                {item.id === 'notifications' && unread > 0 && (
+                  <span className="nav-badge">{unread > 9 ? '9+' : unread}</span>
+                )}
               </button>
             ))}
           </nav>
 
-          <main>
-            {renderView()}
-          </main>
+          <main>{renderView()}</main>
         </div>
 
         {viewingProfile && (
-          <ProfilePage
-            pubkey={viewingProfile}
-            onClose={() => setViewingProfile(null)}
-          />
+          <ProfilePage pubkey={viewingProfile} onClose={() => setViewingProfile(null)} />
         )}
       </AgeGate>
     </Web3Provider>
