@@ -1,6 +1,15 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 
-const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:3000/ws';
+// Auto-detect the correct WebSocket URL:
+// - If VITE_WS_URL is explicitly set, use it
+// - Otherwise derive from the current page URL (works on Render, Vercel, any host)
+function getWsUrl() {
+  if (import.meta.env.VITE_WS_URL) return import.meta.env.VITE_WS_URL;
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const host = window.location.host;
+  return `${protocol}//${host}/ws`;
+}
+
 const MAX_RETRIES = 10;
 const BASE_DELAY_MS = 3000;
 const MAX_DELAY_MS = 30000;
@@ -21,6 +30,7 @@ export function useConduitSocket() {
       return;
     }
 
+    const WS_URL = getWsUrl();
     const ws = new WebSocket(WS_URL);
     wsRef.current = ws;
 
@@ -29,6 +39,7 @@ export function useConduitSocket() {
       setOffline(false);
       retryCount.current = 0;
       if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
+      console.log('[Conduit] Connected to', WS_URL);
     };
 
     ws.onmessage = (event) => {
@@ -67,10 +78,14 @@ export function useConduitSocket() {
       setConnected(false);
       retryCount.current += 1;
       const delay = Math.min(BASE_DELAY_MS * 2 ** (retryCount.current - 1), MAX_DELAY_MS);
+      console.log(`[Conduit] WS closed, retrying in ${delay}ms (attempt ${retryCount.current})`);
       reconnectTimer.current = setTimeout(connect, delay);
     };
 
-    ws.onerror = () => ws.close();
+    ws.onerror = (err) => {
+      console.error('[Conduit] WS error:', err);
+      ws.close();
+    };
   }, []);
 
   useEffect(() => {
