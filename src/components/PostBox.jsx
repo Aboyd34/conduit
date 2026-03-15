@@ -3,8 +3,16 @@ import { publishPost } from '../api/gateway.js';
 import { getSigningPublicKey } from '../ConduitKeyManager.js';
 import { signMessage } from '../crypto/conduit-crypto.js';
 
+const ROOMS = [
+  { id: 'public', label: '# general' },
+  { id: 'crypto', label: '# crypto' },
+  { id: 'tech', label: '# tech' },
+  { id: 'random', label: '# random' },
+];
+
 export default function PostBox() {
   const [content, setContent] = useState('');
+  const [topic, setTopic] = useState('public');
   const [status, setStatus] = useState('');
   const [sending, setSending] = useState(false);
 
@@ -25,13 +33,9 @@ export default function PostBox() {
     setStatus('');
 
     try {
-      // Sign content with ECDSA P-256 private key
       const signature = await signMessage(content, stored.signingPrivateKey);
-
-      // Send signing public key alongside post so relay can verify
       const signingPublicKey = getSigningPublicKey();
-
-      await publishPost(content, signature, signingPublicKey);
+      await publishPost(content, signature, signingPublicKey, topic);
       setContent('');
       setStatus('✅ Post published.');
     } catch (e) {
@@ -47,11 +51,22 @@ export default function PostBox() {
 
   return (
     <div className="post-box">
+      <div className="post-box-room-select">
+        {ROOMS.map((r) => (
+          <button
+            key={r.id}
+            className={`room-btn ${topic === r.id ? 'room-btn--active' : ''}`}
+            onClick={() => setTopic(r.id)}
+          >
+            {r.label}
+          </button>
+        ))}
+      </div>
       <textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="What's on your mind? (signed + encrypted) — Ctrl+Enter to post"
+        placeholder={`Posting to ${ROOMS.find(r => r.id === topic)?.label} — Ctrl+Enter to post`}
         rows={3}
         disabled={sending}
       />

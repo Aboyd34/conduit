@@ -44,13 +44,12 @@ export async function broadcastPost(post) {
 }
 
 /**
- * publishPost — builds and broadcasts a signed post.
- * Called by PostBox with (content, signature, pubkey).
+ * publishPost — builds and broadcasts a signed post with topic support.
  */
-export async function publishPost(content, signature, senderPubkey) {
+export async function publishPost(content, signature, senderPubkey, topic = 'public') {
   const post = {
     id: crypto.randomUUID(),
-    topic: 'public',
+    topic,
     sender: senderPubkey,
     content,
     signature,
