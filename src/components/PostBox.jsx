@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { publishPost } from '../api/gateway.js';
-import { getSigningPublicKey } from '../ConduitKeyManager.js';
+import { broadcastPost } from '../api/gateway.js';
+import { getSigningPublicKey, getPublicKey } from '../ConduitKeyManager.js';
 import { signMessage } from '../crypto/conduit-crypto.js';
 
 const ROOMS = [
@@ -34,8 +34,21 @@ export default function PostBox() {
 
     try {
       const signature = await signMessage(content, stored.signingPrivateKey);
+      // sender = signing public key JWK (for server verification)
+      // display name in feed uses identityFingerprint via SenderName
       const signingPublicKey = getSigningPublicKey();
-      await publishPost(content, signature, signingPublicKey, topic);
+      const fingerprint = getPublicKey(); // short display key
+
+      await broadcastPost({
+        id: crypto.randomUUID(),
+        topic,
+        sender: signingPublicKey,      // full JWK — server needs this to verify
+        displaySender: fingerprint,    // short fingerprint — shown in feed
+        content,
+        signature,
+        timestamp: Date.now(),
+      });
+
       setContent('');
       setStatus('✅ Post published.');
     } catch (e) {
