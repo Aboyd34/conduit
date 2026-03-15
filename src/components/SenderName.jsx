@@ -1,21 +1,15 @@
 /**
  * SenderName — resolves Basename for a post sender
- * If the sender pubkey matches the connected wallet's linked pubkey, show Basename.
- * Otherwise show truncated pubkey as before.
+ * Uses displayKey (short fingerprint) if no wallet link found
  */
 
 import React from 'react';
-import { Name, Address } from '@coinbase/onchainkit/identity';
+import { Name } from '@coinbase/onchainkit/identity';
 import { base } from 'wagmi/chains';
-import { useAccount } from 'wagmi';
 
-// localStorage key where we store the wallet<>pubkey link
 const WALLET_LINK_KEY = 'conduit_wallet_link';
 
-export function SenderName({ senderPubkey }) {
-  const { address, isConnected } = useAccount();
-
-  // Check if this post's sender pubkey is linked to a wallet address
+export function SenderName({ senderPubkey, displayKey }) {
   let linkedAddress = null;
   try {
     const raw = localStorage.getItem(WALLET_LINK_KEY);
@@ -33,10 +27,14 @@ export function SenderName({ senderPubkey }) {
     );
   }
 
-  // Fallback: truncated pubkey
+  // Show short fingerprint — not the full JWK
+  const display = displayKey || senderPubkey;
+  const isJwk = typeof display === 'string' && display.startsWith('{');
+  const label = isJwk ? display.slice(0, 20) + '...' : (display?.slice(0, 20) + '...');
+
   return (
     <span className="post-sender-name">
-      🔑 {senderPubkey?.slice(0, 20)}...
+      🔑 {label}
     </span>
   );
 }

@@ -26,19 +26,23 @@ export default function Feed() {
         <p className="text-muted">No posts in this room yet. Be the first.</p>
       ) : (
         <div className="feed">
-          {filtered.map((post) => (
-            <div key={post.id} className="post-card">
-              <p
-                className="post-sender post-sender--clickable"
-                onClick={() => setViewingProfile(post.sender)}
-                title="View profile"
-              >
-                <SenderName senderPubkey={post.sender} />
-              </p>
-              <p className="post-content">{post.content}</p>
-              <p className="post-time">{new Date(post.timestamp).toLocaleString()}</p>
-            </div>
-          ))}
+          {filtered.map((post) => {
+            // displaySender is the short fingerprint; sender is the full JWK
+            const displayKey = post.displaySender || post.sender;
+            return (
+              <div key={post.id} className="post-card">
+                <p
+                  className="post-sender post-sender--clickable"
+                  onClick={() => setViewingProfile(post.sender)}
+                  title="View profile"
+                >
+                  <SenderName senderPubkey={post.sender} displayKey={displayKey} />
+                </p>
+                <p className="post-content">{post.content}</p>
+                <p className="post-time">{new Date(post.timestamp).toLocaleString()}</p>
+              </div>
+            );
+          })}
         </div>
       )}
 
