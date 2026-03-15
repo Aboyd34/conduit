@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { useConduitSocket } from '../hooks/useConduitSocket.js';
 import { PostCard } from './PostCard.jsx';
 import PostBox from './PostBox.jsx';
+import { AetherRoom } from './AetherRoom.jsx';
 
 const ALL_ROOMS = [
-  { id: 'public',  label: '# general',  desc: 'Open channel. Everyone welcome.',       icon: '🏠' },
-  { id: 'crypto',  label: '# crypto',   desc: 'Web3, wallets, on-chain talk.',           icon: '🔷' },
-  { id: 'tech',    label: '# tech',     desc: 'Builders, devs, tools, projects.',        icon: '🛠️' },
-  { id: 'random',  label: '# random',   desc: 'Anything goes. Keep it interesting.',     icon: '🎲' },
+  { id: 'public',  label: '# general', desc: 'Open channel. Everyone welcome.',         icon: '🏠' },
+  { id: 'crypto',  label: '# crypto',  desc: 'Web3, wallets, on-chain talk.',            icon: '🔷' },
+  { id: 'tech',    label: '# tech',    desc: 'Builders, devs, tools, projects.',         icon: '🛠️' },
+  { id: 'random',  label: '# random',  desc: 'Anything goes. Keep it interesting.',      icon: '🎲' },
+  { id: 'aether',  label: '# aether',  desc: 'Holders only · 100 AETH required.',        icon: '⚡', gated: true },
 ];
 
 export function RoomsView({ onViewProfile }) {
@@ -15,13 +17,22 @@ export function RoomsView({ onViewProfile }) {
   const [activeRoom, setActiveRoom] = useState(null);
 
   if (activeRoom) {
-    const room = ALL_ROOMS.find((r) => r.id === activeRoom);
-    const filtered = posts.filter((p) => (p.topic || 'public') === activeRoom);
+    const room = ALL_ROOMS.find(r => r.id === activeRoom);
+
+    // Aether room gets its own special component
+    if (activeRoom === 'aether') {
+      return (
+        <div className="rooms-view">
+          <button className="back-btn" onClick={() => setActiveRoom(null)}>← Back to Rooms</button>
+          <AetherRoom posts={posts} onViewProfile={onViewProfile} />
+        </div>
+      );
+    }
+
+    const filtered = posts.filter(p => (p.topic || 'public') === activeRoom);
     return (
       <div className="rooms-view">
-        <button className="back-btn" onClick={() => setActiveRoom(null)}>
-          ← Back to Rooms
-        </button>
+        <button className="back-btn" onClick={() => setActiveRoom(null)}>← Back to Rooms</button>
         <div className="view-title-row">
           <h2 className="view-title">{room?.icon} {room?.label}</h2>
           <p className="view-sub">{room?.desc}</p>
@@ -35,9 +46,7 @@ export function RoomsView({ onViewProfile }) {
               <p className="feed-empty-sub">Be the first to transmit.</p>
             </div>
           ) : (
-            filtered.map((p) => (
-              <PostCard key={p.id} post={p} onViewProfile={onViewProfile} />
-            ))
+            filtered.map(p => <PostCard key={p.id} post={p} onViewProfile={onViewProfile} />)
           )}
         </div>
       </div>
@@ -51,20 +60,19 @@ export function RoomsView({ onViewProfile }) {
         <p className="view-sub">Choose your channel</p>
       </div>
       <div className="rooms-grid">
-        {ALL_ROOMS.map((room) => {
-          const count = posts.filter((p) => (p.topic || 'public') === room.id).length;
+        {ALL_ROOMS.map(room => {
+          const count = posts.filter(p => (p.topic || 'public') === room.id).length;
           return (
-            <div
-              key={room.id}
-              className="room-card"
-              onClick={() => setActiveRoom(room.id)}
-            >
+            <div key={room.id} className={`room-card ${room.gated ? 'room-card--gated' : ''}`} onClick={() => setActiveRoom(room.id)}>
               <span className="room-card-icon">{room.icon}</span>
               <div className="room-card-info">
                 <p className="room-card-label">{room.label}</p>
                 <p className="room-card-desc">{room.desc}</p>
               </div>
-              <span className="room-card-count">{count}</span>
+              <div className="room-card-right">
+                {room.gated && <span className="room-gated-tag">AETH</span>}
+                <span className="room-card-count">{count}</span>
+              </div>
             </div>
           );
         })}

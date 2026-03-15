@@ -9,6 +9,7 @@ import { RoomsView } from "./components/RoomsView.jsx";
 import { YouView } from "./components/YouView.jsx";
 import { SearchView } from "./components/SearchView.jsx";
 import { NotificationsView } from "./components/NotificationsView.jsx";
+import { AirdropPage } from "./components/AirdropPage.jsx";
 import { ProfilePage } from "./components/ProfilePage.jsx";
 import { Web3Provider } from "./providers/Web3Provider.jsx";
 import { registerPeer } from "./api/gateway.js";
@@ -19,18 +20,19 @@ import { useNotifications } from "./hooks/useNotifications.js";
 import "./index.css";
 
 const NAV_ITEMS = [
-  { id: 'home',          icon: '🏠', label: 'Home'          },
-  { id: 'rooms',         icon: '📡', label: 'Rooms'         },
-  { id: 'pulse',         icon: '⚡',    label: 'Pulse'         },
-  { id: 'search',        icon: '🔍', label: 'Search'        },
-  { id: 'notifications', icon: '🔔', label: 'Alerts'        },
-  { id: 'you',           icon: '👤', label: 'You'           },
+  { id: 'home',          icon: '🏠', label: 'Home'    },
+  { id: 'rooms',         icon: '📡', label: 'Rooms'   },
+  { id: 'pulse',         icon: '⚡',    label: 'Pulse'   },
+  { id: 'search',        icon: '🔍', label: 'Search'  },
+  { id: 'airdrop',       icon: '🪂', label: 'Airdrop' },
+  { id: 'notifications', icon: '🔔', label: 'Alerts'  },
+  { id: 'you',           icon: '👤', label: 'You'     },
 ];
 
 export default function App() {
   const [peerRegistered, setPeerRegistered] = useState(false);
-  const [activeNav, setActiveNav] = useState('home');
-  const [activeRoom, setActiveRoom] = useState('public');
+  const [activeNav, setActiveNav]           = useState('home');
+  const [activeRoom, setActiveRoom]         = useState('public');
   const [viewingProfile, setViewingProfile] = useState(null);
 
   const myPubkey = getPublicKey();
@@ -40,9 +42,8 @@ export default function App() {
   useEffect(() => {
     if (isAgeVerified()) {
       const pubKey = getPublicKey();
-      if (pubKey && !peerRegistered) {
+      if (pubKey && !peerRegistered)
         registerPeer(pubKey).then(() => setPeerRegistered(true)).catch(() => {});
-      }
     }
   }, []);
 
@@ -68,26 +69,18 @@ export default function App() {
             </ErrorBoundary>
           </>
         );
-      case 'rooms':
-        return <ErrorBoundary><RoomsView onViewProfile={setViewingProfile} /></ErrorBoundary>;
-      case 'pulse':
-        return <ErrorBoundary><PulseView /></ErrorBoundary>;
-      case 'search':
-        return <ErrorBoundary><SearchView allPosts={allPosts} onViewProfile={setViewingProfile} /></ErrorBoundary>;
+      case 'rooms':   return <ErrorBoundary><RoomsView onViewProfile={setViewingProfile} /></ErrorBoundary>;
+      case 'pulse':   return <ErrorBoundary><PulseView /></ErrorBoundary>;
+      case 'search':  return <ErrorBoundary><SearchView allPosts={allPosts} onViewProfile={setViewingProfile} /></ErrorBoundary>;
+      case 'airdrop': return <ErrorBoundary><AirdropPage /></ErrorBoundary>;
       case 'notifications':
         return (
           <ErrorBoundary>
-            <NotificationsView
-              notifications={notifications}
-              onClear={clearAll}
-              onMarkRead={markAllRead}
-            />
+            <NotificationsView notifications={notifications} onClear={clearAll} onMarkRead={markAllRead} />
           </ErrorBoundary>
         );
-      case 'you':
-        return <ErrorBoundary><YouView onViewProfile={setViewingProfile} /></ErrorBoundary>;
-      default:
-        return null;
+      case 'you': return <ErrorBoundary><YouView onViewProfile={setViewingProfile} /></ErrorBoundary>;
+      default: return null;
     }
   }
 
@@ -104,10 +97,10 @@ export default function App() {
 
         <div className="app">
           <nav className="sidebar">
-            {NAV_ITEMS.map((item) => (
+            {NAV_ITEMS.map(item => (
               <button
                 key={item.id}
-                className={`nav-item ${activeNav === item.id ? 'nav-item--active' : ''}`}
+                className={`nav-item ${activeNav === item.id ? 'nav-item--active' : ''} ${item.id === 'airdrop' ? 'nav-item--airdrop' : ''}`}
                 onClick={() => handleNavClick(item.id)}
               >
                 <span className="nav-icon">{item.icon}</span>
@@ -115,10 +108,12 @@ export default function App() {
                 {item.id === 'notifications' && unread > 0 && (
                   <span className="nav-badge">{unread > 9 ? '9+' : unread}</span>
                 )}
+                {item.id === 'airdrop' && (
+                  <span className="nav-airdrop-dot" />
+                )}
               </button>
             ))}
           </nav>
-
           <main>{renderView()}</main>
         </div>
 
