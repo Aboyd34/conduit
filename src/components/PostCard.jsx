@@ -1,35 +1,65 @@
 import React, { useState } from 'react';
 import { SenderName } from './SenderName.jsx';
+import { sendReply, sendSignal, sendAmplify } from '../api/interactions.js';
+import { getPublicKey } from '../ConduitKeyManager.js';
 
 export function PostCard({ post, onViewProfile }) {
   const [showReply, setShowReply] = useState(false);
   const [replyText, setReplyText] = useState('');
-  const [replies, setReplies] = useState([]);
-  const [signals, setSignals] = useState(0);
-  const [amplified, setAmplified] = useState(false);
+  const [replySending, setReplySending] = useState(false);
   const [signaled, setSignaled] = useState(false);
+  const [amplified, setAmplified] = useState(false);
+  const [localError, setLocalError] = useState(null);
 
   const displayKey = post.displaySender || post.sender;
+  const replyCount = post.replies?.length || 0;
+  const signalCount = post.signals || 0;
+  const amplifyCount = post.amplifies || 0;
 
-  function handleSignal() {
-    if (!signaled) {
-      setSignals((s) => s + 1);
-      setSignaled(true);
+  async function handleSignal() {
+    if (signaled) return;
+    setSignaled(true);
+    try {
+      const pubKey = getPublicKey();
+      await sendSignal(post.id, pubKey);
+    } catch {
+      setSignaled(false);
+      setLocalError('Signal failed');
+      setTimeout(() => setLocalError(null), 2000);
     }
   }
 
-  function handleAmplify() {
-    setAmplified((a) => !a);
+  async function handleAmplify() {
+    if (amplified) return;
+    setAmplified(true);
+    try {
+      const pubKey = getPublicKey();
+      await sendAmplify(post.id, pubKey);
+    } catch {
+      setAmplified(false);
+      setLocalError('Amplify failed');
+      setTimeout(() => setLocalError(null), 2000);
+    }
   }
 
-  function submitReply() {
-    if (!replyText.trim()) return;
-    setReplies((r) => [
-      ...r,
-      { id: Date.now(), text: replyText.trim(), time: new Date().toLocaleTimeString() },
-    ]);
-    setReplyText('');
-    setShowReply(false);
+  async function submitReply() {
+    if (!replyText.trim() || replySending) return;
+    setReplySending(true);
+    try {
+      const pubKey = getPublicKey();
+      await sendReply(post.id, replyText.trim(), pubKey);
+      setReplyText('');
+      setShowReply(false);
+    } catch {
+      setLocalError('Reply failed — try again');
+      setTimeout(() => setLocalError(null), 2500);
+    } finally {
+      setReplySending(false);
+    }
+  }
+
+  function handleKeyDown(e) {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submitReply();
   }
 
   return (
@@ -47,6 +77,8 @@ export function PostCard({ post, onViewProfile }) {
 
       <p className="post-content">{post.content}</p>
 
+      {localError && <p className="post-error">{localError}</p>}
+
       <div className="post-actions">
         <button
           className={`action-btn ${showReply ? 'action-btn--active' : ''}`}
@@ -55,26 +87,29 @@ export function PostCard({ post, onViewProfile }) {
         >
           <span className="action-icon">💬</span>
           <span className="action-label">Reply</span>
-          {replies.length > 0 && <span className="action-count">{replies.length}</span>}
+          {replyCount > 0 && <span className="action-count">{replyCount}</span>}
         </button>
 
         <button
           className={`action-btn ${amplified ? 'action-btn--amplified' : ''}`}
           onClick={handleAmplify}
           title="Amplify"
+          disabled={amplified}
         >
           <span className="action-icon">🔁</span>
           <span className="action-label">Amplify</span>
+          {amplifyCount > 0 && <span className="action-count">{amplifyCount}</span>}
         </button>
 
         <button
           className={`action-btn ${signaled ? 'action-btn--signaled' : ''}`}
           onClick={handleSignal}
           title="Signal"
+          disabled={signaled}
         >
           <span className="action-icon">⚡</span>
           <span className="action-label">Signal</span>
-          {signals > 0 && <span className="action-count">{signals}</span>}
+          {signalCount > 0 && <span className="action-count">{signalCount}</span>}
         </button>
       </div>
 
@@ -82,25 +117,33 @@ export function PostCard({ post, onViewProfile }) {
         <div className="reply-box">
           <textarea
             className="reply-input"
-            placeholder="Add to the signal..."
+            placeholder="Add to the signal... (Ctrl+Enter to send)"
             value={replyText}
             onChange={(e) => setReplyText(e.target.value)}
+            onKeyDown={handleKeyDown}
             rows={2}
+            autoFocus
           />
           <div className="reply-actions">
-            <button className="reply-submit-btn" onClick={submitReply}>Send</button>
-            <button className="reply-cancel-btn" onClick={() => setShowReply(false)}>Cancel</button>
+            <button className="reply-submit-btn" onClick={submitReply} disabled={replySending}>
+              {replySending ? 'Sending...' : 'Send'}
+            </button>
+            <button className="reply-cancel-btn" onClick={() => { setShowReply(false); setReplyText(''); }}>
+              Cancel
+            </button>
           </div>
         </div>
       )}
 
-      {replies.length > 0 && (
+      {post.replies && post.replies.length > 0 && (
         <div className="replies-list">
-          {replies.map((r) => (
+          {post.replies.map((r) => (
             <div key={r.id} className="reply-item">
-              <span className="reply-you">You</span>
-              <span className="reply-text">{r.text}</span>
-              <span className="reply-time">{r.time}</span>
+              <span className="reply-sender">
+                {r.sender ? r.sender.slice(0, 8) + '…' : 'anon'}
+              </span>
+              <span className="reply-text">{r.content}</span>
+              <span className="reply-time">{new Date(r.timestamp).toLocaleTimeString()}</span>
             </div>
           ))}
         </div>

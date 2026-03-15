@@ -25,7 +25,6 @@ const logger = winston.createLogger({
   ],
 });
 
-// Use persistent file in production, memory in dev
 const DB_PATH = process.env.NODE_ENV === 'production'
   ? path.join(__dirname, 'conduit.db')
   : ':memory:';
@@ -49,13 +48,32 @@ db.exec(`
     id TEXT PRIMARY KEY, name TEXT, description TEXT,
     owner_pubkey TEXT, created_at INTEGER
   );
+  CREATE TABLE IF NOT EXISTS replies (
+    id TEXT PRIMARY KEY,
+    post_id TEXT NOT NULL,
+    sender_pubkey TEXT,
+    content TEXT NOT NULL,
+    timestamp INTEGER NOT NULL,
+    FOREIGN KEY (post_id) REFERENCES messages(id)
+  );
+  CREATE TABLE IF NOT EXISTS signals (
+    post_id TEXT NOT NULL,
+    sender_pubkey TEXT NOT NULL,
+    timestamp INTEGER NOT NULL,
+    PRIMARY KEY (post_id, sender_pubkey)
+  );
+  CREATE TABLE IF NOT EXISTS amplifies (
+    post_id TEXT NOT NULL,
+    sender_pubkey TEXT NOT NULL,
+    timestamp INTEGER NOT NULL,
+    PRIMARY KEY (post_id, sender_pubkey)
+  );
 `);
 
-// WAL mode for better concurrent read performance
 db.pragma('journal_mode = WAL');
 
 // ---------------------------------------------------------------------------
-// Age Verification Middleware
+// Age Verification
 // ---------------------------------------------------------------------------
 
 const AGE_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
@@ -91,7 +109,7 @@ function requireAgeVerified(req: Request, res: Response, next: NextFunction) {
 }
 
 // ---------------------------------------------------------------------------
-// ECDSA P-256 Post Signature Verification
+// ECDSA Signature Verification
 // ---------------------------------------------------------------------------
 
 async function verifyPostSignature(content: string, signatureB64: string, signingPublicKeyJwk: string): Promise<boolean> {
@@ -109,7 +127,7 @@ async function verifyPostSignature(content: string, signatureB64: string, signin
 }
 
 // ---------------------------------------------------------------------------
-// WebSocket Server — real-time feed broadcast
+// WebSocket Broadcast
 // ---------------------------------------------------------------------------
 
 const clients = new Set<WebSocket>();
@@ -130,20 +148,36 @@ async function startServer() {
   const httpServer = createHttpServer(app);
   const PORT = Number(process.env.PORT) || 3000;
 
-  // WebSocket on /ws
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
 
   wss.on('connection', (ws) => {
     clients.add(ws);
     logger.info('WS client connected', { total: clients.size });
 
-    // Send last 50 posts on connect
     const recent = db.prepare('SELECT * FROM messages ORDER BY timestamp DESC LIMIT 50').all() as any[];
+    const postIds = recent.map((r) => r.id);
+
+    // Batch-load replies and signals for the initial posts
+    const repliesMap: Record<string, any[]> = {};
+    const signalsMap: Record<string, number> = {};
+    const ampMap: Record<string, number> = {};
+
+    for (const id of postIds) {
+      repliesMap[id] = (db.prepare('SELECT * FROM replies WHERE post_id = ? ORDER BY timestamp ASC').all(id) as any[]).map((r) => ({
+        id: r.id, postId: r.post_id, sender: r.sender_pubkey, content: r.content, timestamp: r.timestamp,
+      }));
+      signalsMap[id] = (db.prepare('SELECT COUNT(*) as cnt FROM signals WHERE post_id = ?').get(id) as any).cnt;
+      ampMap[id] = (db.prepare('SELECT COUNT(*) as cnt FROM amplifies WHERE post_id = ?').get(id) as any).cnt;
+    }
+
     ws.send(JSON.stringify({
       type: 'init',
       posts: recent.map((r) => ({
         id: r.id, topic: r.topic, sender: r.sender_pubkey,
         content: r.payload, signature: r.signature, timestamp: r.timestamp,
+        replies: repliesMap[r.id] || [],
+        signals: signalsMap[r.id] || 0,
+        amplifies: ampMap[r.id] || 0,
       })),
     }));
 
@@ -187,14 +221,85 @@ async function startServer() {
       db.prepare(`INSERT INTO messages (id, topic, sender_pubkey, payload, signature, timestamp) VALUES (?, ?, ?, ?, ?, ?)`)
         .run(id, topic || 'public', sender, content, signature, timestamp || Date.now());
 
-      const post = { id, topic: topic || 'public', sender, content, signature, timestamp: timestamp || Date.now() };
+      const post = { id, topic: topic || 'public', sender, content, signature, timestamp: timestamp || Date.now(), replies: [], signals: 0, amplifies: 0 };
       broadcastToClients({ type: 'new_post', post });
-
       res.status(201).json({ status: 'ok' });
     } catch {
       res.status(409).json({ error: 'Duplicate' });
     }
   });
+
+  // ---------------------------------------------------------------------------
+  // Replies
+  // ---------------------------------------------------------------------------
+
+  app.post('/api/relay/:postId/reply', requireAgeVerified, (req, res) => {
+    const { postId } = req.params;
+    const { content, sender } = req.body;
+    if (!content || !sender) return res.status(400).json({ error: 'Missing fields' });
+
+    const post = db.prepare('SELECT id FROM messages WHERE id = ?').get(postId);
+    if (!post) return res.status(404).json({ error: 'Post not found' });
+
+    const id = crypto.randomUUID();
+    const timestamp = Date.now();
+    db.prepare('INSERT INTO replies (id, post_id, sender_pubkey, content, timestamp) VALUES (?, ?, ?, ?, ?)')
+      .run(id, postId, sender, content, timestamp);
+
+    const reply = { id, postId, sender, content, timestamp };
+    broadcastToClients({ type: 'new_reply', postId, reply });
+    res.status(201).json(reply);
+  });
+
+  app.get('/api/relay/:postId/replies', requireAgeVerified, (req, res) => {
+    const { postId } = req.params;
+    const rows = db.prepare('SELECT * FROM replies WHERE post_id = ? ORDER BY timestamp ASC').all(postId) as any[];
+    res.json(rows.map((r) => ({ id: r.id, postId: r.post_id, sender: r.sender_pubkey, content: r.content, timestamp: r.timestamp })));
+  });
+
+  // ---------------------------------------------------------------------------
+  // Signals (likes)
+  // ---------------------------------------------------------------------------
+
+  app.post('/api/relay/:postId/signal', requireAgeVerified, (req, res) => {
+    const { postId } = req.params;
+    const { sender } = req.body;
+    if (!sender) return res.status(400).json({ error: 'Missing sender' });
+
+    try {
+      db.prepare('INSERT INTO signals (post_id, sender_pubkey, timestamp) VALUES (?, ?, ?)')
+        .run(postId, sender, Date.now());
+      const count = (db.prepare('SELECT COUNT(*) as cnt FROM signals WHERE post_id = ?').get(postId) as any).cnt;
+      broadcastToClients({ type: 'signal_update', postId, count });
+      res.status(201).json({ status: 'ok', count });
+    } catch {
+      res.status(409).json({ error: 'Already signaled' });
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // Amplifies (reposts)
+  // ---------------------------------------------------------------------------
+
+  app.post('/api/relay/:postId/amplify', requireAgeVerified, (req, res) => {
+    const { postId } = req.params;
+    const { sender } = req.body;
+    if (!sender) return res.status(400).json({ error: 'Missing sender' });
+
+    try {
+      db.prepare('INSERT INTO amplifies (post_id, sender_pubkey, timestamp) VALUES (?, ?, ?)')
+        .run(postId, sender, Date.now());
+      const count = (db.prepare('SELECT COUNT(*) as cnt FROM amplifies WHERE post_id = ?').get(postId) as any).cnt;
+      broadcastToClients({ type: 'amplify_update', postId, count });
+      res.status(201).json({ status: 'ok', count });
+    } catch {
+      res.status(409).json({ error: 'Already amplified' });
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // Peers & Communities
+  // ---------------------------------------------------------------------------
 
   app.get('/api/peers', requireAgeVerified, (req, res) => {
     const rows = db.prepare('SELECT * FROM peers ORDER BY last_seen DESC').all() as any[];
@@ -221,7 +326,6 @@ async function startServer() {
     res.status(201).json({ status: 'ok' });
   });
 
-  // Cleanup old peers only — keep all messages permanently
   setInterval(() => {
     const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
     db.prepare('DELETE FROM peers WHERE last_seen < ?').run(cutoff);

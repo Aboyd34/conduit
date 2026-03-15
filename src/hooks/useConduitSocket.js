@@ -34,10 +34,29 @@ export function useConduitSocket() {
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
+
         if (data.type === 'init') {
           setPosts(data.posts);
+
         } else if (data.type === 'new_post') {
           setPosts((prev) => [data.post, ...prev].slice(0, 100));
+
+        } else if (data.type === 'new_reply') {
+          setPosts((prev) => prev.map((p) =>
+            p.id === data.postId
+              ? { ...p, replies: [...(p.replies || []), data.reply] }
+              : p
+          ));
+
+        } else if (data.type === 'signal_update') {
+          setPosts((prev) => prev.map((p) =>
+            p.id === data.postId ? { ...p, signals: data.count } : p
+          ));
+
+        } else if (data.type === 'amplify_update') {
+          setPosts((prev) => prev.map((p) =>
+            p.id === data.postId ? { ...p, amplifies: data.count } : p
+          ));
         }
       } catch (e) {
         console.error('[Conduit] WS parse error:', e);
