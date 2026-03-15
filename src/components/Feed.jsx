@@ -1,5 +1,6 @@
 import React from 'react';
 import { useConduitSocket } from '../hooks/useConduitSocket.js';
+import { SenderName } from './SenderName.jsx';
 
 export default function Feed() {
   const { posts, connected } = useConduitSocket();
@@ -17,7 +18,9 @@ export default function Feed() {
         <div className="feed">
           {posts.map((post) => (
             <div key={post.id} className="post-card">
-              <p className="post-sender">🔑 {post.sender?.slice(0, 20)}...</p>
+              <p className="post-sender">
+                <SenderName senderPubkey={post.sender} />
+              </p>
               <p className="post-content">{post.content}</p>
               <p className="post-time">{new Date(post.timestamp).toLocaleString()}</p>
             </div>
