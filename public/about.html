@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Conduit is a privacy-first communication platform. No accounts. No data stored. Communication without witnesses." />
+  <title>About Conduit</title>
+  <style>
+    :root {
+      --bg: #07070d;
+      --card: #0f0f18;
+      --border: #1c1c2e;
+      --accent: #7c6af7;
+      --aether: #a78bfa;
+      --text: #e8e8f0;
+      --muted: #888899;
+      --dim: #444455;
+      --green: #4ade80;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, sans-serif;
+      line-height: 1.7;
+      padding: 0 1rem;
+    }
+    .page {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 4rem 0 6rem;
+    }
+    .hero {
+      text-align: center;
+      margin-bottom: 4rem;
+      padding-bottom: 3rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .hero-logo {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      filter: drop-shadow(0 0 20px var(--accent));
+    }
+    .hero-title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+    .hero-tagline {
+      font-size: 1.1rem;
+      color: var(--muted);
+      margin-bottom: 1.5rem;
+    }
+    .hero-badges {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(74,222,128,0.07);
+      border: 1px solid rgba(74,222,128,0.2);
+      border-radius: 999px;
+      padding: 0.3rem 0.75rem;
+      font-size: 0.78rem;
+      color: var(--green);
+    }
+    .badge-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+    section {
+      margin-bottom: 3rem;
+    }
+    h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    p {
+      font-size: 0.97rem;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+    p strong { color: var(--text); }
+    ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      margin-bottom: 1rem;
+    }
+    ul li {
+      font-size: 0.95rem;
+      color: var(--muted);
+      padding-left: 1.25rem;
+      position: relative;
+    }
+    ul li::before {
+      content: '⚡';
+      position: absolute;
+      left: 0;
+      font-size: 0.75rem;
+    }
+    .token-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+    .token-table th {
+      text-align: left;
+      color: var(--dim);
+      font-weight: 600;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .token-table td {
+      padding: 0.65rem 0.75rem;
+      color: var(--muted);
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .token-table td:first-child { color: var(--text); font-weight: 500; }
+    .token-table td:nth-child(2) { color: var(--aether); font-weight: 700; }
+    .aether-block {
+      background: linear-gradient(135deg, rgba(167,139,250,0.07), rgba(124,106,247,0.04));
+      border: 1px solid rgba(167,139,250,0.2);
+      border-radius: 16px;
+      padding: 1.5rem;
+    }
+    .aether-block h2 { border-color: rgba(167,139,250,0.2); color: var(--aether); }
+    .cta {
+      text-align: center;
+      margin-top: 4rem;
+      padding-top: 3rem;
+      border-top: 1px solid var(--border);
+    }
+    .cta-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .cta-sub {
+      font-size: 0.95rem;
+      color: var(--muted);
+      margin-bottom: 1.5rem;
+    }
+    .cta-btn {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      padding: 0.85rem 2rem;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: opacity 0.15s;
+    }
+    .cta-btn:hover { opacity: 0.88; }
+    .footer {
+      text-align: center;
+      margin-top: 4rem;
+      font-size: 0.78rem;
+      color: var(--dim);
+    }
+    @media(max-width: 600px) {
+      .hero-title { font-size: 1.8rem; }
+      .page { padding: 2.5rem 0 4rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <div class="hero">
+      <div class="hero-logo">⚡</div>
+      <h1 class="hero-title">Conduit</h1>
+      <p class="hero-tagline">Communication without witnesses.</p>
+      <div class="hero-badges">
+        <div class="badge"><span class="badge-dot"></span> No accounts</div>
+        <div class="badge"><span class="badge-dot"></span> No data stored</div>
+        <div class="badge"><span class="badge-dot"></span> Relay only</div>
+        <div class="badge"><span class="badge-dot"></span> Keys stay local</div>
+      </div>
+    </div>
+
+    <section>
+      <h2>Why Conduit exists</h2>
+      <p>Every major platform today is built on one assumption: that your identity, your behavior, and your data are assets to be collected and monetized by someone else.</p>
+      <p>Conduit is built on the opposite assumption. <strong>Your identity is yours.</strong> It lives in your browser, not on a server. Your posts are signed and relayed — the relay never knows who you are.</p>
+      <p>No accounts. No email. No password. No profile that someone else owns. Just communication.</p>
+    </section>
+
+    <section>
+      <h2>How it works</h2>
+      <ul>
+        <li>Your identity is a cryptographic keypair generated locally in your browser on first visit.</li>
+        <li>Posts are signed with that key before transmission. The relay sees a signed packet, not a name.</li>
+        <li>Keys live in your browser's local storage — not on any server or database.</li>
+        <li>Clearing your browser removes your local identity. Back it up yourself in the You panel.</li>
+        <li>The relay is infrastructure, not a record keeper.</li>
+      </ul>
+    </section>
+
+    <section class="aether-block">
+      <h2>⚡ What is Aether?</h2>
+      <p>Aether is the premium layer built on top of Conduit. Holding <strong>100 AETH</strong> unlocks the holder room, governance tools, exclusive drops, and higher-signal utilities for builders and serious participants.</p>
+      <p>Aether is not required to use Conduit. It is a choice — for those who want to go deeper.</p>
+
+      <table class="token-table">
+        <thead>
+          <tr>
+            <th>Bucket</th>
+            <th>%</th>
+            <th>Purpose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Ecosystem reserve</td><td>40%</td><td>Rewards, growth, partnerships</td></tr>
+          <tr><td>Founder allocation</td><td>25%</td><td>Builder upside, long-term ownership</td></tr>
+          <tr><td>Treasury / runway</td><td>20%</td><td>Hosting, ops, development</td></tr>
+          <tr><td>Early supporters</td><td>10%</td><td>Builders, collaborators, early believers</td></tr>
+          <tr><td>Community rewards</td><td>5%</td><td>Activity, referrals, participation</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Who built this</h2>
+      <p>Conduit was built independently by a single founder starting in early 2026. The goal was simple: build something that cooperates instead of clings, that can grow without being rewritten, and that treats the people using it as owners of their own data — not as the product.</p>
+      <p><strong>Conduit is free to use. Aether is how the ecosystem sustains itself.</strong></p>
+    </section>
+
+    <div class="cta">
+      <h2 class="cta-title">Ready to transmit?</h2>
+      <p class="cta-sub">No sign-up required. Your identity generates automatically.</p>
+      <a href="/" class="cta-btn">Open Conduit ⚡</a>
+    </div>
+
+    <div class="footer">
+      Built March 2026 &nbsp;·&nbsp;
+      <a href="https://github.com/Aboyd34/conduit" style="color: inherit;">GitHub</a>
+      &nbsp;·&nbsp; Communication without witnesses.
+    </div>
+
+  </div>
+</body>
+</html>

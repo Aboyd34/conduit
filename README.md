@@ -1,42 +1,101 @@
 # ⚡ Conduit
 
-> Communication without witnesses.
+> **Communication without witnesses.**
 
-Conduit is a privacy-first, decentralized social network. Messages pass through nodes — nothing is stored permanently. No metadata. No central servers. No identity required.
+Conduit is a privacy-first communication platform. No accounts. No data stored on the server. Your identity is generated locally in your browser — the relay never knows who you are.
 
-## Stack
-- **Frontend**: React 19 + Vite
-- **Backend**: Express + TypeScript (ephemeral SQLite in-memory)
-- **Gateway**: Node.js API bridge
-- **Crypto**: libsodium (X25519 + AES-256-GCM)
+🌐 **Live:** [cantc-ulive.live](https://cantc-ulive.live)
+📄 **About:** [cantc-ulive.live/about.html](https://cantc-ulive.live/about.html)
 
-## Quick Start
+---
 
-```bash
-# Install dependencies
-npm install
-cd gateway && npm install && cd ..
+## How it works
 
-# Copy env
-cp .env.example .env
+- **Local identity** — Ed25519 keypair generated in-browser on first visit. Never transmitted.
+- **Relay-only architecture** — Posts are signed and forwarded. The relay does not store your identity.
+- **No accounts** — No email, no password, no profile owned by anyone but you.
+- **Browser key storage** — All identity material lives in `localStorage`. Clearing your browser removes it.
+- **Optional encryption** — Encrypt post content before relay. Only the recipient can read it.
 
-# Run everything
-npm run dev:all
+---
+
+## Rooms
+
+| Room | Access | Description |
+|---|---|---|
+| `#general` | Open | Everyone welcome |
+| `#crypto` | Open | Web3, wallets, on-chain talk |
+| `#tech` | Open | Builders, devs, tools |
+| `#random` | Open | Anything goes |
+| `#aether` | 100 AETH | Holders only — governance, drops, exclusive tools |
+
+---
+
+## Tech stack
+
+- **Frontend** — React 19, Vite, custom inline SVG icon system
+- **Backend** — Node.js, Express, WebSocket relay
+- **Storage** — SQLite (relay buffer only, no identity data)
+- **Web3** — wagmi, viem, OnchainKit (Base)
+- **Identity** — Browser Web Crypto API, Ed25519, localStorage
+- **Hosting** — Render (auto-deploy from `main`)
+
+---
+
+## Project structure
+
+```
+src/
+  App.jsx                  # Main shell, nav, layout
+  components/
+    ConduitIcons.jsx        # Custom inline SVG icon system
+    RoomsView.jsx           # 4-layer room environment
+    roomModules.js          # Room data + helpers
+    EncryptionSettings.jsx  # User encryption panel
+    Feed.jsx                # Main post feed
+    PostBox.jsx             # Post composer
+    PostCard.jsx            # Post display + actions
+    AetherRoom.jsx          # Holder-only room
+    YouView.jsx             # Identity, keys, privacy
+    PulseView.jsx           # Activity stream
+    SearchView.jsx          # Search
+    AirdropPage.jsx         # AETH claim UI
+    NotificationsView.jsx   # Alerts
+  hooks/
+    useConduitSocket.js     # WebSocket connection
+    useNotifications.js     # Notification state
+  identity/                 # Age gate, identity system
+  crypto/                   # Key management
+  api/                      # Gateway, peer registration
+  providers/
+    Web3Provider.jsx        # wagmi / wallet context
+server.ts                   # Express + WebSocket relay
+render.yaml                 # Render deploy config
 ```
 
-Open **http://localhost:5173**
+---
 
-## Q1 Milestones
-- [x] Key generation (X25519 via libsodium)
-- [x] Message signing before publish
-- [x] Ephemeral gateway (in-memory, clears on restart)
-- [x] Live feed (polls every 10 seconds)
-- [x] Peer registration
-- [ ] WebSocket real-time layer
-- [ ] P2P transport (libp2p)
-- [ ] ActivityPub federation
-- [ ] Persistent optional storage
-- [ ] Mobile client
+## Aether token model
+
+| Bucket | % | Purpose |
+|---|---|---|
+| Ecosystem reserve | 40% | Rewards, growth, partnerships |
+| Founder allocation | 25% | Builder upside, long-term ownership |
+| Treasury / runway | 20% | Hosting, ops, development |
+| Early supporters | 10% | Builders, collaborators, early believers |
+| Community rewards | 5% | Activity, referrals, participation |
+
+---
+
+## Founder
+
+Conduit was built independently by a single founder in early 2026.
+The goal: build something that treats users as owners of their own data — not as the product.
+
+📄 [Read the full founder memo →](./FOUNDER.md)
+
+---
 
 ## License
+
 MIT
