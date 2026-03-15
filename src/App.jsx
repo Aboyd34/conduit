@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { WalletConnect } from './components/WalletConnect.jsx';
-import RoomsView from './components/RoomsView.jsx';
-import AirdropPage from './components/AirdropPage.jsx';
-import PulseView from './components/PulseView.jsx';
-import SearchView from './components/SearchView.jsx';
-import NotificationsView from './components/NotificationsView.jsx';
-import YouView from './components/YouView.jsx';
+import { RoomsView } from './components/RoomsView.jsx';
+import { AirdropPage } from './components/AirdropPage.jsx';
+import { PulseView } from './components/PulseView.jsx';
+import { SearchView } from './components/SearchView.jsx';
+import { NotificationsView } from './components/NotificationsView.jsx';
+import { YouView } from './components/YouView.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 
 const STYLES = `
@@ -20,7 +20,7 @@ const STYLES = `
     line-height: 1.5;
   }
 
-  /* ── Age Gate ── */
+  /* -- Age Gate -- */
   .age-gate { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem; background: radial-gradient(ellipse at top, rgba(124,106,247,0.08), transparent 60%), #07070d; }
   .age-gate-card { background: #0f0f18; border: 1px solid #1c1c2e; border-radius: 20px; padding: 2.5rem 2rem; max-width: 480px; width: 100%; text-align: center; }
   .age-gate-card h1 { font-family: 'JetBrains Mono', monospace; font-size: 2rem; color: #7c5cff; margin-bottom: 0.25rem; letter-spacing: 0.08em; }
@@ -35,7 +35,7 @@ const STYLES = `
   .age-gate-btn:disabled { opacity: 0.4; cursor: not-allowed; }
   .age-gate-legal { font-size: 0.72rem; color: #444455; line-height: 1.5; }
 
-  /* ── App Shell ── */
+  /* -- App Shell -- */
   .app-header {
     position: fixed; top: 0; left: 0; right: 0; z-index: 60;
     height: 58px;
@@ -58,10 +58,9 @@ const STYLES = `
   .privacy-dot { width: 6px; height: 6px; border-radius: 50%; background: #00E6A8; box-shadow: 0 0 6px #00E6A8; animation: blink 2s infinite; }
   @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
   .privacy-label { font-size: 0.7rem; color: #00E6A8; }
-
   .app-body { display: grid; grid-template-columns: 220px 1fr; min-height: calc(100vh - 58px); padding-top: 58px; }
 
-  /* ── Sidebar ── */
+  /* -- Sidebar -- */
   .app-sidebar {
     position: fixed; top: 58px; left: 0;
     width: 220px; height: calc(100vh - 58px);
@@ -92,10 +91,10 @@ const STYLES = `
   .key-dot { width: 6px; height: 6px; border-radius: 50%; background: #00E6A8; box-shadow: 0 0 6px #00E6A8; flex-shrink: 0; }
   .key-text { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #444455; }
 
-  /* ── Stage ── */
+  /* -- Stage -- */
   .app-stage { margin-left: 220px; min-width: 0; padding: 1.5rem; }
 
-  /* ── Mobile ── */
+  /* -- Mobile -- */
   .mobile-menu-btn { display: none; flex-direction: column; justify-content: space-between; width: 28px; height: 20px; background: transparent; border: none; padding: 0; cursor: pointer; }
   .mobile-menu-btn span { display: block; height: 2px; border-radius: 2px; background: #888899; }
   .mobile-nav-overlay { position: fixed; inset: 0; z-index: 49; background: rgba(0,0,0,0.6); backdrop-filter: blur(2px); }
@@ -131,13 +130,13 @@ function AgeGate({ onVerify }) {
           <h2>Before you enter</h2>
           <p>Conduit is an anonymous, decentralized communication platform. By entering you acknowledge:</p>
           <ul>
-            <li>✦ You are 18 years of age or older</li>
-            <li>✦ Content is user-generated and unmoderated</li>
-            <li>✦ Your identity is local — no accounts, no servers</li>
-            <li>✦ Messages are cryptographically signed by your device</li>
+            <li>&#9734; You are 18 years of age or older</li>
+            <li>&#9734; Content is user-generated and unmoderated</li>
+            <li>&#9734; Your identity is local &mdash; no accounts, no servers</li>
+            <li>&#9734; Messages are cryptographically signed by your device</li>
           </ul>
         </div>
-        <p className="age-gate-status">🔐 Local key will be generated on entry</p>
+        <p className="age-gate-status">&#128274; Local key will be generated on entry</p>
         <label style={{display:'flex',alignItems:'center',gap:'0.5rem',marginBottom:'0.5rem',fontSize:'0.85rem',color:'#888899',cursor:'pointer'}}>
           <input type="checkbox" checked={checked} onChange={e => setChecked(e.target.checked)} />
           I am 18 or older
@@ -156,12 +155,12 @@ function AgeGate({ onVerify }) {
 }
 
 const NAV = [
-  { id: 'rooms',    icon: '⚡', label: 'Rooms' },
-  { id: 'pulse',    icon: '📡', label: 'Pulse' },
-  { id: 'search',   icon: '🔍', label: 'Search' },
-  { id: 'airdrop',  icon: '🪂', label: 'Airdrop', dot: true },
-  { id: 'notifs',   icon: '🔔', label: 'Notifications', badge: 3 },
-  { id: 'you',      icon: '👤', label: 'You' },
+  { id: 'rooms',   icon: '\u26a1', label: 'Rooms' },
+  { id: 'pulse',   icon: '\ud83d\udce1', label: 'Pulse' },
+  { id: 'search',  icon: '\ud83d\udd0d', label: 'Search' },
+  { id: 'airdrop', icon: '\ud83e\ude82', label: 'Airdrop', dot: true },
+  { id: 'notifs',  icon: '\ud83d\udd14', label: 'Notifications', badge: 3 },
+  { id: 'you',     icon: '\ud83d\udc64', label: 'You' },
 ];
 
 export default function App() {
@@ -176,16 +175,20 @@ export default function App() {
     </>
   );
 
-  const pubkey = (() => { try { return JSON.parse(localStorage.getItem('conduit_identity') || '{}').pubkey || null; } catch { return null; } })();
-  const shortKey = pubkey ? pubkey.slice(0,4).toUpperCase() + '..' + pubkey.slice(-4).toUpperCase() : '—';
+  const shortKey = (() => {
+    try {
+      const id = JSON.parse(localStorage.getItem('conduit_identity') || '{}');
+      const k = id.pubkey || '';
+      return k ? k.slice(0,4).toUpperCase() + '..' + k.slice(-4).toUpperCase() : 'NO KEY';
+    } catch { return 'NO KEY'; }
+  })();
 
   return (
     <>
       <style>{STYLES}</style>
-
       <header className="app-header">
         <div className="app-header-brand">
-          <button className="mobile-menu-btn" onClick={() => setSidebarOpen(o => !o)}>
+          <button className="mobile-menu-btn" onClick={() => setSidebarOpen(o => !o)} aria-label="Menu">
             <span /><span /><span />
           </button>
           <div className="app-header-logo">C</div>
@@ -224,19 +227,19 @@ export default function App() {
           <div className="sidebar-footer">
             <div className="key-badge">
               <div className="key-dot" />
-              <span className="key-text">{shortKey} · LOCAL KEY</span>
+              <span className="key-text">{shortKey} &middot; LOCAL KEY</span>
             </div>
           </div>
         </nav>
 
         <main className="app-stage">
           <ErrorBoundary>
-            {view === 'rooms'  && <RoomsView />}
-            {view === 'pulse'  && <PulseView />}
-            {view === 'search' && <SearchView />}
-            {view === 'airdrop'&& <AirdropPage />}
-            {view === 'notifs' && <NotificationsView />}
-            {view === 'you'    && <YouView />}
+            {view === 'rooms'   && <RoomsView />}
+            {view === 'pulse'   && <PulseView />}
+            {view === 'search'  && <SearchView />}
+            {view === 'airdrop' && <AirdropPage />}
+            {view === 'notifs'  && <NotificationsView />}
+            {view === 'you'     && <YouView />}
           </ErrorBoundary>
         </main>
       </div>
