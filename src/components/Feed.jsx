@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useConduitSocket } from '../hooks/useConduitSocket.js';
-import { SenderName } from './SenderName.jsx';
 import { ProfilePage } from './ProfilePage.jsx';
 import { RoomSelector } from './RoomSelector.jsx';
+import { PostCard } from './PostCard.jsx';
 
 export default function Feed() {
   const { posts, connected } = useConduitSocket();
@@ -18,31 +18,26 @@ export default function Feed() {
       <div className="feed-header">
         <span className={`conn-dot ${connected ? 'online' : 'offline'}`} />
         <span className="conn-label">{connected ? 'Live' : 'Reconnecting...'}</span>
+        <span className="feed-count">{filtered.length} signal{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 
       <RoomSelector activeRoom={activeRoom} onRoomChange={setActiveRoom} />
 
       {!filtered.length ? (
-        <p className="text-muted">No posts in this room yet. Be the first.</p>
+        <div className="feed-empty">
+          <p className="feed-empty-icon">📡</p>
+          <p className="feed-empty-text">No signals in this room yet.</p>
+          <p className="feed-empty-sub">Be the first to transmit.</p>
+        </div>
       ) : (
         <div className="feed">
-          {filtered.map((post) => {
-            // displaySender is the short fingerprint; sender is the full JWK
-            const displayKey = post.displaySender || post.sender;
-            return (
-              <div key={post.id} className="post-card">
-                <p
-                  className="post-sender post-sender--clickable"
-                  onClick={() => setViewingProfile(post.sender)}
-                  title="View profile"
-                >
-                  <SenderName senderPubkey={post.sender} displayKey={displayKey} />
-                </p>
-                <p className="post-content">{post.content}</p>
-                <p className="post-time">{new Date(post.timestamp).toLocaleString()}</p>
-              </div>
-            );
-          })}
+          {filtered.map((post) => (
+            <PostCard
+              key={post.id}
+              post={post}
+              onViewProfile={setViewingProfile}
+            />
+          ))}
         </div>
       )}
 
