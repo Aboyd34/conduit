@@ -1,6 +1,7 @@
 /**
  * Web3Provider — wraps app with wagmi + OnchainKit + TanStack Query
  * reconnectOnMount=false fixes React 19 setState-during-render warning
+ * @farcaster/miniapp-sdk replaces deprecated frame-sdk
  */
 
 import React from 'react';
