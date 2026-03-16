@@ -7,10 +7,25 @@ import { SearchView } from './components/SearchView.jsx';
 import { NotificationsView } from './components/NotificationsView.jsx';
 import { YouView } from './components/YouView.jsx';
 import { AgentsPanel } from './components/AgentsPanel.jsx';
+import { FounderView } from './components/FounderView.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import './components/AgentsPanel.css';
+import './components/FounderView.css';
 
 const AGE_GATE_KEY = 'conduit_age_verified';
+
+/* ---- ensure identity key exists on first load ---- */
+function ensureIdentity() {
+  try {
+    const existing = JSON.parse(localStorage.getItem('conduit_identity') || 'null');
+    if (existing && existing.pubkey) return;
+    const arr = new Uint8Array(16);
+    crypto.getRandomValues(arr);
+    const pubkey = Array.from(arr).map(b => b.toString(16).padStart(2,'0')).join('');
+    localStorage.setItem('conduit_identity', JSON.stringify({ pubkey, created: Date.now() }));
+  } catch {}
+}
+ensureIdentity();
 
 function AgeGate({ onVerify }) {
   const [checked, setChecked] = useState(false);
@@ -19,6 +34,7 @@ function AgeGate({ onVerify }) {
   function handleVerify() {
     if (!checked || !agreed) return;
     localStorage.setItem(AGE_GATE_KEY, '1');
+    ensureIdentity();
     onVerify();
   }
 
@@ -62,8 +78,22 @@ const NAV = [
   { id: 'airdrop', icon: '\ud83e\ude82', label: 'Airdrop', dot: true },
   { id: 'notifs',  icon: '\ud83d\udd14', label: 'Notifications', badge: 3 },
   { id: 'agents',  icon: '\ud83e\udde0', label: 'Agents' },
+  { id: 'founder', icon: '\ud83d\udcdd', label: 'Founder Note' },
   { id: 'you',     icon: '\ud83d\udc64', label: 'You' },
 ];
+
+/* Safe WalletConnect wrapper — never crashes the header */
+function SafeWallet() {
+  try {
+    return (
+      <ErrorBoundary fallback={null}>
+        <WalletConnect />
+      </ErrorBoundary>
+    );
+  } catch {
+    return null;
+  }
+}
 
 export default function App() {
   const [verified, setVerified] = useState(() => !!localStorage.getItem(AGE_GATE_KEY));
@@ -95,9 +125,7 @@ export default function App() {
             <div className="privacy-dot" />
             <span className="privacy-label">No tracking</span>
           </div>
-          <ErrorBoundary>
-            <WalletConnect />
-          </ErrorBoundary>
+          <SafeWallet />
         </div>
       </header>
 
@@ -136,6 +164,7 @@ export default function App() {
             {view === 'airdrop' && <AirdropPage />}
             {view === 'notifs'  && <NotificationsView />}
             {view === 'agents'  && <AgentsPanel />}
+            {view === 'founder' && <FounderView />}
             {view === 'you'     && <YouView />}
           </ErrorBoundary>
         </main>
