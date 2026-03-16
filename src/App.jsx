@@ -13,8 +13,8 @@ import './components/AgentsPanel.css';
 import './components/FounderView.css';
 
 const AGE_GATE_KEY = 'conduit_age_verified';
+const FOUNDER_SECRET = 'conduit_founder';
 
-/* ---- ensure identity key exists on first load ---- */
 function ensureIdentity() {
   try {
     const existing = JSON.parse(localStorage.getItem('conduit_identity') || 'null');
@@ -71,18 +71,20 @@ function AgeGate({ onVerify }) {
   );
 }
 
+// Public nav — Agents removed
 const NAV = [
   { id: 'rooms',   icon: '\u26a1',       label: 'Rooms' },
   { id: 'pulse',   icon: '\ud83d\udce1', label: 'Pulse' },
   { id: 'search',  icon: '\ud83d\udd0d', label: 'Search' },
   { id: 'airdrop', icon: '\ud83e\ude82', label: 'Airdrop', dot: true },
   { id: 'notifs',  icon: '\ud83d\udd14', label: 'Notifications', badge: 3 },
-  { id: 'agents',  icon: '\ud83e\udde0', label: 'Agents' },
   { id: 'founder', icon: '\ud83d\udcdd', label: 'Founder Note' },
   { id: 'you',     icon: '\ud83d\udc64', label: 'You' },
 ];
 
-/* Safe WalletConnect wrapper — never crashes the header */
+// Founder-only nav item — only shown when localStorage flag is set
+const FOUNDER_NAV = { id: 'agents', icon: '\ud83e\udde0', label: 'Agents', founderOnly: true };
+
 function SafeWallet() {
   try {
     return (
@@ -99,6 +101,7 @@ export default function App() {
   const [verified, setVerified] = useState(() => !!localStorage.getItem(AGE_GATE_KEY));
   const [view, setView] = useState('rooms');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const isFounder = !!localStorage.getItem(FOUNDER_SECRET);
 
   if (!verified) return <AgeGate onVerify={() => setVerified(true)} />;
 
@@ -109,6 +112,8 @@ export default function App() {
       return k ? k.slice(0,4).toUpperCase() + '..' + k.slice(-4).toUpperCase() : 'NO KEY';
     } catch { return 'NO KEY'; }
   })();
+
+  const visibleNav = isFounder ? [...NAV, FOUNDER_NAV] : NAV;
 
   return (
     <>
@@ -135,10 +140,10 @@ export default function App() {
         <nav className={`app-sidebar${sidebarOpen ? ' open' : ''}`}>
           <div className="sidebar-inner">
             <div className="sidebar-section-label">Navigate</div>
-            {NAV.map(item => (
+            {visibleNav.map(item => (
               <button
                 key={item.id}
-                className={`nav-item${view === item.id ? ' active' : ''}`}
+                className={`nav-item${view === item.id ? ' active' : ''}${item.founderOnly ? ' nav-item--founder' : ''}`}
                 onClick={() => { setView(item.id); setSidebarOpen(false); }}
               >
                 <span className="nav-icon">{item.icon}</span>
@@ -163,9 +168,9 @@ export default function App() {
             {view === 'search'  && <SearchView />}
             {view === 'airdrop' && <AirdropPage />}
             {view === 'notifs'  && <NotificationsView />}
-            {view === 'agents'  && <AgentsPanel />}
             {view === 'founder' && <FounderView />}
             {view === 'you'     && <YouView />}
+            {view === 'agents'  && isFounder && <AgentsPanel />}
           </ErrorBoundary>
         </main>
       </div>
