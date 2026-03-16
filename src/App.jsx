@@ -8,11 +8,13 @@ import { NotificationsView } from './components/NotificationsView.jsx';
 import { YouView } from './components/YouView.jsx';
 import { AgentsPanel } from './components/AgentsPanel.jsx';
 import { FounderView } from './components/FounderView.jsx';
+import { ConductView } from './components/ConductView.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import './components/AgentsPanel.css';
 import './components/FounderView.css';
+import './components/ConductView.css';
 
-const AGE_GATE_KEY = 'conduit_age_verified';
+const AGE_GATE_KEY   = 'conduit_age_verified';
 const FOUNDER_SECRET = 'conduit_founder';
 
 function ensureIdentity() {
@@ -29,7 +31,7 @@ ensureIdentity();
 
 function AgeGate({ onVerify }) {
   const [checked, setChecked] = useState(false);
-  const [agreed, setAgreed] = useState(false);
+  const [agreed,  setAgreed]  = useState(false);
 
   function handleVerify() {
     if (!checked || !agreed) return;
@@ -71,18 +73,17 @@ function AgeGate({ onVerify }) {
   );
 }
 
-// Public nav — Agents removed
 const NAV = [
   { id: 'rooms',   icon: '\u26a1',       label: 'Rooms' },
   { id: 'pulse',   icon: '\ud83d\udce1', label: 'Pulse' },
   { id: 'search',  icon: '\ud83d\udd0d', label: 'Search' },
   { id: 'airdrop', icon: '\ud83e\ude82', label: 'Airdrop', dot: true },
   { id: 'notifs',  icon: '\ud83d\udd14', label: 'Notifications', badge: 3 },
+  { id: 'conduct', icon: '\ud83d\udcdc', label: 'Conduct' },
   { id: 'founder', icon: '\ud83d\udcdd', label: 'Founder Note' },
   { id: 'you',     icon: '\ud83d\udc64', label: 'You' },
 ];
 
-// Founder-only nav item — only shown when localStorage flag is set
 const FOUNDER_NAV = { id: 'agents', icon: '\ud83e\udde0', label: 'Agents', founderOnly: true };
 
 function SafeWallet() {
@@ -98,8 +99,8 @@ function SafeWallet() {
 }
 
 export default function App() {
-  const [verified, setVerified] = useState(() => !!localStorage.getItem(AGE_GATE_KEY));
-  const [view, setView] = useState('rooms');
+  const [verified,    setVerified]    = useState(() => !!localStorage.getItem(AGE_GATE_KEY));
+  const [view,        setView]        = useState('rooms');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isFounder = !!localStorage.getItem(FOUNDER_SECRET);
 
@@ -108,7 +109,7 @@ export default function App() {
   const shortKey = (() => {
     try {
       const id = JSON.parse(localStorage.getItem('conduit_identity') || '{}');
-      const k = id.pubkey || '';
+      const k  = id.pubkey || '';
       return k ? k.slice(0,4).toUpperCase() + '..' + k.slice(-4).toUpperCase() : 'NO KEY';
     } catch { return 'NO KEY'; }
   })();
@@ -149,7 +150,7 @@ export default function App() {
                 <span className="nav-icon">{item.icon}</span>
                 <span className="nav-label">{item.label}</span>
                 {item.badge && <span className="nav-badge">{item.badge}</span>}
-                {item.dot && <span className="airdrop-dot" />}
+                {item.dot   && <span className="airdrop-dot" />}
               </button>
             ))}
           </div>
@@ -168,6 +169,7 @@ export default function App() {
             {view === 'search'  && <SearchView />}
             {view === 'airdrop' && <AirdropPage />}
             {view === 'notifs'  && <NotificationsView />}
+            {view === 'conduct' && <ConductView />}
             {view === 'founder' && <FounderView />}
             {view === 'you'     && <YouView />}
             {view === 'agents'  && isFounder && <AgentsPanel />}
