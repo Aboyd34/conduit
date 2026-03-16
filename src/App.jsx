@@ -6,7 +6,9 @@ import { PulseView } from './components/PulseView.jsx';
 import { SearchView } from './components/SearchView.jsx';
 import { NotificationsView } from './components/NotificationsView.jsx';
 import { YouView } from './components/YouView.jsx';
+import { AgentsPanel } from './components/AgentsPanel.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
+import './components/AgentsPanel.css';
 
 const AGE_GATE_KEY = 'conduit_age_verified';
 
@@ -54,11 +56,12 @@ function AgeGate({ onVerify }) {
 }
 
 const NAV = [
-  { id: 'rooms',   icon: '\u26a1', label: 'Rooms' },
+  { id: 'rooms',   icon: '\u26a1',       label: 'Rooms' },
   { id: 'pulse',   icon: '\ud83d\udce1', label: 'Pulse' },
   { id: 'search',  icon: '\ud83d\udd0d', label: 'Search' },
   { id: 'airdrop', icon: '\ud83e\ude82', label: 'Airdrop', dot: true },
   { id: 'notifs',  icon: '\ud83d\udd14', label: 'Notifications', badge: 3 },
+  { id: 'agents',  icon: '\ud83e\udde0', label: 'Agents' },
   { id: 'you',     icon: '\ud83d\udc64', label: 'You' },
 ];
 
@@ -132,6 +135,7 @@ export default function App() {
             {view === 'search'  && <SearchView />}
             {view === 'airdrop' && <AirdropPage />}
             {view === 'notifs'  && <NotificationsView />}
+            {view === 'agents'  && <AgentsPanel />}
             {view === 'you'     && <YouView />}
           </ErrorBoundary>
         </main>
