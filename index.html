@@ -5,88 +5,172 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Conduit — Communication Without Witnesses</title>
     <style>
-      .conduit-disclaimer {
-        position: sticky;
-        top: 0;
-        z-index: 10000;
-        background: linear-gradient(135deg, #FF6B6B, #FFD93D);
-        color: #000;
-        padding: 14px 20px;
-        font-family: Arial, sans-serif;
-        font-size: 15px;
-        font-weight: bold;
-        text-align: center;
-        border-bottom: 4px solid #FF0000;
-        animation: glow 1.5s infinite alternate;
-      }
-      @keyframes glow {
-        0% { box-shadow: 0 2px 8px rgba(255,0,0,0.5); }
-        100% { box-shadow: 0 2px 20px rgba(255,107,107,0.9); }
-      }
-      #cookieBanner {
+      /* ---- Compliance Badge (bottom-right, subtle) ---- */
+      #compliance-badge {
         position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: linear-gradient(135deg, #1a1a2e, #16213e);
-        color: #fff;
-        padding: 16px 20px;
-        z-index: 9999;
-        border-top: 4px solid #FFD93D;
-        font-family: Arial, sans-serif;
-        font-size: 14px;
-        text-align: center;
-        display: none;
+        bottom: 16px;
+        right: 16px;
+        z-index: 9000;
+        background: rgba(15,15,20,0.92);
+        border: 1px solid rgba(239,68,68,0.45);
+        border-radius: 10px;
+        padding: 7px 13px;
+        font-family: 'Inter', system-ui, sans-serif;
+        font-size: 11px;
+        color: #f87171;
+        cursor: pointer;
+        backdrop-filter: blur(12px);
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 2px 12px rgba(239,68,68,0.15);
+        user-select: none;
       }
-      #cookieBanner a { color: #FFD93D; }
-      .cb-btn { padding: 10px 22px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin: 4px; }
-      .cb-accept { background: #4CAF50; color: #fff; }
-      .cb-reject { background: #f44336; color: #fff; }
-      .cb-prefs  { background: #2196F3; color: #fff; }
+      #compliance-badge:hover {
+        background: rgba(239,68,68,0.12);
+        border-color: rgba(239,68,68,0.7);
+        color: #fca5a5;
+      }
+      #compliance-badge .badge-dot {
+        width: 6px; height: 6px; border-radius: 50%;
+        background: #ef4444;
+        box-shadow: 0 0 6px rgba(239,68,68,0.8);
+        flex-shrink: 0;
+        animation: bdot 1.8s ease-in-out infinite;
+      }
+      @keyframes bdot {
+        0%,100% { opacity:1; transform:scale(1); }
+        50%      { opacity:0.4; transform:scale(0.75); }
+      }
+
+      /* ---- Compliance Modal ---- */
+      #compliance-modal {
+        display: none;
+        position: fixed; inset: 0; z-index: 9999;
+        background: rgba(0,0,0,0.72);
+        backdrop-filter: blur(6px);
+        align-items: center; justify-content: center;
+      }
+      #compliance-modal.open { display: flex; }
+      #compliance-modal-inner {
+        background: #111;
+        border: 1px solid #262626;
+        border-radius: 16px;
+        padding: 28px 28px 24px;
+        max-width: 460px; width: 90%;
+        font-family: 'Inter', system-ui, sans-serif;
+        color: #e0e0e0;
+        box-shadow: 0 8px 48px rgba(0,0,0,0.6);
+      }
+      #compliance-modal-inner h3 {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 1rem; font-weight: 700;
+        color: #f87171; margin: 0 0 12px;
+        display: flex; align-items: center; gap: 8px;
+      }
+      #compliance-modal-inner ul {
+        list-style: none; padding: 0; margin: 0 0 16px;
+        display: flex; flex-direction: column; gap: 6px;
+      }
+      #compliance-modal-inner ul li {
+        font-size: 0.82rem; color: #a1a1aa;
+        padding: 6px 10px;
+        background: rgba(255,255,255,0.03);
+        border-radius: 8px;
+        border: 1px solid #1e1e1e;
+      }
+      #compliance-modal-inner ul li span { color: #ef4444; margin-right: 6px; }
+      #compliance-modal-inner .modal-links {
+        font-size: 0.75rem; color: #6b7280;
+        display: flex; gap: 12px; flex-wrap: wrap;
+      }
+      #compliance-modal-inner .modal-links a { color: #4fc3f7; text-decoration: none; }
+      #compliance-modal-inner .modal-links a:hover { text-decoration: underline; }
+      #compliance-close {
+        float: right; background: transparent; border: none;
+        color: #6b7280; cursor: pointer; font-size: 1.1rem; margin-top: -4px;
+      }
+      #compliance-close:hover { color: #e0e0e0; }
+
+      /* ---- Cookie Banner (bottom strip, minimal) ---- */
+      #cookieBanner {
+        position: fixed; bottom: 0; left: 0; right: 0;
+        background: rgba(10,10,14,0.96);
+        border-top: 1px solid #262626;
+        backdrop-filter: blur(16px);
+        display: none;
+        align-items: center; justify-content: space-between;
+        gap: 12px; flex-wrap: wrap;
+        padding: 10px 20px;
+        z-index: 8999;
+        font-family: 'Inter', system-ui, sans-serif;
+        font-size: 12px; color: #a1a1aa;
+      }
+      #cookieBanner a { color: #4fc3f7; text-decoration: none; }
+      #cookieBanner a:hover { text-decoration: underline; }
+      .cb-btns { display: flex; gap: 8px; flex-shrink: 0; }
+      .cb-btn { padding: 6px 16px; border: none; border-radius: 7px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: opacity 0.15s; }
+      .cb-accept { background: #16a34a; color: #fff; }
+      .cb-reject { background: #1e1e1e; color: #a1a1aa; border: 1px solid #333; }
+      .cb-accept:hover { opacity:0.88; } .cb-reject:hover { border-color: #555; color: #fff; }
     </style>
   </head>
   <body>
-
-    <!-- STICKY DISCLAIMER: TOP OF EVERY PAGE -->
-    <div class="conduit-disclaimer">
-      🚫 STRICTLY PROHIBITED: Minors/CSAM &nbsp;|&nbsp; Sex Trafficking &nbsp;|&nbsp; Hate Speech &nbsp;|&nbsp; Bullying &nbsp;—&nbsp;
-      ALL posts AUTO-SCANNED. Violations = PERMANENT BAN + LAW ENFORCEMENT REPORT. Must be 18+ verified.
-    </div>
-
-    <!-- APP ROOT -->
     <div id="root"></div>
     <script type="module" src="/src/index.jsx"></script>
 
-    <!-- COOKIE BANNER -->
-    <div id="cookieBanner">
-      🍪 <strong>We use cookies for essential functions.</strong>
-      <a href="/privacy-policy.html">Privacy Policy</a> |
-      <a href="/cookie-policy.html">Cookie Policy</a><br><br>
-      <button class="cb-btn cb-accept" onclick="setConsent(true)">Accept All</button>
-      <button class="cb-btn cb-reject" onclick="setConsent(false)">Reject</button>
-      <button class="cb-btn cb-prefs"  onclick="openPrefs()">Preferences</button>
+    <!-- COMPLIANCE BADGE: bottom-right subtle icon -->
+    <div id="compliance-badge" onclick="document.getElementById('compliance-modal').classList.add('open')" title="Platform safety & legal">
+      <span class="badge-dot"></span>
+      Safe Platform
     </div>
 
-    <!-- COOKIE CONSENT JS -->
+    <!-- COMPLIANCE MODAL (shown on click) -->
+    <div id="compliance-modal">
+      <div id="compliance-modal-inner">
+        <h3>
+          🚫 Platform Safety
+          <button id="compliance-close" onclick="document.getElementById('compliance-modal').classList.remove('open')">&times;</button>
+        </h3>
+        <ul>
+          <li><span>❌</span>No minors / CSAM — illegal under 18 U.S.C. § 2252</li>
+          <li><span>❌</span>No sex trafficking or exploitation</li>
+          <li><span>❌</span>No hate speech, slurs, or discrimination</li>
+          <li><span>❌</span>No bullying, harassment, or threats</li>
+        </ul>
+        <p style="font-size:0.75rem;color:#6b7280;margin:0 0 12px;">All posts auto-scanned. Violations = permanent ban + law enforcement report. Must be 18+ verified.</p>
+        <div class="modal-links">
+          <a href="/privacy-policy.html">Privacy Policy</a>
+          <a href="/cookie-policy.html">Cookie Policy</a>
+          <a href="mailto:admin@cantc-ulive.live">Report Issue</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- COOKIE BANNER -->
+    <div id="cookieBanner">
+      <span>🍪 We use essential cookies only. <a href="/privacy-policy.html">Privacy Policy</a> | <a href="/cookie-policy.html">Cookie Policy</a></span>
+      <div class="cb-btns">
+        <button class="cb-btn cb-accept" onclick="setConsent(true)">Accept</button>
+        <button class="cb-btn cb-reject" onclick="setConsent(false)">Reject</button>
+      </div>
+    </div>
+
     <script>
-      (function () {
-        const KEY = 'conduitConsent';
-        const banner = document.getElementById('cookieBanner');
-        if (!localStorage.getItem(KEY)) {
-          banner.style.display = 'block';
-          if (typeof gtag !== 'undefined') gtag('consent', 'default', { analytics_storage: 'denied' });
-        }
-        window.setConsent = function (accept) {
-          localStorage.setItem(KEY, accept ? 'accept' : 'reject');
-          banner.style.display = 'none';
-          if (typeof gtag !== 'undefined') gtag('consent', 'update', { analytics_storage: accept ? 'granted' : 'denied' });
+      (function(){
+        const KEY='conduitConsent';
+        const banner=document.getElementById('cookieBanner');
+        if(!localStorage.getItem(KEY)) banner.style.display='flex';
+        window.setConsent=function(a){
+          localStorage.setItem(KEY,a?'accept':'reject');
+          banner.style.display='none';
         };
-        window.openPrefs = function () {
-          const ok = confirm('Enable analytics cookies?');
-          setConsent(ok);
-        };
+        // Close modal on outside click
+        document.getElementById('compliance-modal').addEventListener('click',function(e){
+          if(e.target===this) this.classList.remove('open');
+        });
       })();
     </script>
-
   </body>
 </html>
