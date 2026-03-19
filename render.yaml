@@ -1,15 +1,11 @@
 services:
-
-  # ──────────────────────────────
-  # 1. Backend — Express + WebSocket server
-  # ──────────────────────────────
   - type: web
     name: conduit-server
     runtime: node
     region: oregon
     plan: free
     buildCommand: npm install
-    startCommand: npm run start
+    startCommand: node server.js
     envVars:
       - key: NODE_ENV
         value: production
