@@ -3,25 +3,32 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#7c3aed" />
+    <meta name="description" content="Conduit — encrypted, decentralized social network" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Conduit" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <title>Conduit</title>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <style>
-      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-      html, body, #root { height: 100%; background: #07060f; color: #f0f0f0; font-family: 'Space Grotesk', system-ui, sans-serif; }
-      /* Crash-safe: if JS fails completely, show something */
-      #root:empty::after {
-        content: 'CONDUIT — Loading...';
+      body { margin: 0; background: #07060f; color: #e2e8f0; font-family: system-ui, sans-serif; }
+      #root { min-height: 100vh; }
+      #fallback {
         display: flex; align-items: center; justify-content: center;
-        height: 100vh; font-size: 1.2rem; color: #7a5cff;
-        position: fixed; inset: 0;
+        height: 100vh; flex-direction: column; gap: 16px;
       }
+      #fallback h1 { color: #7c3aed; letter-spacing: 4px; font-size: 2rem; margin: 0; }
+      #fallback p { color: #475569; font-size: 0.9rem; margin: 0; }
     </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="fallback">
+        <h1>CONDUIT</h1>
+        <p>Loading…</p>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

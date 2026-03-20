@@ -1,39 +1,31 @@
 import React from 'react'
-import ReactDOM from 'react-dom/client'
+import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App.jsx'
-import ErrorBoundary from './components/ErrorBoundary.jsx'
 import './index.css'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
 
-// Crash-safe Web3 loader — never blocks render
-function SafeWeb3({ children }) {
-  const [Provider, setProvider] = React.useState(null)
-
-  React.useEffect(() => {
-    let cancelled = false
-    import('./providers/Web3Provider.jsx')
-      .then(m => { if (!cancelled) setProvider(() => m.Web3Provider) })
-      .catch(() => {}) // Web3 optional — app works without it
-    return () => { cancelled = true }
-  }, [])
-
-  if (!Provider) return <>{children}</>
-  return <Provider>{children}</Provider>
+// Register service worker for PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {/* sw optional */})
+  })
 }
 
-const root = document.getElementById('root')
-if (!root) throw new Error('Missing #root element in index.html')
+const rootEl = document.getElementById('root')
+if (!rootEl) throw new Error('Missing #root element')
 
-ReactDOM.createRoot(root).render(
+let cancelled = false
+const root = createRoot(rootEl)
+
+root.render(
   <React.StrictMode>
     <ErrorBoundary>
-      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <SafeWeb3>
-          <ErrorBoundary>
-            <App />
-          </ErrorBoundary>
-        </SafeWeb3>
+      <BrowserRouter>
+        <App />
       </BrowserRouter>
     </ErrorBoundary>
   </React.StrictMode>
 )
+
+window.addEventListener('unload', () => { cancelled = true })

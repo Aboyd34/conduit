@@ -1,17 +1,17 @@
 services:
   - type: web
-    name: conduit-server
-    runtime: node
+    name: conduit-api
+    env: node
     region: oregon
     plan: free
-    buildCommand: npm install
+    buildCommand: npm install && npm run build
     startCommand: node server.js
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 10000
+      - key: GROQ_API_KEY
+        sync: false
       - key: ALLOWED_ORIGIN
-        value: https://conduit-blush.vercel.app,https://cantc-ulive.live
+        sync: false
     healthCheckPath: /health
     autoDeploy: true

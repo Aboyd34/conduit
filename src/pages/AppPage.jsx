@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import AgeGate from '../components/AgeGate.jsx'
+import Onboarding from '../components/Onboarding.jsx'
 import Nav from '../components/Nav.jsx'
 import { RoomsView } from '../components/RoomsView.jsx'
 import PulseView from '../components/PulseView.jsx'
@@ -8,17 +9,21 @@ import YouView from '../components/YouView.jsx'
 import AetherAI from '../components/AetherAI.jsx'
 
 const AGE_KEY = 'conduit_age_verified'
+const ONBOARD_KEY = 'conduit_onboarded'
 
 export default function AppPage() {
   const [verified, setVerified] = useState(false)
+  const [onboarded, setOnboarded] = useState(false)
   const [view, setView] = useState('rooms')
   const [profileId, setProfileId] = useState(null)
 
   useEffect(() => {
     setVerified(!!localStorage.getItem(AGE_KEY))
+    setOnboarded(!!localStorage.getItem(ONBOARD_KEY))
   }, [])
 
   if (!verified) return <AgeGate onVerify={() => setVerified(true)} />
+  if (!onboarded) return <Onboarding onDone={() => setOnboarded(true)} />
 
   function renderView() {
     switch (view) {
