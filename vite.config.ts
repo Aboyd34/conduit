@@ -1,8 +1,9 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import lqipPlugin from './vite.lqip'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), lqipPlugin()],
   server: {
     port: 5173,
     proxy: {
