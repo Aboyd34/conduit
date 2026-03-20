@@ -1,8 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -14,6 +13,8 @@ body {
   min-height: 100vh;
 }
 
+.font-mono { font-family: 'Space Grotesk', monospace; }
+
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #1e1e3a; border-radius: 4px; }
@@ -24,7 +25,6 @@ body {
 }
 .pulse { animation: pulse-dot 1.8s ease-in-out infinite; }
 
-/* Compliance badge */
 #compliance-badge {
   position: fixed; bottom: 16px; right: 16px; z-index: 9000;
   background: rgba(15,14,31,0.92);
@@ -42,7 +42,6 @@ body {
   animation: pulse-dot 1.8s ease-in-out infinite;
 }
 
-/* Cookie banner */
 #cookie-banner {
   display: none;
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 8999;

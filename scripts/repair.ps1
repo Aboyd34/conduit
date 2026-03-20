@@ -8,7 +8,7 @@ Write-Host "=== Conduit auto-repair starting ==="
 
 Set-Location $ProjectPath
 
-# 1. Ensure Node via nvm (optional: comment out if not using nvm)
+# 1. Ensure Node via nvm (optional)
 if (Get-Command nvm -ErrorAction SilentlyContinue) {
   Write-Host "Using nvm to set Node $NodeVersion"
   nvm use $NodeVersion | Out-Null
@@ -31,26 +31,27 @@ Write-Host "Cleaning node_modules and lockfile..."
 if (Test-Path "node_modules") { Remove-Item "node_modules" -Recurse -Force }
 if (Test-Path "package-lock.json") { Remove-Item "package-lock.json" -Force }
 
-Write-Host "Running npm ci..."
-npm ci
+Write-Host "Running npm install..."
+npm install
 if ($LASTEXITCODE -ne 0) {
-  Write-Error "npm ci failed. Aborting."
+  Write-Error "npm install failed. Aborting."
   exit 1
 }
 
-# 4. Rebuild native modules
-Write-Host "Rebuilding better-sqlite3..."
-npm rebuild better-sqlite3 --build-from-source
+# 4. Rebuild sqlite3 native module
+Write-Host "Rebuilding sqlite3..."
+npm rebuild sqlite3 --build-from-source
 if ($LASTEXITCODE -ne 0) {
-  Write-Error "better-sqlite3 rebuild failed. Aborting."
-  exit 1
+  Write-Warning "sqlite3 rebuild failed — continuing anyway."
 }
 
 # 5. Run migrations (if script exists)
 Write-Host "Running migrations (if defined)..."
-npm run migrate
-# ignore non-zero if you want, or enforce:
-# if ($LASTEXITCODE -ne 0) { Write-Error "Migrations failed. Aborting."; exit 1 }
+if (Test-Path "scripts/migrate.js") {
+  node scripts/migrate.js
+} else {
+  Write-Host "No migrate script found — skipping."
+}
 
 # 6. Start server
 Write-Host "Starting Conduit server..."
