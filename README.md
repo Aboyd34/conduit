@@ -1,101 +1,51 @@
 # ⚡ Conduit
 
-> **Communication without witnesses.**
+> Encrypted, decentralized social network — real-time rooms, AI assistant, AETH token economy.
 
-Conduit is a privacy-first communication platform. No accounts. No data stored on the server. Your identity is generated locally in your browser — the relay never knows who you are.
+## Stack
 
-🌐 **Live:** [cantc-ulive.live](https://cantc-ulive.live)
-📄 **About:** [cantc-ulive.live/about.html](https://cantc-ulive.live/about.html)
+| Layer | Tech |
+|---|---|
+| Frontend | React 18 + Vite + React Router v6 |
+| Backend | Node.js + Express + WebSocket (ws) |
+| Database | SQLite (WAL mode) — persisted in `data/` on Render |
+| AI | Groq API — llama-3.3-70b-versatile (free tier) |
+| Auth | Browser-side cryptographic keypair (ECDSA P-256) |
+| Token | AETH — earned by posting, replies, signals |
 
----
+## Local Dev
 
-## How it works
-
-- **Local identity** — Ed25519 keypair generated in-browser on first visit. Never transmitted.
-- **Relay-only architecture** — Posts are signed and forwarded. The relay does not store your identity.
-- **No accounts** — No email, no password, no profile owned by anyone but you.
-- **Browser key storage** — All identity material lives in `localStorage`. Clearing your browser removes it.
-- **Optional encryption** — Encrypt post content before relay. Only the recipient can read it.
-
----
-
-## Rooms
-
-| Room | Access | Description |
-|---|---|---|
-| `#general` | Open | Everyone welcome |
-| `#crypto` | Open | Web3, wallets, on-chain talk |
-| `#tech` | Open | Builders, devs, tools |
-| `#random` | Open | Anything goes |
-| `#aether` | 100 AETH | Holders only — governance, drops, exclusive tools |
-
----
-
-## Tech stack
-
-- **Frontend** — React 19, Vite, custom inline SVG icon system
-- **Backend** — Node.js, Express, WebSocket relay
-- **Storage** — SQLite (relay buffer only, no identity data)
-- **Web3** — wagmi, viem, OnchainKit (Base)
-- **Identity** — Browser Web Crypto API, Ed25519, localStorage
-- **Hosting** — Render (auto-deploy from `main`)
-
----
-
-## Project structure
-
-```
-src/
-  App.jsx                  # Main shell, nav, layout
-  components/
-    ConduitIcons.jsx        # Custom inline SVG icon system
-    RoomsView.jsx           # 4-layer room environment
-    roomModules.js          # Room data + helpers
-    EncryptionSettings.jsx  # User encryption panel
-    Feed.jsx                # Main post feed
-    PostBox.jsx             # Post composer
-    PostCard.jsx            # Post display + actions
-    AetherRoom.jsx          # Holder-only room
-    YouView.jsx             # Identity, keys, privacy
-    PulseView.jsx           # Activity stream
-    SearchView.jsx          # Search
-    AirdropPage.jsx         # AETH claim UI
-    NotificationsView.jsx   # Alerts
-  hooks/
-    useConduitSocket.js     # WebSocket connection
-    useNotifications.js     # Notification state
-  identity/                 # Age gate, identity system
-  crypto/                   # Key management
-  api/                      # Gateway, peer registration
-  providers/
-    Web3Provider.jsx        # wagmi / wallet context
-server.ts                   # Express + WebSocket relay
-render.yaml                 # Render deploy config
+```bash
+cp .env.example .env          # add GROQ_API_KEY
+npm install
+npm run dev:all               # Vite :5173 + Node :3001 concurrently
 ```
 
----
+## Production Deploy (Render)
 
-## Aether token model
+1. Connect `Aboyd34/conduit` repo on [render.com](https://render.com)
+2. Build command: `npm install && npm run build`
+3. Start command: `node server.js`
+4. Add env var: `GROQ_API_KEY=gsk_...`
+5. Push to `main` → auto-deploy
 
-| Bucket | % | Purpose |
+Live: **https://conduit-api1.onrender.com**
+
+## Environment Variables
+
+| Key | Required | Description |
 |---|---|---|
-| Ecosystem reserve | 40% | Rewards, growth, partnerships |
-| Founder allocation | 25% | Builder upside, long-term ownership |
-| Treasury / runway | 20% | Hosting, ops, development |
-| Early supporters | 10% | Builders, collaborators, early believers |
-| Community rewards | 5% | Activity, referrals, participation |
+| `GROQ_API_KEY` | Yes | Free key from [console.groq.com/keys](https://console.groq.com/keys) |
+| `NODE_ENV` | Auto | Set to `production` by Render |
+| `PORT` | Auto | Set by Render (10000) |
+| `ALLOWED_ORIGIN` | Optional | Extra CORS origin to whitelist |
 
----
+## Features
 
-## Founder
-
-Conduit was built independently by a single founder in early 2026.
-The goal: build something that treats users as owners of their own data — not as the product.
-
-📄 [Read the full founder memo →](./FOUNDER.md)
-
----
-
-## License
-
-MIT
+- 🔑 Self-sovereign identity (keypair in browser, never leaves device)
+- 💬 Real-time rooms + DMs over WebSocket
+- ⚡ AETH token economy (50 post / 20 signal / 10 reply, 2× Pioneer)
+- 🤖 Aether AI (Groq llama-3.3-70b, 20 req/min)
+- 🔞 Age gate with signed local token
+- 📱 PWA — installs on mobile
+- 🎯 3-step onboarding for new users

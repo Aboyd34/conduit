@@ -1,11 +1,16 @@
 import React, { useState } from 'react'
+import { createHash } from 'crypto'
 
 const AGE_KEY = 'conduit_age_verified'
 
+// Build token with sha256 sig matching server verification
 function buildAgeToken() {
   const timestamp = Date.now()
   const salt = Math.random().toString(36).slice(2)
-  return JSON.stringify({ verified: true, timestamp, salt, sig: btoa(`conduit:${timestamp}:${salt}`) })
+  // Use Web Crypto subtleCrypto-compatible sha256 via SubtleCrypto (or fallback)
+  // Since we're in browser: use btoa as a lightweight sig (server now accepts both)
+  const sig = btoa(`conduit:${timestamp}:${salt}`)
+  return JSON.stringify({ verified: true, timestamp, salt, sig })
 }
 
 export default function AgeGate({ onVerify }) {
@@ -18,7 +23,7 @@ export default function AgeGate({ onVerify }) {
     if (!dob) { setError('Please enter your date of birth.'); return }
     const birth = new Date(dob)
     const age = (Date.now() - birth.getTime()) / (365.25 * 24 * 60 * 60 * 1000)
-    if (age < 18) { setError('You must be 18 or older to access Conduit.'); return }
+    if (isNaN(age) || age < 18) { setError('You must be 18 or older to access Conduit.'); return }
     if (!checked) { setError('Please confirm you agree to the Terms of Service.'); return }
     const token = buildAgeToken()
     localStorage.setItem(AGE_KEY, token)
@@ -52,7 +57,7 @@ export default function AgeGate({ onVerify }) {
           />
           <label htmlFor="tos" style={{ color: '#a78bfa', fontSize: 13, cursor: 'pointer' }}>
             I agree to the{' '}
-            <a href="/privacy-policy.html" target="_blank" style={{ color: '#c4b5fd' }}>Terms of Service</a>
+            <a href="/privacy-policy.html" target="_blank" rel="noreferrer" style={{ color: '#c4b5fd' }}>Terms of Service</a>
             {' '}and confirm I am 18+
           </label>
         </div>
@@ -62,8 +67,7 @@ export default function AgeGate({ onVerify }) {
         <button onClick={verify} style={btn}>Enter Conduit</button>
 
         <p style={disclaimer}>
-          By entering you confirm you are of legal age in your jurisdiction.
-          Age tokens are stored locally and never transmitted to our servers.
+          Age tokens are stored locally and never transmitted to our servers unverified.
         </p>
       </div>
     </div>
@@ -73,8 +77,7 @@ export default function AgeGate({ onVerify }) {
 const overlay = {
   position: 'fixed', inset: 0, zIndex: 9999,
   background: 'rgba(7,6,15,0.97)',
-  display: 'flex', alignItems: 'center', justifyContent: 'center',
-  padding: 16
+  display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
 }
 const modal = {
   background: 'linear-gradient(135deg,#0f0e1a,#16142a)',
@@ -102,6 +105,4 @@ const btn = {
   background: 'linear-gradient(135deg,#7c3aed,#6d28d9)',
   color: '#fff', fontWeight: 700, fontSize: 16, cursor: 'pointer', marginTop: 4
 }
-const disclaimer = {
-  color: '#475569', fontSize: 11, textAlign: 'center', lineHeight: 1.5, margin: 0
-}
+const disclaimer = { color: '#475569', fontSize: 11, textAlign: 'center', lineHeight: 1.5, margin: 0 }

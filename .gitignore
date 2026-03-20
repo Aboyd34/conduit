@@ -1,9 +1,39 @@
-node_modules
-dist
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.vite/
+
+# Environment — NEVER commit secrets
 .env
 .env.local
-.env.production
+.env.*.local
+
+# Keep .env.production (only has public VITE_ vars, no secrets)
+!.env.production
+
+# Database — data dir is on Render disk, not in git
+data/
 conduit.db
+*.db-shm
+*.db-wal
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
 logs/
 *.log
-.DS_Store
+npm-debug.log*
+
+# PM2
+.pm2/
+
+# TypeScript
+*.tsbuildinfo
