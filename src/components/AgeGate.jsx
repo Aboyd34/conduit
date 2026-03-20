@@ -1,14 +1,10 @@
 import React, { useState } from 'react'
-import { createHash } from 'crypto'
 
 const AGE_KEY = 'conduit_age_verified'
 
-// Build token with sha256 sig matching server verification
 function buildAgeToken() {
   const timestamp = Date.now()
   const salt = Math.random().toString(36).slice(2)
-  // Use Web Crypto subtleCrypto-compatible sha256 via SubtleCrypto (or fallback)
-  // Since we're in browser: use btoa as a lightweight sig (server now accepts both)
   const sig = btoa(`conduit:${timestamp}:${salt}`)
   return JSON.stringify({ verified: true, timestamp, salt, sig })
 }
