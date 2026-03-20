@@ -225,6 +225,59 @@ async function startServer() {
     timestamp: Date.now(), ws_clients: clients.size
   }));
 
+  // ── AETHER AI ─────────────────────────────────────────────────────────────
+  // Rate-limit AI separately: 30 req / 15 min per IP
+  const aiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 30 });
+
+  app.post('/api/ai/chat', aiLimiter, express.json(), async (req, res) => {
+    const PPLX_KEY = process.env.PERPLEXITY_API_KEY;
+    if (!PPLX_KEY) return res.status(503).json({ error: 'AI not configured — set PERPLEXITY_API_KEY env var' });
+
+    const { messages, system } = req.body;
+    if (!Array.isArray(messages) || messages.length === 0)
+      return res.status(400).json({ error: 'messages array required' });
+
+    // Keep last 20 turns to stay within context limits
+    const trimmed = messages.slice(-20);
+
+    const body = {
+      model: 'sonar',
+      messages: [
+        { role: 'system', content: system || 'You are Aether, the AI inside Conduit.' },
+        ...trimmed
+      ],
+      max_tokens: 1024,
+      temperature: 0.7,
+      stream: false
+    };
+
+    try {
+      const pplxRes = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${PPLX_KEY}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (!pplxRes.ok) {
+        const err = await pplxRes.text();
+        console.error('[Aether] Perplexity error:', pplxRes.status, err);
+        return res.status(502).json({ error: 'upstream_error', status: pplxRes.status });
+      }
+
+      const data = await pplxRes.json();
+      const reply = data.choices?.[0]?.message?.content || 'No response from Aether.';
+      res.json({ reply });
+    } catch (e) {
+      console.error('[Aether] fetch failed:', e.message);
+      res.status(500).json({ error: 'internal_error', message: e.message });
+    }
+  });
+  // ──────────────────────────────────────────────────────────────────────────
+
   // -- FEED --
   app.get('/api/relay/feed', requireAgeVerified, async (req, res) => {
     const rows = await dbAll('SELECT * FROM messages ORDER BY timestamp DESC LIMIT 200');
