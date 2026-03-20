@@ -1,79 +1,81 @@
-import React, { useEffect, useState } from 'react';
-import { useConduitSocket } from '../hooks/useConduitSocket.js';
+import { useState, useEffect } from 'react'
+import { useConduitSocket } from '../hooks/useConduitSocket.js'
 
-export function PulseView() {
-  const { posts, connected } = useConduitSocket();
-  const [activity, setActivity] = useState([]);
+export default function PulseView() {
+  const { posts, connected } = useConduitSocket()
+  const [filter, setFilter] = useState('all')
 
-  useEffect(() => {
-    // Build activity log from posts — newest first, max 50
-    const events = posts.slice(0, 50).map((p) => ({
-      id: p.id,
-      type: 'post',
-      room: p.topic || 'public',
-      sender: p.displaySender || (p.sender ? p.sender.slice(0, 8) + '…' : 'anon'),
-      preview: p.content?.slice(0, 80) + (p.content?.length > 80 ? '…' : ''),
-      timestamp: p.timestamp,
-      replies: p.replies?.length || 0,
-      signals: p.signals || 0,
-    }));
-    setActivity(events);
-  }, [posts]);
+  const topics = ['all', 'public', 'crypto', 'dev', 'aether', 'lounge']
 
-  const totalSignals = posts.reduce((acc, p) => acc + (p.signals || 0), 0);
-  const totalReplies = posts.reduce((acc, p) => acc + (p.replies?.length || 0), 0);
+  const filtered = filter === 'all'
+    ? [...posts].reverse().slice(0, 50)
+    : [...posts].filter(p => (p.topic || 'public') === filter).reverse().slice(0, 50)
 
   return (
-    <div className="pulse-view">
-      <div className="pulse-header">
-        <h2 className="view-title">⚡ Pulse</h2>
-        <p className="view-sub">Live network activity</p>
+    <div style={{ padding: '1.5rem', maxWidth: 720, margin: '0 auto' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+        <h2 style={{ color: '#f0f0f0', fontFamily: 'Space Grotesk, sans-serif', fontSize: '1.4rem', fontWeight: 700 }}>📡 Pulse</h2>
+        <span style={{
+          width: 8, height: 8, borderRadius: '50%',
+          background: connected ? '#00ff9f' : '#ef4444',
+          boxShadow: connected ? '0 0 8px #00ff9f' : 'none',
+          display: 'inline-block'
+        }} />
+        <span style={{ color: '#52525b', fontSize: '0.75rem' }}>{connected ? 'Live' : 'Offline'}</span>
       </div>
 
-      <div className="pulse-stats">
-        <div className="stat-card">
-          <span className="stat-value">{posts.length}</span>
-          <span className="stat-label">Signals</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-value">{totalReplies}</span>
-          <span className="stat-label">Replies</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-value">{totalSignals}</span>
-          <span className="stat-label">⚡ Boosts</span>
-        </div>
-        <div className="stat-card">
-          <span className={`stat-value ${connected ? 'stat-online' : 'stat-offline'}`}>
-            {connected ? 'LIVE' : 'OFF'}
-          </span>
-          <span className="stat-label">Network</span>
-        </div>
+      {/* Filter pills */}
+      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+        {topics.map(t => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => setFilter(t)}
+            style={{
+              padding: '0.3rem 0.85rem',
+              borderRadius: 999,
+              border: filter === t ? '1px solid #7a5cff' : '1px solid #1e1e2e',
+              background: filter === t ? 'rgba(122,92,255,0.15)' : 'transparent',
+              color: filter === t ? '#7a5cff' : '#52525b',
+              fontSize: '0.75rem',
+              cursor: 'pointer',
+              fontFamily: 'Space Grotesk, sans-serif',
+              fontWeight: 600,
+              textTransform: 'capitalize'
+            }}
+          >{t}</button>
+        ))}
       </div>
 
-      <div className="pulse-feed">
-        {activity.length === 0 ? (
-          <div className="feed-empty">
-            <p className="feed-empty-icon">📡</p>
-            <p className="feed-empty-text">No activity yet.</p>
-          </div>
-        ) : (
-          activity.map((ev) => (
-            <div key={ev.id} className="pulse-item">
-              <div className="pulse-item-left">
-                <span className="pulse-room">#{ev.room}</span>
-                <span className="pulse-sender">{ev.sender}</span>
+      {/* Feed */}
+      {filtered.length === 0 ? (
+        <div style={{ textAlign: 'center', color: '#3f3f5a', marginTop: '4rem' }}>
+          <p style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📡</p>
+          <p>No signals yet. Be the first to transmit.</p>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {filtered.map(p => (
+            <div key={p.id} style={{
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid #1e1e2e',
+              borderRadius: 12,
+              padding: '0.85rem 1rem'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                <span style={{ color: '#7a5cff', fontSize: '0.75rem', fontWeight: 700, fontFamily: 'Space Grotesk' }}>
+                  #{p.topic || 'public'}
+                </span>
+                <span style={{ color: '#3f3f5a', fontSize: '0.7rem' }}>
+                  {p.ts ? new Date(p.ts).toLocaleTimeString() : ''}
+                </span>
               </div>
-              <p className="pulse-preview">{ev.preview}</p>
-              <div className="pulse-item-meta">
-                {ev.replies > 0 && <span className="pulse-meta-tag">💬 {ev.replies}</span>}
-                {ev.signals > 0 && <span className="pulse-meta-tag">⚡ {ev.signals}</span>}
-                <span className="pulse-time">{new Date(ev.timestamp).toLocaleTimeString()}</span>
-              </div>
+              <p style={{ color: '#d4d4d8', fontSize: '0.9rem', lineHeight: 1.55, margin: 0 }}>{p.content}</p>
             </div>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
-  );
+  )
 }

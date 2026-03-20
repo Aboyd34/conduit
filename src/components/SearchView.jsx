@@ -1,86 +1,91 @@
-import React, { useState, useMemo } from 'react';
-import { PostCard } from './PostCard.jsx';
+import { useState, useMemo } from 'react'
+import { useConduitSocket } from '../hooks/useConduitSocket.js'
 
-export function SearchView({ allPosts, onViewProfile }) {
-  const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState('all'); // all | posts | senders | rooms
+export default function SearchView({ onViewProfile }) {
+  const { posts } = useConduitSocket()
+  const [query, setQuery] = useState('')
+  const [topicFilter, setTopicFilter] = useState('all')
+
+  const topics = ['all', 'public', 'crypto', 'dev', 'aether', 'lounge']
 
   const results = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return [];
-    return allPosts.filter((p) => {
-      if (filter === 'posts' || filter === 'all') {
-        if (p.content?.toLowerCase().includes(q)) return true;
-      }
-      if (filter === 'senders' || filter === 'all') {
-        const sender = p.displaySender || p.sender || '';
-        if (sender.toLowerCase().includes(q)) return true;
-      }
-      if (filter === 'rooms' || filter === 'all') {
-        if ((p.topic || 'public').toLowerCase().includes(q)) return true;
-      }
-      return false;
-    });
-  }, [query, filter, allPosts]);
+    if (!query.trim() && topicFilter === 'all') return []
+    return posts.filter(p => {
+      const matchTopic = topicFilter === 'all' || (p.topic || 'public') === topicFilter
+      const matchQuery = !query.trim() || (p.content || '').toLowerCase().includes(query.toLowerCase())
+      return matchTopic && matchQuery
+    }).slice(0, 40)
+  }, [posts, query, topicFilter])
 
   return (
-    <div className="search-view">
-      <div className="search-header">
-        <h2 className="view-title">🔍 Search</h2>
-        <p className="view-sub">Find signals, senders, or rooms</p>
-      </div>
+    <div style={{ padding: '1.5rem', maxWidth: 720, margin: '0 auto' }}>
+      <h2 style={{ color: '#f0f0f0', fontFamily: 'Space Grotesk, sans-serif', fontSize: '1.4rem', fontWeight: 700, marginBottom: '1.25rem' }}>🔍 Search</h2>
 
-      <div className="search-box">
-        <input
-          className="search-input"
-          type="text"
-          placeholder="Search signals..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          autoFocus
-        />
-        {query && (
-          <button className="search-clear" onClick={() => setQuery('')}>✕</button>
-        )}
-      </div>
+      {/* Search input */}
+      <input
+        type="text"
+        placeholder="Search signals..."
+        value={query}
+        onChange={e => setQuery(e.target.value)}
+        style={{
+          width: '100%', padding: '0.75rem 1rem',
+          background: 'rgba(255,255,255,0.04)',
+          border: '1px solid #1e1e2e',
+          borderRadius: 10, color: '#f0f0f0',
+          fontSize: '0.9rem', outline: 'none',
+          marginBottom: '1rem',
+          fontFamily: 'Inter, sans-serif'
+        }}
+      />
 
-      <div className="search-filters">
-        {['all', 'posts', 'senders', 'rooms'].map((f) => (
+      {/* Topic filter */}
+      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+        {topics.map(t => (
           <button
-            key={f}
-            className={`room-btn ${filter === f ? 'room-btn--active' : ''}`}
-            onClick={() => setFilter(f)}
-          >
-            {f.charAt(0).toUpperCase() + f.slice(1)}
-          </button>
+            key={t}
+            type="button"
+            onClick={() => setTopicFilter(t)}
+            style={{
+              padding: '0.3rem 0.85rem',
+              borderRadius: 999,
+              border: topicFilter === t ? '1px solid #7a5cff' : '1px solid #1e1e2e',
+              background: topicFilter === t ? 'rgba(122,92,255,0.15)' : 'transparent',
+              color: topicFilter === t ? '#7a5cff' : '#52525b',
+              fontSize: '0.75rem', cursor: 'pointer',
+              fontFamily: 'Space Grotesk, sans-serif',
+              fontWeight: 600, textTransform: 'capitalize'
+            }}
+          >{t}</button>
         ))}
       </div>
 
-      {query && (
-        <p className="search-result-count">
-          {results.length} result{results.length !== 1 ? 's' : ''} for "{query}"
-        </p>
+      {/* Results */}
+      {results.length === 0 ? (
+        <div style={{ textAlign: 'center', color: '#3f3f5a', marginTop: '3rem' }}>
+          <p style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔍</p>
+          <p>{query || topicFilter !== 'all' ? 'No signals found.' : 'Type to search all signals.'}</p>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {results.map(p => (
+            <div key={p.id} style={{
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid #1e1e2e',
+              borderRadius: 12,
+              padding: '0.85rem 1rem',
+              cursor: 'pointer'
+            }}
+            onClick={() => onViewProfile && onViewProfile(p.sender)}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                <span style={{ color: '#7a5cff', fontSize: '0.75rem', fontWeight: 700, fontFamily: 'Space Grotesk' }}>#{p.topic || 'public'}</span>
+                <span style={{ color: '#3f3f5a', fontSize: '0.7rem' }}>{p.ts ? new Date(p.ts).toLocaleTimeString() : ''}</span>
+              </div>
+              <p style={{ color: '#d4d4d8', fontSize: '0.9rem', lineHeight: 1.55, margin: 0 }}>{p.content}</p>
+            </div>
+          ))}
+        </div>
       )}
-
-      <div className="feed">
-        {!query ? (
-          <div className="feed-empty">
-            <p className="feed-empty-icon">🔍</p>
-            <p className="feed-empty-text">Type something to search</p>
-            <p className="feed-empty-sub">Search across all signals in the network</p>
-          </div>
-        ) : results.length === 0 ? (
-          <div className="feed-empty">
-            <p className="feed-empty-icon">📡</p>
-            <p className="feed-empty-text">No results found</p>
-            <p className="feed-empty-sub">Try a different keyword or filter</p>
-          </div>
-        ) : (
-          results.map((post) => (
-            <PostCard key={post.id} post={post} onViewProfile={onViewProfile} />
-          ))
-        )}
-      </div>
     </div>
-  );
+  )
 }
