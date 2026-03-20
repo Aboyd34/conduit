@@ -1,6 +1,9 @@
-node_modules/
-dist/
+node_modules
+dist
 .env
-*.pwb
+.env.local
+.env.production
+conduit.db
+logs/
 *.log
 .DS_Store

@@ -1,9 +1,3 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-
-export default defineConfig({
-  plugins: [react()],
-  build: {
-    outDir: 'dist'
-  }
-})
+// Intentionally empty — vite.config.ts is the active config
+// This file exists only to prevent Vite from throwing on .js resolution
+export default {}
