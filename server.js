@@ -225,54 +225,50 @@ async function startServer() {
     timestamp: Date.now(), ws_clients: clients.size
   }));
 
-  // ── AETHER AI ─────────────────────────────────────────────────────────────
-  // Rate-limit AI separately: 30 req / 15 min per IP
-  const aiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 30 });
+  // ── AETHER AI (Groq — free tier, llama-3.3-70b-versatile) ──────────────────────
+  // Get free key at: https://console.groq.com/keys
+  // Free limits: 14,400 req/day · 30 req/min · no credit card required
+  const aiLimiter = rateLimit({ windowMs: 60 * 1000, max: 20 }); // 20 req/min per IP (stays inside Groq's 30)
 
   app.post('/api/ai/chat', aiLimiter, express.json(), async (req, res) => {
-    const PPLX_KEY = process.env.PERPLEXITY_API_KEY;
-    if (!PPLX_KEY) return res.status(503).json({ error: 'AI not configured — set PERPLEXITY_API_KEY env var' });
+    const GROQ_KEY = process.env.GROQ_API_KEY;
+    if (!GROQ_KEY) return res.status(503).json({ error: 'AI not configured — set GROQ_API_KEY env var' });
 
     const { messages, system } = req.body;
     if (!Array.isArray(messages) || messages.length === 0)
       return res.status(400).json({ error: 'messages array required' });
 
-    // Keep last 20 turns to stay within context limits
-    const trimmed = messages.slice(-20);
-
     const body = {
-      model: 'sonar',
+      model: 'llama-3.3-70b-versatile',
       messages: [
-        { role: 'system', content: system || 'You are Aether, the AI inside Conduit.' },
-        ...trimmed
+        { role: 'system', content: system || 'You are Aether, the AI assistant inside Conduit. Be concise and helpful.' },
+        ...messages.slice(-20)
       ],
       max_tokens: 1024,
-      temperature: 0.7,
-      stream: false
+      temperature: 0.7
     };
 
     try {
-      const pplxRes = await fetch('https://api.perplexity.ai/chat/completions', {
+      const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${PPLX_KEY}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Authorization': `Bearer ${GROQ_KEY}`,
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(body)
       });
 
-      if (!pplxRes.ok) {
-        const err = await pplxRes.text();
-        console.error('[Aether] Perplexity error:', pplxRes.status, err);
-        return res.status(502).json({ error: 'upstream_error', status: pplxRes.status });
+      if (!groqRes.ok) {
+        const err = await groqRes.text();
+        console.error('[Aether/Groq] error:', groqRes.status, err);
+        return res.status(502).json({ error: 'upstream_error', status: groqRes.status });
       }
 
-      const data = await pplxRes.json();
+      const data = await groqRes.json();
       const reply = data.choices?.[0]?.message?.content || 'No response from Aether.';
       res.json({ reply });
     } catch (e) {
-      console.error('[Aether] fetch failed:', e.message);
+      console.error('[Aether/Groq] fetch failed:', e.message);
       res.status(500).json({ error: 'internal_error', message: e.message });
     }
   });
