@@ -1,11 +1,17 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// lqipPlugin only runs at build time — never in dev (causes 8s startup)
+// lqipPlugin only in prod — never slows down dev server
 const isProd = process.env.NODE_ENV === 'production'
 
 export default defineConfig(async () => {
-  const plugins = [react()]
+  const plugins = [
+    react({
+      // Explicit automatic JSX runtime — fixes 'React is not defined' across all JSX files
+      jsxRuntime: 'automatic'
+    })
+  ]
+
   if (isProd) {
     const { default: lqipPlugin } = await import('./vite.lqip')
     plugins.push(lqipPlugin())
@@ -17,8 +23,8 @@ export default defineConfig(async () => {
       port: 5173,
       hmr: true,
       proxy: {
-        '/api': 'http://localhost:3000',
-        '/socket.io': { target: 'http://localhost:3000', ws: true }
+        '/api': 'http://localhost:3001',
+        '/socket.io': { target: 'http://localhost:3001', ws: true }
       }
     },
     optimizeDeps: {
@@ -30,8 +36,7 @@ export default defineConfig(async () => {
         'viem',
         '@tanstack/react-query',
         '@coinbase/onchainkit'
-      ],
-      force: false
+      ]
     },
     build: {
       outDir: 'dist',
@@ -39,8 +44,8 @@ export default defineConfig(async () => {
       rollupOptions: {
         output: {
           manualChunks: {
-            'react-vendor':  ['react', 'react-dom', 'react-router-dom'],
-            'web3-vendor':   ['wagmi', 'viem', '@tanstack/react-query'],
+            'react-vendor':   ['react', 'react-dom', 'react-router-dom'],
+            'web3-vendor':    ['wagmi', 'viem', '@tanstack/react-query'],
             'onchain-vendor': ['@coinbase/onchainkit']
           }
         }
