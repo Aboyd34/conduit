@@ -1,23 +1,56 @@
-export default function PostCard({ post = {} }) {
-  const { alias = 'Abc12..Xyz9', time = 'now', text = 'Signal incoming.', signals = 0 } = post
+export function PostCard({ post = {}, onViewProfile }) {
+  const {
+    id,
+    alias = 'Anon',
+    sender,
+    ts,
+    content = '',
+    text = '',
+    signals = 0,
+    topic = 'public'
+  } = post
+
+  const displayText = content || text || 'Signal incoming.'
+  const displayAlias = alias || (sender ? sender.slice(0, 12) + '...' : 'Anon')
+  const displayTime = ts ? new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'now'
+
   return (
-    <div className="rounded-xl p-4 transition-all"
-      style={{ background: '#0f0e1f', border: '1px solid #1e1e2e' }}
-      onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(122,92,255,0.35)'; e.currentTarget.style.boxShadow = '0 0 20px rgba(122,92,255,0.1)'; }}
+    <div
+      className="rounded-xl p-4 transition-all"
+      style={{ background: '#0f0e1f', border: '1px solid #1e1e2e', marginBottom: '0.65rem' }}
+      onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(122,92,255,0.35)'; e.currentTarget.style.boxShadow = '0 0 20px rgba(122,92,255,0.08)'; }}
       onMouseOut={e => { e.currentTarget.style.borderColor = '#1e1e2e'; e.currentTarget.style.boxShadow = 'none'; }}
     >
-      <div className="flex items-center gap-2 mb-2">
-        <span className="w-1.5 h-1.5 rounded-full pulse" style={{ background: '#00ff9f' }} />
-        <span className="text-xs font-mono" style={{ color: '#52525b' }}>◉ {alias}</span>
-        <span className="text-xs ml-auto" style={{ color: '#3f3f46' }}>{time} ago</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+        <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00ff9f', display: 'inline-block' }} className="pulse" />
+        <span
+          style={{ color: '#52525b', fontSize: '0.75rem', fontFamily: 'Space Grotesk', cursor: onViewProfile ? 'pointer' : 'default' }}
+          onClick={() => onViewProfile && onViewProfile(sender)}
+        >◉ {displayAlias}</span>
+        <span style={{ color: '#3f3f46', fontSize: '0.7rem', marginLeft: 'auto' }}>{displayTime}</span>
+        <span style={{ color: '#2a2a3e', fontSize: '0.65rem', padding: '0.1rem 0.4rem', borderRadius: 4, border: '1px solid #1e1e2e' }}>#{topic}</span>
       </div>
-      <p className="text-sm leading-relaxed" style={{ color: '#d4d4d8' }}>{text}</p>
-      <div className="mt-3 flex gap-5 text-xs" style={{ color: '#52525b' }}>
-        <button className="flex items-center gap-1 transition-colors hover:text-green-400">↑ signal ({signals})</button>
-        <button className="transition-colors hover:text-purple-400">⟳ amplify</button>
-        <button className="transition-colors hover:text-zinc-300">↩ reply</button>
-        <button className="ml-auto transition-colors hover:text-red-400">🚩 report</button>
+      <p style={{ color: '#d4d4d8', fontSize: '0.875rem', lineHeight: 1.55, margin: 0 }}>{displayText}</p>
+      <div style={{ marginTop: '0.75rem', display: 'flex', gap: '1.25rem', fontSize: '0.75rem', color: '#52525b' }}>
+        <button type="button" style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}
+          onMouseOver={e => e.currentTarget.style.color = '#00ff9f'}
+          onMouseOut={e => e.currentTarget.style.color = '#52525b'}
+        >↑ signal ({signals})</button>
+        <button type="button" style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}
+          onMouseOver={e => e.currentTarget.style.color = '#7a5cff'}
+          onMouseOut={e => e.currentTarget.style.color = '#52525b'}
+        >⟳ amplify</button>
+        <button type="button" style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}
+          onMouseOver={e => e.currentTarget.style.color = '#d4d4d8'}
+          onMouseOut={e => e.currentTarget.style.color = '#52525b'}
+        >↩ reply</button>
+        <button type="button" style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', marginLeft: 'auto' }}
+          onMouseOver={e => e.currentTarget.style.color = '#ef4444'}
+          onMouseOut={e => e.currentTarget.style.color = '#52525b'}
+        >🚩</button>
       </div>
     </div>
   )
 }
+
+export default PostCard
