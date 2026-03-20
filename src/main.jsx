@@ -5,22 +5,26 @@ import App from './App.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 import './index.css'
 
+// Crash-safe Web3 loader — never blocks render
 function SafeWeb3({ children }) {
   const [Provider, setProvider] = React.useState(null)
-  const [failed, setFailed] = React.useState(false)
 
   React.useEffect(() => {
+    let cancelled = false
     import('./providers/Web3Provider.jsx')
-      .then(m => setProvider(() => m.Web3Provider))
-      .catch(() => setFailed(true))
+      .then(m => { if (!cancelled) setProvider(() => m.Web3Provider) })
+      .catch(() => {}) // Web3 optional — app works without it
+    return () => { cancelled = true }
   }, [])
 
-  // Web3 failed or not loaded yet — render children directly (app still works)
-  if (!Provider || failed) return <>{children}</>
+  if (!Provider) return <>{children}</>
   return <Provider>{children}</Provider>
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+const root = document.getElementById('root')
+if (!root) throw new Error('Missing #root element in index.html')
+
+ReactDOM.createRoot(root).render(
   <React.StrictMode>
     <ErrorBoundary>
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>

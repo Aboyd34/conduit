@@ -1,7 +1,10 @@
+import React from 'react'
+
 const ITEMS = [
   { id: 'rooms',  icon: '⚡', label: 'Rooms' },
   { id: 'pulse',  icon: '📡', label: 'Pulse' },
   { id: 'search', icon: '🔍', label: 'Search' },
+  { id: 'ai',     icon: '🤖', label: 'Aether AI' },
   { id: 'you',    icon: '👤', label: 'You' },
 ]
 
