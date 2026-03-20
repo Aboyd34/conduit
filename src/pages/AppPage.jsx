@@ -5,7 +5,6 @@ import { RoomsView } from '../components/RoomsView.jsx'
 import PulseView from '../components/PulseView.jsx'
 import SearchView from '../components/SearchView.jsx'
 import YouView from '../components/YouView.jsx'
-import WalletConnect from '../components/WalletConnect.jsx'
 
 const AGE_KEY = 'conduit_age_verified'
 
@@ -31,12 +30,11 @@ export default function AppPage() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: '#07060f' }}>
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#07060f' }}>
       <Nav view={view} setView={setView} />
-      <div className="flex-1 overflow-y-auto">
+      <div style={{ flex: 1, overflowY: 'auto' }}>
         {renderView()}
       </div>
-      <WalletConnect />
     </div>
   )
 }
