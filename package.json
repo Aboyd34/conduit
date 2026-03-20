@@ -2,13 +2,13 @@
   "name": "conduit",
   "version": "1.0.0",
   "private": true,
-  "type": "commonjs",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "start": "ts-node server.ts",
-    "migrate": "node scripts/migrate.js || true"
+    "start": "node --loader ts-node/esm server.ts",
+    "migrate": "node scripts/migrate.js"
   },
   "dependencies": {
     "@coinbase/onchainkit": "^0.36.0",
