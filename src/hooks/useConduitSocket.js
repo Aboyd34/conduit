@@ -1,21 +1,28 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 
 function getWsUrl() {
+  // Explicit env var wins (set in .env.development to ws://localhost:3001/ws)
   if (import.meta.env.VITE_WS_URL) return import.meta.env.VITE_WS_URL;
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  return `${protocol}//${window.location.host}/ws`;
+  // In prod the WS lives on the same host; in dev it's port 3001
+  const host = import.meta.env.DEV
+    ? window.location.hostname + ':3001'
+    : window.location.host;
+  return `${protocol}//${host}/ws`;
 }
 
 function getApiUrl() {
   if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
-  return window.location.origin;
+  return import.meta.env.DEV
+    ? 'http://localhost:3001'
+    : window.location.origin;
 }
 
 const MAX_RETRIES   = 15;
 const BASE_DELAY_MS = 3000;
 const MAX_DELAY_MS  = 30000;
 const PAGE_SIZE     = 20;
-const KEEPALIVE_MS  = 9 * 60 * 1000; // 9 minutes
+const KEEPALIVE_MS  = 9 * 60 * 1000;
 
 let keepAliveInterval = null;
 function startKeepAlive(apiUrl) {
@@ -29,11 +36,11 @@ function stopKeepAlive() {
 }
 
 export function useConduitSocket(onNotification) {
-  const [allPosts,   setAllPosts]   = useState([]);
-  const [page,       setPage]       = useState(1);
-  const [connected,  setConnected]  = useState(false);
-  const [offline,    setOffline]    = useState(false);
-  const [status,     setStatus]     = useState('connecting');
+  const [allPosts,  setAllPosts]  = useState([]);
+  const [page,      setPage]      = useState(1);
+  const [connected, setConnected] = useState(false);
+  const [offline,   setOffline]   = useState(false);
+  const [status,    setStatus]    = useState('connecting');
   const wsRef          = useRef(null);
   const reconnectTimer = useRef(null);
   const retryCount     = useRef(0);
@@ -58,7 +65,15 @@ export function useConduitSocket(onNotification) {
 
     setStatus(retryCount.current === 0 ? 'connecting' : 'reconnecting');
 
-    const ws = new WebSocket(getWsUrl());
+    let ws;
+    try {
+      ws = new WebSocket(getWsUrl());
+    } catch (e) {
+      // Bad URL or env — go straight to offline/demo mode
+      setOffline(true);
+      setStatus('offline');
+      return;
+    }
     wsRef.current = ws;
 
     ws.onopen = () => {
@@ -131,8 +146,8 @@ export function useConduitSocket(onNotification) {
 
   useEffect(() => {
     mountedRef.current = true;
-    // Wake up Render before attempting WebSocket — hits the correct /api/health route
     fetch(`${getApiUrl()}/api/health`, { method: 'GET', cache: 'no-store' })
+      .catch(() => {})
       .finally(() => { if (mountedRef.current) connect(); });
 
     return () => {
