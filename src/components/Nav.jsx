@@ -1,38 +1,47 @@
-import React from 'react'
+import React from 'react';
+import WalletConnect from './WalletConnect.jsx';
 
-const ITEMS = [
-  { id: 'rooms',  icon: '⚡', label: 'Rooms' },
-  { id: 'pulse',  icon: '📡', label: 'Pulse' },
-  { id: 'search', icon: '🔍', label: 'Search' },
-  { id: 'ai',     icon: '🤖', label: 'Aether AI' },
-  { id: 'you',    icon: '👤', label: 'You' },
-]
+const NAV_ITEMS = [
+  { id: 'rooms',   icon: '⚡', label: 'Rooms'    },
+  { id: 'pulse',   icon: '📡', label: 'Pulse'    },
+  { id: 'search',  icon: '🔍', label: 'Search'   },
+  { id: 'ai',      icon: '🤖', label: 'Aether AI' },
+  { id: 'airdrop', icon: '🪂', label: 'Airdrop'  },
+  { id: 'you',     icon: '👤', label: 'You'       },
+];
 
 export default function Nav({ view, setView }) {
   return (
-    <div className="flex flex-col items-center py-4 gap-1 flex-shrink-0"
-      style={{ width: 60, background: '#0f0e1f', borderRight: '1px solid #1e1e2e' }}>
-      <div className="flex items-center justify-center font-bold text-sm mb-4 rounded-xl"
-        style={{ width: 36, height: 36, background: 'rgba(122,92,255,0.12)', border: '1px solid rgba(122,92,255,0.3)', color: '#7a5cff', fontFamily: 'Space Grotesk' }}>
-        C
+    <nav style={{
+      width: 64, display: 'flex', flexDirection: 'column', alignItems: 'center',
+      background: '#0c0b18', borderRight: '1px solid #1a1a2e',
+      padding: '16px 0', gap: 4, flexShrink: 0, height: '100vh',
+      justifyContent: 'space-between'
+    }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+        {/* Logo */}
+        <div style={{ color: '#7a5cff', fontSize: 22, fontWeight: 900, marginBottom: 12 }}>⚡</div>
+        {NAV_ITEMS.map(item => (
+          <button
+            key={item.id}
+            title={item.label}
+            onClick={() => setView(item.id)}
+            style={{
+              width: 44, height: 44, borderRadius: 12, border: 'none',
+              background: view === item.id ? 'rgba(122,92,255,0.2)' : 'transparent',
+              color: view === item.id ? '#7a5cff' : '#52527a',
+              fontSize: 20, cursor: 'pointer', display: 'flex',
+              alignItems: 'center', justifyContent: 'center',
+              transition: 'all 0.15s'
+            }}
+          >
+            {item.icon}
+          </button>
+        ))}
       </div>
-      {ITEMS.map(item => (
-        <button
-          key={item.id}
-          onClick={() => setView(item.id)}
-          title={item.label}
-          className="flex items-center justify-center rounded-xl text-lg transition-all"
-          style={{
-            width: 40, height: 40,
-            background: view === item.id ? 'rgba(122,92,255,0.15)' : 'transparent',
-            border: view === item.id ? '1px solid rgba(122,92,255,0.4)' : '1px solid transparent',
-            color: view === item.id ? '#7a5cff' : '#3f3f5a',
-            cursor: 'pointer'
-          }}
-        >
-          {item.icon}
-        </button>
-      ))}
-    </div>
-  )
+      <div style={{ padding: '0 8px', width: '100%', display: 'flex', justifyContent: 'center' }}>
+        <WalletConnect />
+      </div>
+    </nav>
+  );
 }

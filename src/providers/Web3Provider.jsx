@@ -1,15 +1,8 @@
-/**
- * Web3Provider — wraps app with wagmi + OnchainKit + TanStack Query
- * reconnectOnMount=false fixes React 19 setState-during-render warning
- * @farcaster/miniapp-sdk replaces deprecated frame-sdk
- */
-
 import React from 'react';
 import { WagmiProvider, createConfig, http } from 'wagmi';
 import { base } from 'wagmi/chains';
 import { coinbaseWallet } from 'wagmi/connectors';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { OnchainKitProvider } from '@coinbase/onchainkit';
 
 const wagmiConfig = createConfig({
   chains: [base],
@@ -26,16 +19,27 @@ const wagmiConfig = createConfig({
 
 const queryClient = new QueryClient();
 
+const apiKey = import.meta.env.VITE_ONCHAINKIT_API_KEY;
+const hasRealKey = apiKey && apiKey !== 'placeholder' && apiKey.length > 10;
+
+function MaybeOnchainKit({ children }) {
+  if (!hasRealKey) return <>{children}</>;
+  // Lazy-load OnchainKitProvider only when a real key is present
+  const { OnchainKitProvider } = require('@coinbase/onchainkit');
+  return (
+    <OnchainKitProvider apiKey={apiKey} chain={base}>
+      {children}
+    </OnchainKitProvider>
+  );
+}
+
 export function Web3Provider({ children }) {
   return (
     <WagmiProvider config={wagmiConfig} reconnectOnMount={false}>
       <QueryClientProvider client={queryClient}>
-        <OnchainKitProvider
-          apiKey={import.meta.env.VITE_ONCHAINKIT_API_KEY}
-          chain={base}
-        >
+        <MaybeOnchainKit>
           {children}
-        </OnchainKitProvider>
+        </MaybeOnchainKit>
       </QueryClientProvider>
     </WagmiProvider>
   );

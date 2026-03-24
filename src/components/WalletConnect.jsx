@@ -1,66 +1,40 @@
-/**
- * WalletConnect — optional Base wallet overlay
- * On connect, links wallet address to local signing pubkey in localStorage
- * This allows the feed to show Basenames next to posts
- */
+import React from 'react';
+import { useAccount, useConnect, useDisconnect } from 'wagmi';
 
-import React, { useEffect } from 'react';
-import {
-  ConnectWallet,
-  Wallet,
-  WalletDropdown,
-  WalletDropdownDisconnect,
-} from '@coinbase/onchainkit/wallet';
-import {
-  Address,
-  Avatar,
-  Name,
-  Identity,
-} from '@coinbase/onchainkit/identity';
-import { useAccount } from 'wagmi';
-import { getSigningPublicKey } from '../ConduitKeyManager.js';
-import '@coinbase/onchainkit/styles.css';
-
-const WALLET_LINK_KEY = 'conduit_wallet_link';
-
-function WalletLinker() {
+export default function WalletConnect() {
   const { address, isConnected } = useAccount();
+  const { connect, connectors } = useConnect();
+  const { disconnect } = useDisconnect();
 
-  useEffect(() => {
-    if (!isConnected || !address) return;
-    const pubkey = getSigningPublicKey();
-    if (!pubkey) return;
-    try {
-      const raw = localStorage.getItem(WALLET_LINK_KEY);
-      const links = raw ? JSON.parse(raw) : {};
-      links[pubkey] = address;
-      localStorage.setItem(WALLET_LINK_KEY, JSON.stringify(links));
-    } catch {}
-  }, [isConnected, address]);
+  if (isConnected) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ color: '#a1a1aa', fontSize: 12, fontFamily: 'monospace' }}>
+          {address?.slice(0, 6)}...{address?.slice(-4)}
+        </span>
+        <button
+          onClick={() => disconnect()}
+          style={{
+            padding: '4px 10px', borderRadius: 8, border: '1px solid #3f3f5a',
+            background: 'transparent', color: '#71717a', fontSize: 11, cursor: 'pointer'
+          }}
+        >
+          Disconnect
+        </button>
+      </div>
+    );
+  }
 
-  return null;
-}
-
-export function WalletConnect() {
   return (
-    <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 1rem 0.5rem' }}>
-      <WalletLinker />
-      <Wallet>
-        <ConnectWallet>
-          <Avatar className="h-6 w-6" />
-          <Name />
-        </ConnectWallet>
-        <WalletDropdown>
-          <Identity hasCopyAddressOnClick>
-            <Avatar />
-            <Name />
-            <Address />
-          </Identity>
-          <WalletDropdownDisconnect />
-        </WalletDropdown>
-      </Wallet>
-    </div>
+    <button
+      onClick={() => connect({ connector: connectors[0] })}
+      style={{
+        padding: '6px 14px', borderRadius: 8, border: 'none',
+        background: 'linear-gradient(135deg,#7a5cff,#00d4ff)',
+        color: 'white', fontSize: 12, fontWeight: 700, cursor: 'pointer'
+      }}
+    >
+      Connect Wallet
+    </button>
   );
 }
-
-export default WalletConnect;
