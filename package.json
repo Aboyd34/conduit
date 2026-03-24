@@ -15,7 +15,9 @@
     "pm2:start": "npx pm2 start ecosystem.config.cjs",
     "pm2:stop": "npx pm2 stop all",
     "pm2:logs": "npx pm2 logs",
-    "migrate": "node scripts/migrate.js"
+    "migrate": "node scripts/migrate.js",
+    "compile": "hardhat compile",
+    "test:contracts": "hardhat test"
   },
   "dependencies": {
     "@coinbase/onchainkit": "^0.36.0",
@@ -41,5 +43,14 @@
     "wagmi": "^2.9.0",
     "ws": "^8.18.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "^5.0.2",
+    "better-sqlite3": "^9.6.0",
+    "dotenv": "^16.4.5",
+    "ethers": "^6.12.0",
+    "hardhat": "^2.22.0",
+    "keccak": "^3.0.4",
+    "merkletreejs": "^0.3.11"
+  }
 }

@@ -99,9 +99,9 @@ contract Aether is ERC20, ERC20Burnable, ERC20Permit, Ownable {
         _mint(_liquidityWallet, LIQUIDITY_SUPPLY);
         _mint(_treasuryWallet,  TREASURY_SUPPLY);
         // Team tokens held in contract until vested
-        _mint(address(this),    TEAM_SUPPLY);
+        _mint(address(this), TEAM_SUPPLY);
         // Airdrop pool held in contract until claimed
-        _mint(address(this),    AIRDROP_SUPPLY);
+        _mint(address(this), AIRDROP_SUPPLY);
     }
 
     // -----------------------------------------------------------------------
@@ -122,15 +122,26 @@ contract Aether is ERC20, ERC20Burnable, ERC20Permit, Ownable {
 
     /**
      * @notice Claim airdrop tokens.
-     * @param amount   Amount of AETH to claim (in wei)
-     * @param proof    Merkle proof
+     * @param amount   Amount of AETH to claim (in wei, must match snapshot)
+     * @param proof    Merkle proof array from airdrop-snapshot.json
+     *
+     * IMPORTANT — leaf encoding:
+     *   leaf = keccak256(keccak256(abi.encodePacked(address, uint256)))
+     *   Double-hash matches the solidityPackedKeccak256 + MerkleTree(keccak, {sortPairs:true})
+     *   pattern used in scripts/airdrop-snapshot.js so proofs verify correctly.
      */
     function claimAirdrop(uint256 amount, bytes32[] calldata proof) external {
         require(airdropOpen,              "Airdrop not open");
         require(!hasClaimed[msg.sender],  "Already claimed");
         require(merkleRoot != bytes32(0), "Root not set");
+        require(amount > 0,               "Zero amount");
+        require(balanceOf(address(this)) >= amount + (TEAM_SUPPLY - teamReleased),
+                                          "Insufficient airdrop pool");
 
-        bytes32 leaf = keccak256(abi.encodePacked(msg.sender, amount));
+        // Double-keccak leaf — matches MerkleTree.js leaf generation in snapshot script
+        bytes32 leaf = keccak256(bytes.concat(
+            keccak256(abi.encodePacked(msg.sender, amount))
+        ));
         require(MerkleProof.verify(proof, merkleRoot, leaf), "Invalid proof");
 
         hasClaimed[msg.sender] = true;
@@ -165,7 +176,11 @@ contract Aether is ERC20, ERC20Burnable, ERC20Permit, Ownable {
     // Team vesting
     // -----------------------------------------------------------------------
 
-    /// @notice Release vested team tokens (callable by anyone, sends to teamWallet)
+    /**
+     * @notice Release vested team tokens to teamWallet.
+     *         Callable by anyone — tokens always go to teamWallet.
+     *         Linear vesting after 6-month cliff over 2 years.
+     */
     function releaseTeamVesting() external {
         uint256 elapsed = block.timestamp - vestingStart;
         require(elapsed >= CLIFF, "Cliff not reached");
@@ -182,13 +197,43 @@ contract Aether is ERC20, ERC20Burnable, ERC20Permit, Ownable {
     }
 
     // -----------------------------------------------------------------------
-    // Emergency: rescue unclaimed airdrop after 2 years
+    // Emergency: rescue unclaimed airdrop tokens after 2 years
     // -----------------------------------------------------------------------
 
+    /**
+     * @notice Owner can sweep unclaimed airdrop remainder 2 years after deploy.
+     *         Subtracts still-locked team tokens from the contract balance first.
+     */
     function rescueAirdropRemainder(address to) external onlyOwner {
+        require(to != address(0), "bad address");
         uint256 elapsed = block.timestamp - vestingStart;
-        require(elapsed >= 730 days, "Too early");
-        uint256 remaining = balanceOf(address(this)) - (TEAM_SUPPLY - teamReleased);
-        if (remaining > 0) _transfer(address(this), to, remaining);
+        require(elapsed >= 730 days, "Too early (2 year lock)");
+
+        uint256 lockedTeam  = TEAM_SUPPLY - teamReleased;
+        uint256 contractBal = balanceOf(address(this));
+        require(contractBal > lockedTeam, "Nothing to rescue");
+
+        uint256 rescuable = contractBal - lockedTeam;
+        _transfer(address(this), to, rescuable);
+    }
+
+    // -----------------------------------------------------------------------
+    // View helpers
+    // -----------------------------------------------------------------------
+
+    /// @notice How many AETH are left unclaimed in the airdrop pool
+    function airdropRemaining() external view returns (uint256) {
+        uint256 lockedTeam = TEAM_SUPPLY - teamReleased;
+        uint256 bal = balanceOf(address(this));
+        return bal > lockedTeam ? bal - lockedTeam : 0;
+    }
+
+    /// @notice How many team tokens are releasable right now
+    function teamReleasable() external view returns (uint256) {
+        uint256 elapsed = block.timestamp - vestingStart;
+        if (elapsed < CLIFF) return 0;
+        uint256 vested = (TEAM_SUPPLY * elapsed) / VEST_PERIOD;
+        if (vested > TEAM_SUPPLY) vested = TEAM_SUPPLY;
+        return vested - teamReleased;
     }
 }
