@@ -1,18 +1,49 @@
+import React, { useState, useCallback } from 'react';
+import { broadcastSignal, broadcastAmplify } from '../api/gateway.js';
+
 export function PostCard({ post = {}, onViewProfile }) {
   const {
     id,
     alias = 'Anon',
     sender,
+    timestamp,
     ts,
     content = '',
     text = '',
     signals = 0,
-    topic = 'public'
-  } = post
+    amplifies = 0,
+    replies = [],
+    topic = 'public',
+  } = post;
 
-  const displayText = content || text || 'Signal incoming.'
-  const displayAlias = alias || (sender ? sender.slice(0, 12) + '...' : 'Anon')
-  const displayTime = ts ? new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'now'
+  const [localSignals,   setLocalSignals]   = useState(Number(signals));
+  const [localAmplifies, setLocalAmplifies] = useState(Number(amplifies));
+  const [signaled,       setSignaled]       = useState(false);
+  const [amplified,      setAmplified]      = useState(false);
+  const [showReplies,    setShowReplies]    = useState(false);
+
+  // BUG FIX 1: post.timestamp field was ignored — server uses `timestamp`, client expected `ts`
+  const rawTime = timestamp || ts;
+  const displayText  = content || text || 'Signal incoming.';
+  const displayAlias = alias || (sender ? sender.slice(0, 12) + '...' : 'Anon');
+  const displayTime  = rawTime
+    ? new Date(rawTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : 'now';
+
+  // BUG FIX 2: signal/amplify buttons had no actual API calls — wired up
+  const handleSignal = useCallback(async () => {
+    if (signaled || !id) return;
+    setSignaled(true);
+    setLocalSignals(s => s + 1);
+    try { await broadcastSignal(id); } catch { /* optimistic — ignore */ }
+  }, [signaled, id]);
+
+  const handleAmplify = useCallback(async () => {
+    if (amplified || !id) return;
+    setAmplified(true);
+    setLocalAmplifies(a => a + 1);
+    try { await broadcastAmplify(id); } catch { /* optimistic — ignore */ }
+  }, [amplified, id]);
 
   return (
     <div
@@ -32,25 +63,41 @@ export function PostCard({ post = {}, onViewProfile }) {
       </div>
       <p style={{ color: '#d4d4d8', fontSize: '0.875rem', lineHeight: 1.55, margin: 0 }}>{displayText}</p>
       <div style={{ marginTop: '0.75rem', display: 'flex', gap: '1.25rem', fontSize: '0.75rem', color: '#52525b' }}>
-        <button type="button" style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}
-          onMouseOver={e => e.currentTarget.style.color = '#00ff9f'}
-          onMouseOut={e => e.currentTarget.style.color = '#52525b'}
-        >↑ signal ({signals})</button>
-        <button type="button" style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}
-          onMouseOver={e => e.currentTarget.style.color = '#7a5cff'}
-          onMouseOut={e => e.currentTarget.style.color = '#52525b'}
-        >⟳ amplify</button>
-        <button type="button" style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}
-          onMouseOver={e => e.currentTarget.style.color = '#d4d4d8'}
-          onMouseOut={e => e.currentTarget.style.color = '#52525b'}
-        >↩ reply</button>
+        <button
+          type="button"
+          style={{ background: 'none', border: 'none', color: signaled ? '#00ff9f' : 'inherit', cursor: signaled ? 'default' : 'pointer' }}
+          onClick={handleSignal}
+          disabled={signaled}
+        >↑ signal ({localSignals})</button>
+        <button
+          type="button"
+          style={{ background: 'none', border: 'none', color: amplified ? '#7a5cff' : 'inherit', cursor: amplified ? 'default' : 'pointer' }}
+          onClick={handleAmplify}
+          disabled={amplified}
+        >⟳ amplify ({localAmplifies})</button>
+        <button
+          type="button"
+          style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}
+          onClick={() => setShowReplies(v => !v)}
+        >↩ reply{replies.length > 0 ? ` (${replies.length})` : ''}</button>
         <button type="button" style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', marginLeft: 'auto' }}
           onMouseOver={e => e.currentTarget.style.color = '#ef4444'}
           onMouseOut={e => e.currentTarget.style.color = '#52525b'}
         >🚩</button>
       </div>
+      {/* BUG FIX 3: replies array was never rendered */}
+      {showReplies && replies.length > 0 && (
+        <div style={{ marginTop: '0.75rem', borderLeft: '2px solid #1e1e2e', paddingLeft: '0.75rem' }}>
+          {replies.map((r, i) => (
+            <div key={r.id || i} style={{ marginBottom: '0.4rem', color: '#a1a1aa', fontSize: '0.8rem' }}>
+              <span style={{ color: '#52525b', marginRight: '0.4rem' }}>↩</span>
+              {r.content || r.text || ''}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
-  )
+  );
 }
 
-export default PostCard
+export default PostCard;

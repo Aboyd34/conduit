@@ -3,7 +3,7 @@
  * Works with wagmi + viem already wired via OnchainKit
  */
 import { useReadContract, useWriteContract, useAccount } from 'wagmi';
-import { parseUnits, formatUnits } from 'viem';
+import { formatUnits } from 'viem';
 
 const AETHER_ADDRESS = import.meta.env.VITE_AETHER_ADDRESS;
 
@@ -15,8 +15,9 @@ const ABI = [
   { name: 'isGated',   type: 'function', stateMutability: 'view',
     inputs: [{ name: 'account', type: 'address' }],
     outputs: [{ name: '', type: 'bool' }] },
+  // BUG FIX 6: hasClaimed ABI had unnamed input — wagmi needs a name to pass arg correctly
   { name: 'hasClaimed', type: 'function', stateMutability: 'view',
-    inputs: [{ name: '', type: 'address' }],
+    inputs: [{ name: 'account', type: 'address' }],
     outputs: [{ name: '', type: 'bool' }] },
   { name: 'airdropOpen', type: 'function', stateMutability: 'view',
     inputs: [], outputs: [{ name: '', type: 'bool' }] },
@@ -33,12 +34,14 @@ const ABI = [
 export function useAether() {
   const { address, isConnected } = useAccount();
 
-  const { data: balance } = useReadContract({
+  const contractEnabled = !!address && !!AETHER_ADDRESS;
+
+  const { data: balance, refetch: refetchBalance } = useReadContract({
     address: AETHER_ADDRESS,
     abi: ABI,
     functionName: 'balanceOf',
     args: [address],
-    query: { enabled: !!address && !!AETHER_ADDRESS },
+    query: { enabled: contractEnabled },
   });
 
   const { data: gated } = useReadContract({
@@ -46,15 +49,15 @@ export function useAether() {
     abi: ABI,
     functionName: 'isGated',
     args: [address],
-    query: { enabled: !!address && !!AETHER_ADDRESS },
+    query: { enabled: contractEnabled },
   });
 
-  const { data: claimed } = useReadContract({
+  const { data: claimed, refetch: refetchClaimed } = useReadContract({
     address: AETHER_ADDRESS,
     abi: ABI,
     functionName: 'hasClaimed',
     args: [address],
-    query: { enabled: !!address && !!AETHER_ADDRESS },
+    query: { enabled: contractEnabled },
   });
 
   const { data: airdropOpen } = useReadContract({
@@ -78,22 +81,27 @@ export function useAether() {
 
   async function claimAirdrop(amountWei, proof) {
     if (!AETHER_ADDRESS) throw new Error('Contract not deployed yet');
-    return writeContractAsync({
+    // BUG FIX 7: amountWei from server is a string — must be BigInt for viem, safely convert
+    const amount = typeof amountWei === 'bigint' ? amountWei : BigInt(String(amountWei));
+    const tx = await writeContractAsync({
       address: AETHER_ADDRESS,
       abi: ABI,
       functionName: 'claimAirdrop',
-      args: [BigInt(amountWei), proof],
+      args: [amount, proof],
     });
+    // Refresh balance + claimed state after successful tx
+    await Promise.allSettled([refetchBalance(), refetchClaimed()]);
+    return tx;
   }
 
   return {
     isConnected,
     address,
-    balance:      balance ? formatUnits(balance, 18) : '0',
-    balanceRaw:   balance || 0n,
-    isGated:      gated ?? false,
-    hasClaimed:   claimed ?? false,
-    airdropOpen:  airdropOpen ?? false,
+    balance:       balance ? formatUnits(balance, 18) : '0',
+    balanceRaw:    balance ?? 0n,
+    isGated:       gated ?? false,
+    hasClaimed:    claimed ?? false,
+    airdropOpen:   airdropOpen ?? false,
     contractReady: !!AETHER_ADDRESS,
     isPending,
     recyclePost,

@@ -1,10 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 
 function getWsUrl() {
-  // Explicit env var wins (set in .env.development to ws://localhost:3001/ws)
   if (import.meta.env.VITE_WS_URL) return import.meta.env.VITE_WS_URL;
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  // In prod the WS lives on the same host; in dev it's port 3001
   const host = import.meta.env.DEV
     ? window.location.hostname + ':3001'
     : window.location.host;
@@ -13,9 +11,7 @@ function getWsUrl() {
 
 function getApiUrl() {
   if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
-  return import.meta.env.DEV
-    ? 'http://localhost:3001'
-    : window.location.origin;
+  return import.meta.env.DEV ? 'http://localhost:3001' : window.location.origin;
 }
 
 const MAX_RETRIES   = 15;
@@ -46,6 +42,9 @@ export function useConduitSocket(onNotification) {
   const retryCount     = useRef(0);
   const myPubkeyRef    = useRef(null);
   const mountedRef     = useRef(true);
+  // BUG FIX 8: onNotification was stale in closure — store in ref so latest callback is always used
+  const onNotifRef     = useRef(onNotification);
+  useEffect(() => { onNotifRef.current = onNotification; }, [onNotification]);
 
   function setMyPubkey(key) { myPubkeyRef.current = key; }
 
@@ -68,8 +67,7 @@ export function useConduitSocket(onNotification) {
     let ws;
     try {
       ws = new WebSocket(getWsUrl());
-    } catch (e) {
-      // Bad URL or env — go straight to offline/demo mode
+    } catch {
       setOffline(true);
       setStatus('offline');
       return;
@@ -91,37 +89,48 @@ export function useConduitSocket(onNotification) {
       try {
         const data = JSON.parse(event.data);
         if (data.type === 'init') {
-          setAllPosts(data.posts); setPage(1);
+          setAllPosts(data.posts ?? []); setPage(1);
         } else if (data.type === 'new_post') {
           setAllPosts(prev => [data.post, ...prev].slice(0, 500));
         } else if (data.type === 'new_reply') {
           setAllPosts(prev => prev.map(p =>
-            p.id === data.postId ? { ...p, replies: [...(p.replies || []), data.reply] } : p
+            p.id === data.postId
+              ? { ...p, replies: [...(p.replies || []), data.reply] }
+              : p
           ));
           const me = myPubkeyRef.current;
-          if (me && onNotification) {
-            setAllPosts(prev => {
-              const post = prev.find(p => p.id === data.postId);
-              if (post && (post.displaySender === me || post.sender === me)) {
-                onNotification({ id: `reply-${data.reply.id}`, type: 'reply', postId: data.postId, preview: data.reply.content?.slice(0, 60), timestamp: data.reply.timestamp });
-              }
-              return prev;
-            });
-          }
+          // Use ref so notification callback is never stale
+          setAllPosts(prev => {
+            const post = prev.find(p => p.id === data.postId);
+            if (me && post && (post.displaySender === me || post.sender === me)) {
+              onNotifRef.current?.({
+                id: `reply-${data.reply.id}`,
+                type: 'reply',
+                postId: data.postId,
+                preview: data.reply.content?.slice(0, 60),
+                timestamp: data.reply.timestamp,
+              });
+            }
+            return prev;
+          });
         } else if (data.type === 'signal_update') {
           setAllPosts(prev => prev.map(p =>
             p.id === data.postId ? { ...p, signals: data.count } : p
           ));
           const me = myPubkeyRef.current;
-          if (me && onNotification) {
-            setAllPosts(prev => {
-              const post = prev.find(p => p.id === data.postId);
-              if (post && (post.displaySender === me || post.sender === me)) {
-                onNotification({ id: `signal-${data.postId}-${data.count}`, type: 'signal', postId: data.postId, preview: post.content?.slice(0, 60), timestamp: Date.now() });
-              }
-              return prev;
-            });
-          }
+          setAllPosts(prev => {
+            const post = prev.find(p => p.id === data.postId);
+            if (me && post && (post.displaySender === me || post.sender === me)) {
+              onNotifRef.current?.({
+                id: `signal-${data.postId}-${data.count}`,
+                type: 'signal',
+                postId: data.postId,
+                preview: post.content?.slice(0, 60),
+                timestamp: Date.now(),
+              });
+            }
+            return prev;
+          });
         } else if (data.type === 'amplify_update') {
           setAllPosts(prev => prev.map(p =>
             p.id === data.postId ? { ...p, amplifies: data.count } : p
