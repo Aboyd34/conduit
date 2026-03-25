@@ -26,6 +26,19 @@ export async function broadcastPost(post) {
   return res.json();
 }
 
+export async function broadcastAmplify(postId, ampliferPubkey) {
+  const res = await fetch(`${BASE}/api/relay/amplify`, {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify({ postId, ampliferPubkey }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Amplify failed');
+  }
+  return res.json();
+}
+
 export async function fetchFeed() {
   const res = await fetch(`${BASE}/api/relay/feed`, {
     headers: headers(),
