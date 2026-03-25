@@ -26,11 +26,24 @@ export async function broadcastPost(post) {
   return res.json();
 }
 
-export async function broadcastAmplify(postId, ampliferPubkey) {
+export async function broadcastSignal(postId) {
+  const res = await fetch(`${BASE}/api/relay/signal`, {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify({ postId }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Signal failed');
+  }
+  return res.json();
+}
+
+export async function broadcastAmplify(postId, amplifierPubkey) {
   const res = await fetch(`${BASE}/api/relay/amplify`, {
     method: 'POST',
     headers: headers(),
-    body: JSON.stringify({ postId, ampliferPubkey }),
+    body: JSON.stringify({ postId, amplifierPubkey }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
