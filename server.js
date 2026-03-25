@@ -100,8 +100,6 @@ const AGE_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const PIONEER_CUTOFF = new Date('2026-06-01').getTime();
 
 // ── Age token: frontend builds with btoa, backend verifies with sha256 ────────
-// Token structure: { verified, timestamp, salt, sig }
-// sig = sha256(`conduit:age_verified:${timestamp}:${salt}`) as hex
 function verifyAgeToken(raw) {
   if (!raw) return { valid: false, reason: 'missing_token' };
   try {
@@ -111,7 +109,6 @@ function verifyAgeToken(raw) {
     const age = Date.now() - token.timestamp;
     if (age > AGE_TOKEN_TTL_MS) return { valid: false, reason: 'token_expired' };
     if (age < 0) return { valid: false, reason: 'token_future' };
-    // Accept both old btoa sig and new sha256 sig
     const sha256sig = crypto.createHash('sha256')
       .update(`conduit:age_verified:${token.timestamp}:${token.salt}`)
       .digest('hex');
@@ -189,6 +186,8 @@ async function startServer() {
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
 
   const ALLOWED_ORIGINS = [
+    'https://conduitprotect.info',
+    'https://www.conduitprotect.info',
     'https://conduit-blush.vercel.app',
     'https://cantc-ulive.live',
     'http://localhost:5173',
