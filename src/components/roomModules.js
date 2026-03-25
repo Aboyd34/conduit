@@ -1,11 +1,18 @@
-import React from 'react';
+// Room icon SVGs as string identifiers — rendered as CSS classes in rail
+export const ROOM_ICONS = {
+  public:  { symbol: '#', color: 'rgba(255,255,255,0.4)' },
+  crypto:  { symbol: '◈', color: '#00d4ff' },
+  tech:    { symbol: '</>', color: '#00ff9f' },
+  random:  { symbol: '~', color: '#ff9f00' },
+  aether:  { symbol: '⚡', color: '#7a5cff' },
+};
 
 export const ROOMS = [
   {
     id: 'public',
     label: '# general',
     short: 'General',
-    icon: '🏠',
+    icon: '#',
     desc: 'Open channel. Everyone welcome.',
     accent: 'general',
     toolsTitle: 'Community Tools',
@@ -23,7 +30,7 @@ export const ROOMS = [
     id: 'crypto',
     label: '# crypto',
     short: 'Crypto',
-    icon: '🔷',
+    icon: '◈',
     desc: 'Web3, wallets, on-chain talk.',
     accent: 'crypto',
     toolsTitle: 'Wallet Tools',
@@ -41,7 +48,7 @@ export const ROOMS = [
     id: 'tech',
     label: '# tech',
     short: 'Tech',
-    icon: '🛠️',
+    icon: '</>',
     desc: 'Builders, devs, tools, projects.',
     accent: 'tech',
     toolsTitle: 'Dev Tools',
@@ -59,7 +66,7 @@ export const ROOMS = [
     id: 'random',
     label: '# random',
     short: 'Random',
-    icon: '🎲',
+    icon: '~',
     desc: 'Anything goes. Keep it interesting.',
     accent: 'random',
     toolsTitle: 'Chaos Tools',
@@ -99,7 +106,7 @@ export function getRoomMeta(roomId) {
 }
 
 export function estimateOnline(posts, roomId) {
-  const roomPosts    = posts.filter(p => (p.topic || 'public') === roomId);
+  const roomPosts = posts.filter(p => (p.topic || 'public') === roomId);
   const uniqueSenders = new Set(roomPosts.map(p => p.displaySender || p.sender).filter(Boolean));
   return Math.max(uniqueSenders.size, Math.min(999, roomPosts.length * 3 + 12));
 }
