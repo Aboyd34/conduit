@@ -14,23 +14,34 @@ const AGE_KEY     = 'conduit_age_verified';
 const ONBOARD_KEY = 'conduit_onboarded';
 const ADMIN_KEY   = 'conduit_admin_role';
 
+// POST-DEPLOY: replace isAetherHolder with real wallet balance check (>= 100 AETH)
+// For now: admin role = automatic Aether access (founder bypass)
+function resolveAetherAccess(role) {
+  return role === 'admin';
+}
+
 export default function AppPage() {
-  const [verified,  setVerified]  = useState(false);
-  const [onboarded, setOnboarded] = useState(false);
-  const [view,      setView]      = useState('rooms');
-  const [profileId, setProfileId] = useState(null);
-  const [pulses,    setPulses]    = useState([]);
-  const [userRole,  setUserRole]  = useState('user');
+  const [verified,       setVerified]       = useState(false);
+  const [onboarded,      setOnboarded]      = useState(false);
+  const [view,           setView]           = useState('rooms');
+  const [profileId,      setProfileId]      = useState(null);
+  const [pulses,         setPulses]         = useState([]);
+  const [userRole,       setUserRole]       = useState('user');
+  const [isAetherHolder, setIsAetherHolder] = useState(false);
 
   useEffect(() => {
     setVerified(!!localStorage.getItem(AGE_KEY));
     setOnboarded(!!localStorage.getItem(ONBOARD_KEY));
-    setUserRole(localStorage.getItem(ADMIN_KEY) || 'user');
+    const role = localStorage.getItem(ADMIN_KEY) || 'user';
+    setUserRole(role);
+    setIsAetherHolder(resolveAetherAccess(role));
   }, []);
 
   function handleVerify() {
     setVerified(true);
-    setUserRole(localStorage.getItem(ADMIN_KEY) || 'user');
+    const role = localStorage.getItem(ADMIN_KEY) || 'user';
+    setUserRole(role);
+    setIsAetherHolder(resolveAetherAccess(role));
   }
 
   if (!verified)  return <AgeGate onVerify={handleVerify} />;
@@ -38,13 +49,13 @@ export default function AppPage() {
 
   function renderView() {
     switch (view) {
-      case 'rooms':   return <RoomsView userRole={userRole} onViewProfile={(id) => { setProfileId(id); setView('you'); }} />;
+      case 'rooms':   return <RoomsView userRole={userRole} isAetherHolder={isAetherHolder} onViewProfile={(id) => { setProfileId(id); setView('you'); }} />;
       case 'pulse':   return <PulseView pulses={pulses} />;
       case 'search':  return <SearchView onViewProfile={(id) => { setProfileId(id); setView('you'); }} />;
       case 'you':     return <YouView profileId={profileId} onBack={() => setView('rooms')} />;
       case 'ai':      return <AetherAI />;
       case 'airdrop': return <AirdropPage />;
-      default:        return <RoomsView userRole={userRole} onViewProfile={(id) => { setProfileId(id); setView('you'); }} />;
+      default:        return <RoomsView userRole={userRole} isAetherHolder={isAetherHolder} onViewProfile={(id) => { setProfileId(id); setView('you'); }} />;
     }
   }
 
