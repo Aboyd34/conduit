@@ -4,56 +4,48 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Privacy Policy — Conduit</title>
-  <meta property="og:title" content="Privacy Policy — Conduit" />
-  <meta property="og:description" content="Conduit privacy policy. No tracking. No selling. No central authority." />
-  <meta property="og:image" content="https://conduitprotect.info/logo.png" />
-  <meta property="og:url" content="https://conduitprotect.info/privacy-policy.html" />
   <style>
-    body { font-family: Arial, sans-serif; max-width: 820px; margin: 40px auto; padding: 20px; background: #0d0d1a; color: #e0e0e0; line-height: 1.7; }
-    h1 { color: #c8a014; } h2 { color: #a78bfa; border-bottom: 1px solid #333; padding-bottom: 4px; }
-    a { color: #4fc3f7; } footer { margin-top: 40px; font-size: 12px; color: #666; }
-    .disclaimer { background: linear-gradient(135deg,#c8a014,#7c3aed); color:#fff; padding:14px; border-radius:8px; font-weight:bold; text-align:center; margin-bottom:20px; }
-    .nav { margin-bottom: 28px; font-size: 13px; } .nav a { color: #a78bfa; margin-right: 16px; text-decoration: none; }
+    :root { --bg:#07070d; --border:#1c1c2e; --accent:#7c6af7; --text:#e8e8f0; --muted:#888899; --dim:#444455; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,sans-serif; line-height:1.7; padding:0 1rem; }
+    .page { max-width:720px; margin:0 auto; padding:4rem 0 6rem; }
+    .nav-logo { display:flex; align-items:center; gap:10px; margin-bottom:2rem; }
+    .nav-logo img { width:36px; height:36px; object-fit:contain; }
+    .nav-logo span { font-size:1.1rem; font-weight:800; letter-spacing:2px; color:var(--accent); }
+    h1 { font-size:2rem; font-weight:800; margin-bottom:0.5rem; }
+    h2 { font-size:1.2rem; font-weight:700; margin:2rem 0 0.5rem; color:var(--accent); }
+    p { font-size:0.95rem; color:var(--muted); margin-bottom:1rem; }
+    p strong { color:var(--text); }
+    .footer { text-align:center; margin-top:4rem; font-size:0.78rem; color:var(--dim); }
   </style>
 </head>
 <body>
-  <div class="nav"><a href="/">&#8592; Back to Conduit</a></div>
-  <div class="disclaimer">&#128683; This site is strictly 18+. No minors. No trafficking. No hate. No bullying.</div>
-  <h1>Privacy Policy</h1>
-  <p><strong>Site:</strong> conduitprotect.info &nbsp;|&nbsp; <strong>Operator:</strong> Anthony Boyd, Lility LLC, Philadelphia, PA USA<br>
-  <strong>Contact:</strong> <a href="mailto:admin@conduitprotect.info">admin@conduitprotect.info</a> &nbsp;|&nbsp; <strong>Last Updated:</strong> March 26, 2026</p>
-
-  <h2>Data We Collect</h2>
-  <ul>
-    <li>IP address &amp; browser/device info (essential site function)</li>
-    <li>Wallet address (for Web3 auth — never linked to real identity)</li>
-    <li>User posts and uploads (content you provide)</li>
-    <li>Cookies (with your consent only)</li>
-  </ul>
-
-  <h2>How We Use It</h2>
-  <p>Site operation only. No selling. No sharing with third parties. No ads.</p>
-
-  <h2>Third Parties</h2>
-  <p>None currently. Any future additions will be listed here first.</p>
-
-  <h2>Your Rights</h2>
-  <ul>
-    <li><strong>Access / Delete:</strong> Email <a href="mailto:admin@conduitprotect.info">admin@conduitprotect.info</a></li>
-    <li><strong>California (CPRA):</strong> <a href="mailto:admin@conduitprotect.info?subject=Do Not Sell My Info">Do Not Sell My Personal Information</a></li>
-    <li><strong>Pennsylvania (PCDPA):</strong> Opt-out rights honored on request</li>
-    <li><strong>GPC Signal:</strong> Honored automatically</li>
-  </ul>
-
-  <h2>Cookies</h2>
-  <p>All non-essential cookies are blocked until you consent. See <a href="/cookie-policy.html">Cookie Policy</a>.</p>
-
-  <h2>Minors</h2>
-  <p>This platform is strictly for users <strong>18 and older</strong>. We do not knowingly collect data from minors. Any content involving minors is immediately removed and reported to NCMEC and law enforcement per 18 U.S.C. § 2252.</p>
-
-  <h2>Content Moderation</h2>
-  <p>All uploads and posts are automatically scanned for CSAM, trafficking indicators, hate speech, and bullying. Violations result in permanent ban and law enforcement referral.</p>
-
-  <footer>&#169; 2026 Conduit | Lility LLC | Philadelphia, PA | <a href="mailto:admin@conduitprotect.info">admin@conduitprotect.info</a> | <a href="/terms-of-service.html">Terms of Service</a> | <a href="/cookie-policy.html">Cookie Policy</a></footer>
+  <div class="page">
+    <div class="nav-logo">
+      <a href="/" style="display:flex;align-items:center;gap:10px;text-decoration:none;">
+        <img src="/logo.png" alt="Conduit" />
+        <span>CONDUIT</span>
+      </a>
+    </div>
+    <h1>Privacy Policy</h1>
+    <p>Effective: March 2026 &nbsp;·&nbsp; conduitprotect.info &nbsp;·&nbsp; admin@conduitprotect.info</p>
+    <h2>1. What We Collect</h2>
+    <p>Conduit collects <strong>no personal data</strong>. There are no accounts, no emails, no names, no IP logs retained. Your cryptographic identity is generated locally in your browser and never transmitted to our servers in identifiable form.</p>
+    <h2>2. Local Storage</h2>
+    <p>Your identity keypair, age verification token, and preferences are stored in your browser's <strong>localStorage</strong>. We have no access to this data. Clearing your browser data removes your local identity permanently.</p>
+    <h2>3. Relay Behavior</h2>
+    <p>The Conduit relay receives signed message packets. It does not log sender identities, IP addresses, or message content beyond the minimum required for real-time delivery. No message content is stored server-side after delivery.</p>
+    <h2>4. Cookies</h2>
+    <p>We use only technically necessary cookies. No advertising or tracking cookies are used. Non-essential cookies are blocked until you provide consent via the cookie banner.</p>
+    <h2>5. Third Parties</h2>
+    <p>Conduit does not sell, share, or transfer your data to any third party. Wallet connections (if used) are handled client-side and never expose private keys to our servers.</p>
+    <h2>6. Children</h2>
+    <p>Conduit is restricted to users 18 and older. We do not knowingly collect data from minors.</p>
+    <h2>7. Changes</h2>
+    <p>We may update this policy. Continued use after changes constitutes acceptance. Check this page periodically.</p>
+    <h2>8. Contact</h2>
+    <p>Questions? Email <strong>admin@conduitprotect.info</strong></p>
+    <div class="footer">© 2026 Conduit &nbsp;·&nbsp; <a href="/terms-of-service.html" style="color:inherit;">Terms of Service</a> &nbsp;·&nbsp; <a href="/" style="color:inherit;">Home</a></div>
+  </div>
 </body>
 </html>

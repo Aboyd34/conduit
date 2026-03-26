@@ -4,120 +4,39 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FAQ — Conduit</title>
-  <meta property="og:title" content="FAQ — Conduit" />
-  <meta property="og:description" content="Answers to common questions about Conduit's privacy, keys, AETH token, and how the platform works." />
-  <meta property="og:image" content="https://conduitprotect.info/logo.png" />
-  <meta property="og:url" content="https://conduitprotect.info/faq.html" />
   <style>
-    body { font-family: Arial, sans-serif; max-width: 820px; margin: 40px auto; padding: 20px; background: #0d0d1a; color: #e0e0e0; line-height: 1.7; }
-    h1 { color: #c8a014; } h2 { color: #a78bfa; margin-top: 32px; }
-    a { color: #4fc3f7; } footer { margin-top: 40px; font-size: 12px; color: #666; }
-    .nav { margin-bottom: 28px; font-size: 13px; } .nav a { color: #a78bfa; margin-right: 16px; text-decoration: none; }
-    details { background: #13122a; border: 1px solid #2d2a4a; border-radius: 10px; margin-bottom: 10px; padding: 14px 18px; }
-    summary { font-weight: bold; color: #e2e8f0; cursor: pointer; font-size: 15px; }
-    summary:hover { color: #c8a014; }
-    details p { margin: 10px 0 0; color: rgba(255,255,255,0.6); font-size: 14px; }
-    .section-label { font-family: monospace; font-size: 10px; letter-spacing: 3px; color: rgba(255,255,255,0.2); margin: 32px 0 12px; }
+    :root { --bg:#07070d; --border:#1c1c2e; --accent:#7c6af7; --text:#e8e8f0; --muted:#888899; --dim:#444455; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,sans-serif; line-height:1.7; padding:0 1rem; }
+    .page { max-width:720px; margin:0 auto; padding:4rem 0 6rem; }
+    .nav-logo { display:flex; align-items:center; gap:10px; margin-bottom:2rem; }
+    .nav-logo img { width:36px; height:36px; object-fit:contain; }
+    .nav-logo span { font-size:1.1rem; font-weight:800; letter-spacing:2px; color:var(--accent); }
+    h1 { font-size:2rem; font-weight:800; margin-bottom:2rem; }
+    .faq-item { border-bottom:1px solid var(--border); padding:1.25rem 0; }
+    .faq-q { font-size:1rem; font-weight:700; color:var(--text); margin-bottom:0.5rem; }
+    .faq-a { font-size:0.93rem; color:var(--muted); }
+    .footer { text-align:center; margin-top:4rem; font-size:0.78rem; color:var(--dim); }
   </style>
 </head>
 <body>
-  <div class="nav"><a href="/">&#8592; Back to Conduit</a></div>
-  <h1>&#9889; Frequently Asked Questions</h1>
-  <p style="color:rgba(255,255,255,0.4); font-size:14px;">Everything you need to know about Conduit. Can't find your answer? <a href="mailto:admin@conduitprotect.info">Contact us.</a></p>
-
-  <div class="section-label">IDENTITY &amp; KEYS</div>
-
-  <details>
-    <summary>What is a Signal Key?</summary>
-    <p>Your Signal Key is a cryptographic keypair that acts as your identity on Conduit. There's no email, no phone number, no username tied to a real identity — just your key. It's generated in your browser and stored locally.</p>
-  </details>
-
-  <details>
-    <summary>Where is my Signal Key stored?</summary>
-    <p>Your Signal Key is stored in your browser's localStorage. It never leaves your device and is never sent to our servers. Think of it like a password that only exists on your machine.</p>
-  </details>
-
-  <details>
-    <summary>What happens if I clear my browser data?</summary>
-    <p>Your Signal Key will be deleted. This is permanent — we cannot recover it. Before clearing your browser, export your key from the Settings page and store it somewhere safe (like a password manager or encrypted file).</p>
-  </details>
-
-  <details>
-    <summary>Can I use Conduit on multiple devices?</summary>
-    <p>Yes. Export your Signal Key from one device and import it on another. Your identity and post history travel with the key.</p>
-  </details>
-
-  <details>
-    <summary>Can I recover my account if I lose my key?</summary>
-    <p>No. There is no account recovery. This is by design — Conduit has no central authority that can reset your identity. Guard your key like a private password. Back it up.</p>
-  </details>
-
-  <div class="section-label">PRIVACY &amp; SAFETY</div>
-
-  <details>
-    <summary>Does Conduit store my posts?</summary>
-    <p>Posts are stored locally in your browser's localStorage. They are not stored on a central server. If you clear your browser data, your post history is gone.</p>
-  </details>
-
-  <details>
-    <summary>Can Conduit see my messages?</summary>
-    <p>No. Direct signals (DMs) are stored only in your browser and the recipient's browser. We have no access to message content.</p>
-  </details>
-
-  <details>
-    <summary>Is Conduit anonymous?</summary>
-    <p>Your identity on Conduit is your fingerprint derived from your Signal Key — not your real name. However, your IP address may be visible to our infrastructure. Use a VPN for maximum anonymity.</p>
-  </details>
-
-  <details>
-    <summary>Who can see my posts?</summary>
-    <p>Posts in public rooms are visible to all users in that room. Ephemeral DMs are never stored and disappear when the session ends.</p>
-  </details>
-
-  <div class="section-label">AETH TOKEN</div>
-
-  <details>
-    <summary>What is AETH?</summary>
-    <p>AETH (Aether) is Conduit's platform utility token. Holding AETH unlocks premium features including the #aether room, advanced moderation tools, and future perks.</p>
-  </details>
-
-  <details>
-    <summary>How do I get AETH?</summary>
-    <p>AETH is available through the Airdrop event. Visit the <a href="/app">Airdrop page</a> to see current distribution phases and requirements.</p>
-  </details>
-
-  <details>
-    <summary>What blockchain is AETH on?</summary>
-    <p>AETH contract and chain details will be published at launch. Check the Airdrop page for the latest info.</p>
-  </details>
-
-  <details>
-    <summary>Is AETH an investment?</summary>
-    <p>No. AETH is a utility token for use within the Conduit platform. It is not a security or investment vehicle. Do not purchase AETH expecting financial returns.</p>
-  </details>
-
-  <div class="section-label">PLATFORM</div>
-
-  <details>
-    <summary>Is Conduit free to use?</summary>
-    <p>Yes. Core features are free. Premium features require AETH. There are no subscription fees.</p>
-  </details>
-
-  <details>
-    <summary>What devices does Conduit support?</summary>
-    <p>Conduit is a Progressive Web App (PWA) — it works on any modern browser on desktop or mobile. You can install it to your home screen for an app-like experience.</p>
-  </details>
-
-  <details>
-    <summary>How do I install Conduit on my phone?</summary>
-    <p>Visit conduitprotect.info in your mobile browser. Tap the install banner that appears at the bottom, or use your browser's "Add to Home Screen" option.</p>
-  </details>
-
-  <details>
-    <summary>How do I report a user or post?</summary>
-    <p>Tap the flag icon on any post to report it. Our moderation system reviews all flagged content. For urgent issues, email <a href="mailto:admin@conduitprotect.info">admin@conduitprotect.info</a>.</p>
-  </details>
-
-  <footer>&#169; 2026 Conduit | Lility LLC | Philadelphia, PA | <a href="/privacy-policy.html">Privacy Policy</a> | <a href="/terms-of-service.html">Terms of Service</a> | <a href="mailto:admin@conduitprotect.info">Contact</a></footer>
+  <div class="page">
+    <div class="nav-logo">
+      <a href="/" style="display:flex;align-items:center;gap:10px;text-decoration:none;">
+        <img src="/logo.png" alt="Conduit" />
+        <span>CONDUIT</span>
+      </a>
+    </div>
+    <h1>Frequently Asked Questions</h1>
+    <div class="faq-item"><p class="faq-q">Where are my keys stored?</p><p class="faq-a">Your cryptographic identity lives entirely in your browser's localStorage. Nothing is ever sent to a server in a form that identifies you.</p></div>
+    <div class="faq-item"><p class="faq-q">What happens if I clear my browser?</p><p class="faq-a">Your local identity is permanently deleted. Always export and back up your key from the You panel before clearing storage.</p></div>
+    <div class="faq-item"><p class="faq-q">Can I export my identity?</p><p class="faq-a">Yes. Open the You panel inside the app and use the Export Key option to download your keypair as an encrypted backup file.</p></div>
+    <div class="faq-item"><p class="faq-q">Is Conduit free?</p><p class="faq-a">Yes. Conduit is free to use. Aether (AETH) is the optional premium layer that unlocks holder-only rooms and governance features.</p></div>
+    <div class="faq-item"><p class="faq-q">Do I need a wallet?</p><p class="faq-a">No wallet is required for basic Conduit use. A wallet is only needed to connect Aether tokens for premium features.</p></div>
+    <div class="faq-item"><p class="faq-q">Can the relay read my messages?</p><p class="faq-a">The relay receives signed packets. Message content is not stored server-side after delivery. The relay is infrastructure, not a record keeper.</p></div>
+    <div class="faq-item"><p class="faq-q">How do I get Aether?</p><p class="faq-a">Aether (AETH) token details including contract address, chain, and purchase instructions are coming soon on the About page.</p></div>
+    <div class="faq-item"><p class="faq-q">How do I report abuse?</p><p class="faq-a">Email admin@conduitprotect.info with the subject "Abuse Report" and include the signed message hash and description of the violation.</p></div>
+    <div class="footer">© 2026 Conduit &nbsp;·&nbsp; <a href="/" style="color:inherit;">Home</a> &nbsp;·&nbsp; <a href="/about.html" style="color:inherit;">About</a></div>
+  </div>
 </body>
 </html>

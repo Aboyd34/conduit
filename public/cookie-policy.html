@@ -2,33 +2,41 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Cookie Policy — Conduit</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 820px; margin: 40px auto; padding: 20px; background: #0d0d1a; color: #e0e0e0; line-height: 1.7; }
-    h1 { color: #FF6B6B; } h2 { color: #FFD93D; }
-    table { width: 100%; border-collapse: collapse; margin: 16px 0; }
-    th { background: #1565c0; color: #fff; padding: 10px; text-align: left; }
-    td { padding: 10px; border: 1px solid #333; }
-    a { color: #4fc3f7; }
+    :root { --bg:#07070d; --border:#1c1c2e; --accent:#7c6af7; --text:#e8e8f0; --muted:#888899; --dim:#444455; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,sans-serif; line-height:1.7; padding:0 1rem; }
+    .page { max-width:720px; margin:0 auto; padding:4rem 0 6rem; }
+    .nav-logo { display:flex; align-items:center; gap:10px; margin-bottom:2rem; }
+    .nav-logo img { width:36px; height:36px; object-fit:contain; }
+    .nav-logo span { font-size:1.1rem; font-weight:800; letter-spacing:2px; color:var(--accent); }
+    h1 { font-size:2rem; font-weight:800; margin-bottom:0.5rem; }
+    h2 { font-size:1.2rem; font-weight:700; margin:2rem 0 0.5rem; color:var(--accent); }
+    p { font-size:0.95rem; color:var(--muted); margin-bottom:1rem; }
+    .footer { text-align:center; margin-top:4rem; font-size:0.78rem; color:var(--dim); }
   </style>
 </head>
 <body>
-  <h1>Cookie Policy</h1>
-  <p><strong>cantc-ulive.live / Conduit</strong> &nbsp;|&nbsp; Last Updated: March 16, 2026</p>
-
-  <h2>Cookies We Use</h2>
-  <table>
-    <tr><th>Type</th><th>Purpose</th><th>Consent Required</th></tr>
-    <tr><td>Essential</td><td>Login session, security, site function</td><td>No (always on)</td></tr>
-    <tr><td>Analytics</td><td>Usage statistics (optional)</td><td>Yes</td></tr>
-  </table>
-
-  <h2>Third-Party Cookies</h2>
-  <p>None currently installed on this site.</p>
-
-  <h2>Manage Your Preferences</h2>
-  <p>Use the cookie banner at the bottom of every page to accept, reject, or update your preferences at any time.</p>
-
-  <p>More info: <a href="/privacy-policy.html">Privacy Policy</a> | Contact: admin@cantc-ulive.live</p>
+  <div class="page">
+    <div class="nav-logo">
+      <a href="/" style="display:flex;align-items:center;gap:10px;text-decoration:none;">
+        <img src="/logo.png" alt="Conduit" />
+        <span>CONDUIT</span>
+      </a>
+    </div>
+    <h1>Cookie Policy</h1>
+    <p>Effective: March 2026 &nbsp;·&nbsp; conduitprotect.info</p>
+    <h2>What We Use</h2>
+    <p>Conduit uses only technically necessary browser storage (localStorage) to maintain your local identity and preferences. We do not use advertising cookies, tracking pixels, or analytics scripts.</p>
+    <h2>Third-Party Cookies</h2>
+    <p>No third-party cookies are set by Conduit. Wallet providers (e.g. MetaMask) may set their own cookies governed by their own policies.</p>
+    <h2>Control</h2>
+    <p>You can clear all Conduit storage at any time via your browser settings. Note that clearing localStorage will permanently delete your local identity keypair.</p>
+    <h2>Contact</h2>
+    <p>Questions? Email <strong>admin@conduitprotect.info</strong></p>
+    <div class="footer">© 2026 Conduit &nbsp;·&nbsp; <a href="/privacy-policy.html" style="color:inherit;">Privacy Policy</a> &nbsp;·&nbsp; <a href="/" style="color:inherit;">Home</a></div>
+  </div>
 </body>
 </html>
