@@ -1,32 +1,39 @@
-const CACHE = 'conduit-v1';
-const PRECACHE = ['/', '/app', '/manifest.json'];
+/**
+ * Conduit Service Worker
+ * Caches app shell for offline support
+ */
+const CACHE  = 'conduit-v1'
+const ASSETS = ['/', '/index.html']
 
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(PRECACHE)).then(() => self.skipWaiting())
-  );
-});
+    caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())
+  )
+})
 
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
       Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
     ).then(() => self.clients.claim())
-  );
-});
+  )
+})
 
 self.addEventListener('fetch', e => {
-  // Never intercept API or WS calls
-  if (e.request.url.includes('/api/') || e.request.url.includes('/ws')) return;
-  if (e.request.method !== 'GET') return;
-
+  if (e.request.method !== 'GET') return
+  const url = new URL(e.request.url)
+  // Network-first for API calls
+  if (url.pathname.startsWith('/api/')) {
+    e.respondWith(
+      fetch(e.request).catch(() => new Response('{}', { headers: { 'Content-Type': 'application/json' } }))
+    )
+    return
+  }
+  // Cache-first for app shell
   e.respondWith(
-    fetch(e.request)
-      .then(res => {
-        const clone = res.clone();
-        caches.open(CACHE).then(c => c.put(e.request, clone));
-        return res;
-      })
-      .catch(() => caches.match(e.request))
-  );
-});
+    caches.match(e.request).then(cached => cached || fetch(e.request).then(res => {
+      if (res.ok) caches.open(CACHE).then(c => c.put(e.request, res.clone()))
+      return res
+    }))
+  )
+})

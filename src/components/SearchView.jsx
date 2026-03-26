@@ -1,70 +1,144 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react'
 
-const SearchIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="8"/>
-    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-  </svg>
-);
+const ROOMS = ['general','dev','privacy','aether','random']
+const ROOM_COLORS = { general:'#5b8cff', dev:'#9b5cff', privacy:'#00ffc3', aether:'#ffd700', random:'#ff6b6b' }
 
-export default function SearchView({ onViewProfile }) {
-  const [query, setQuery] = useState('');
+export default function SearchView({ posts = {}, onGoToRoom }) {
+  const [query, setQuery] = useState('')
+  const [filter, setFilter] = useState('all') // all | posts | rooms | fingerprints
+
+  const flatPosts = useMemo(() => {
+    return ROOMS.flatMap(room =>
+      (posts[room] || []).filter(p => !p.removed).map(p => ({ ...p, room }))
+    )
+  }, [posts])
+
+  const results = useMemo(() => {
+    if (!query.trim()) return []
+    const q = query.toLowerCase()
+    return flatPosts.filter(p => {
+      if (filter === 'rooms')        return p.room.includes(q)
+      if (filter === 'fingerprints') return p.fingerprint?.toLowerCase().includes(q)
+      if (filter === 'posts')        return p.text?.toLowerCase().includes(q)
+      return (
+        p.text?.toLowerCase().includes(q) ||
+        p.fingerprint?.toLowerCase().includes(q) ||
+        p.room.includes(q)
+      )
+    })
+  }, [query, filter, flatPosts])
+
+  const trending = useMemo(() => {
+    const words = {}
+    flatPosts.forEach(p => {
+      ;(p.text || '').split(/\s+/).forEach(w => {
+        if (w.startsWith('#') && w.length > 1) words[w] = (words[w] || 0) + 1
+      })
+    })
+    return Object.entries(words).sort((a,b) => b[1]-a[1]).slice(0, 8)
+  }, [flatPosts])
+
+  function highlight(text, q) {
+    if (!text || !q) return text
+    const idx = text.toLowerCase().indexOf(q.toLowerCase())
+    if (idx === -1) return text
+    return (
+      <>{text.slice(0, idx)}<mark style={{ background: 'rgba(124,58,237,0.35)', color: '#e2e8f0', borderRadius: 2 }}>{text.slice(idx, idx+q.length)}</mark>{text.slice(idx+q.length)}</>
+    )
+  }
 
   return (
-    <div style={{ padding: '2rem', background: '#07060f', minHeight: '100vh', color: '#f1f1f7' }}>
+    <div style={{ padding: '20px 16px', maxWidth: 580, margin: '0 auto', paddingBottom: 80 }}>
 
-      <header style={{ marginBottom: '1.5rem' }}>
-        <h1 style={{ fontFamily: 'monospace', fontSize: 18, color: '#5b8cff', letterSpacing: 2 }}>SEARCH</h1>
-        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginTop: 4 }}>Find signals, rooms, and identities</p>
-      </header>
-
-      {/* Search input */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 10,
-        background: 'rgba(255,255,255,0.04)',
-        border: '1px solid rgba(91,140,255,0.2)',
-        borderRadius: 12, padding: '10px 16px', marginBottom: '2rem',
-      }}>
-        <span style={{ color: 'rgba(255,255,255,0.3)' }}><SearchIcon /></span>
+      {/* Search bar */}
+      <div style={{ position: 'relative', marginBottom: 16 }}>
+        <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 16, pointerEvents: 'none' }}>🔍</span>
         <input
-          autoFocus
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder="Search rooms, signals, fingerprints…"
+          placeholder="Search signals, rooms, fingerprints…"
+          autoFocus
           style={{
-            flex: 1, background: 'transparent', border: 'none', outline: 'none',
-            color: '#f1f1f7', fontSize: 14, fontFamily: 'monospace',
+            width: '100%', boxSizing: 'border-box',
+            padding: '12px 14px 12px 38px',
+            background: '#0f0e1a', border: '1px solid #2d2a4a',
+            borderRadius: 12, color: '#e2e8f0', fontSize: 14,
+            outline: 'none', fontFamily: 'monospace',
           }}
         />
         {query && (
-          <button onClick={() => setQuery('')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontSize: 16 }}>×</button>
+          <button onClick={() => setQuery('')} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontSize: 16 }}>×</button>
         )}
       </div>
 
-      {/* Empty state */}
-      {!query && (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '45vh', gap: 12, opacity: 0.4 }}>
-          <SearchIcon />
-          <p style={{ fontFamily: 'monospace', color: '#5b8cff', fontSize: 13 }}>Start typing to search</p>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', marginTop: 8 }}>
-            {['#general', '#aether', '#dev', '#privacy'].map(tag => (
+      {/* Filter pills */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+        {['all','posts','rooms','fingerprints'].map(f => (
+          <button key={f} onClick={() => setFilter(f)} style={{
+            padding: '5px 14px', borderRadius: 20, border: '1px solid',
+            borderColor: filter === f ? '#7c3aed' : 'rgba(255,255,255,0.1)',
+            background: filter === f ? 'rgba(124,58,237,0.15)' : 'transparent',
+            color: filter === f ? '#a78bfa' : 'rgba(255,255,255,0.35)',
+            fontSize: 11, cursor: 'pointer', fontFamily: 'monospace',
+          }}>{f}</button>
+        ))}
+      </div>
+
+      {/* Trending hashtags */}
+      {!query && trending.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', fontFamily: 'monospace', letterSpacing: 2, marginBottom: 10 }}>TRENDING</div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {trending.map(([tag, count]) => (
               <button key={tag} onClick={() => setQuery(tag)} style={{
-                padding: '4px 12px', borderRadius: 20, border: '1px solid rgba(91,140,255,0.25)',
-                background: 'rgba(91,140,255,0.08)', color: '#5b8cff',
-                fontSize: 12, fontFamily: 'monospace', cursor: 'pointer',
-              }}>{tag}</button>
+                padding: '5px 12px', borderRadius: 20,
+                background: 'rgba(124,58,237,0.08)',
+                border: '1px solid rgba(124,58,237,0.2)',
+                color: '#a78bfa', fontSize: 12, cursor: 'pointer',
+                fontFamily: 'monospace',
+              }}>{tag} <span style={{ opacity: 0.4 }}>{count}</span></button>
             ))}
           </div>
         </div>
       )}
 
-      {/* Results placeholder */}
-      {query && (
-        <div style={{ color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace', fontSize: 13, textAlign: 'center', marginTop: '4rem' }}>
-          Searching for &ldquo;{query}&rdquo;…
-          <br /><span style={{ fontSize: 11, marginTop: 8, display: 'block' }}>Backend search coming soon</span>
+      {/* Empty state */}
+      {!query && (
+        <div style={{ textAlign: 'center', opacity: 0.3, marginTop: 40 }}>
+          <div style={{ fontSize: 32, marginBottom: 10 }}>📡</div>
+          <p style={{ fontFamily: 'monospace', fontSize: 13 }}>Search the signal.</p>
         </div>
       )}
+
+      {/* No results */}
+      {query && results.length === 0 && (
+        <div style={{ textAlign: 'center', opacity: 0.3, marginTop: 40 }}>
+          <div style={{ fontSize: 28, marginBottom: 8 }}>🔇</div>
+          <p style={{ fontFamily: 'monospace', fontSize: 12 }}>No signals match "{query}"</p>
+        </div>
+      )}
+
+      {/* Results */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {results.map(post => (
+          <div key={post.id + post.room}
+            onClick={() => onGoToRoom && onGoToRoom(post.room)}
+            style={{
+              background: '#0f0e1a', border: `1px solid ${ROOM_COLORS[post.room]}30`,
+              borderRadius: 12, padding: '14px 16px', cursor: 'pointer', transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = ROOM_COLORS[post.room]}
+            onMouseLeave={e => e.currentTarget.style.borderColor = `${ROOM_COLORS[post.room]}30`}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <span style={{ fontFamily: 'monospace', fontSize: 10, color: ROOM_COLORS[post.room] }}>#{post.room}</span>
+              <span style={{ fontFamily: 'monospace', fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>{post.fingerprint}</span>
+            </div>
+            <p style={{ fontSize: 13, color: '#e2e8f0', lineHeight: 1.6, margin: 0 }}>{highlight(post.text, query)}</p>
+          </div>
+        ))}
+      </div>
+
     </div>
-  );
+  )
 }

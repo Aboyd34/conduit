@@ -1,49 +1,70 @@
 import React from 'react'
-import { Avatar } from './UserProfile.jsx'
 
-export default function NotificationsPanel({ notifications = [], onDismiss, onClear }) {
+const ROOM_COLORS = { general:'#5b8cff', dev:'#9b5cff', privacy:'#00ffc3', aether:'#ffd700', random:'#ff6b6b' }
+
+function NotifIcon({ type }) {
+  const icons = { signal: '📶', reply: '💬', boost: '⚡', system: '📡', dm: '✉️' }
+  return <span style={{ fontSize: 18, lineHeight: 1, flexShrink: 0 }}>{icons[type] || '📡'}</span>
+}
+
+export default function NotificationsPanel({ notifications = [], onMarkRead, onClear, onClose }) {
   const unread = notifications.filter(n => !n.read).length
 
   return (
     <div style={{
-      position: 'fixed', top: 0, right: 0, height: '100vh', width: 300, zIndex: 400,
-      background: 'linear-gradient(135deg,#0f0e1a,#16142a)',
-      borderLeft: '1px solid #2d2a4a',
-      display: 'flex', flexDirection: 'column',
-      boxShadow: '-8px 0 32px rgba(7,6,15,0.6)',
+      position: 'fixed', top: 0, right: 0, width: 340, height: '100vh',
+      background: '#0a0916', borderLeft: '1px solid #1e1c30',
+      zIndex: 600, display: 'flex', flexDirection: 'column',
+      boxShadow: '-8px 0 40px rgba(0,0,0,0.6)',
     }}>
       {/* Header */}
-      <div style={{ padding: '18px 16px 12px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontFamily: 'monospace', fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: 2 }}>PULSE</span>
-          {unread > 0 && <span style={{ fontSize: 9, background: '#7c3aed', color: '#fff', padding: '1px 6px', borderRadius: 10, fontFamily: 'monospace', fontWeight: 700 }}>{unread}</span>}
+      <div style={{ padding: '18px 18px 14px', borderBottom: '1px solid #1e1c30', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <span style={{ fontFamily: 'monospace', fontWeight: 800, fontSize: 14, color: '#e2e8f0' }}>Notifications</span>
+          {unread > 0 && <span style={{ marginLeft: 8, background: '#7c3aed', color: '#fff', fontSize: 10, fontFamily: 'monospace', padding: '1px 7px', borderRadius: 20 }}>{unread}</span>}
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          {notifications.length > 0 && <button onClick={onClear} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.2)', cursor: 'pointer', fontSize: 10, fontFamily: 'monospace' }}>Clear all</button>}
-          <button onClick={onDismiss} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontSize: 16 }}>×</button>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {notifications.length > 0 && (
+            <button onClick={onClear} style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', background: 'none', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontFamily: 'monospace' }}>Clear all</button>
+          )}
+          <button onClick={onClose} style={{ fontSize: 18, background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', lineHeight: 1 }}>×</button>
         </div>
       </div>
 
-      {/* List */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
+      {/* Body */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '10px 0' }}>
         {notifications.length === 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60%', gap: 10, opacity: 0.3 }}>
-            <div style={{ fontSize: 28 }}>📡</div>
-            <p style={{ fontFamily: 'monospace', fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: 0 }}>No pulse activity yet</p>
+          <div style={{ textAlign: 'center', padding: '60px 20px', opacity: 0.3 }}>
+            <div style={{ fontSize: 32, marginBottom: 10 }}>📡</div>
+            <p style={{ fontFamily: 'monospace', fontSize: 12 }}>No signals yet.</p>
           </div>
-        ) : notifications.slice().reverse().map((n, i) => (
-          <div key={i} style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.03)', background: n.read ? 'transparent' : 'rgba(124,58,237,0.05)', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-            <Avatar fingerprint={n.from || 'system'} handle={n.from} size={28} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.65)', lineHeight: 1.5 }}>
-                <span style={{ color: '#a78bfa', fontFamily: 'monospace' }}>{n.from || 'System'}</span>{' '}{n.action}
+        ) : (
+          notifications.map(n => (
+            <div key={n.id} onClick={onMarkRead}
+              style={{
+                padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.04)',
+                display: 'flex', gap: 12, alignItems: 'flex-start',
+                background: n.read ? 'transparent' : 'rgba(124,58,237,0.05)',
+                cursor: 'pointer', transition: 'background 0.15s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
+              onMouseLeave={e => e.currentTarget.style.background = n.read ? 'transparent' : 'rgba(124,58,237,0.05)'}
+            >
+              <NotifIcon type={n.type} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
+                  <span style={{ fontFamily: 'monospace', fontSize: 11, color: n.room ? ROOM_COLORS[n.room] || '#a78bfa' : '#a78bfa' }}>#{n.room || 'system'}</span>
+                  <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', fontFamily: 'monospace' }}>{n.ts ? new Date(n.ts).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : ''}</span>
+                </div>
+                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', margin: 0, lineHeight: 1.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {n.from && <span style={{ color: 'rgba(255,255,255,0.4)', fontFamily: 'monospace' }}>{n.from} · </span>}
+                  {n.preview}
+                </p>
               </div>
-              {n.preview && <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'monospace' }}>"{ n.preview}"</div>}
-              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', fontFamily: 'monospace', marginTop: 4 }}>{n.time} · {n.room}</div>
+              {!n.read && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#7c3aed', flexShrink: 0, marginTop: 5 }} />}
             </div>
-            {!n.read && <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#7c3aed', flexShrink: 0, marginTop: 4 }} />}
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   )
