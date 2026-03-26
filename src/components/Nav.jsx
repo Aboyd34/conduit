@@ -17,8 +17,7 @@ export default function Nav({ activePath = '/' }) {
       {/* ── DESKTOP sidebar ── */}
       <nav style={styles.desktop}>
         <div style={styles.logo}>
-          <span style={styles.bolt}>⚡</span>
-          <span style={styles.logoText}>CONDUIT</span>
+          <img src="/logo.png" alt="Conduit" style={styles.logoImg} />
         </div>
         <div style={styles.navList}>
           {NAV_ITEMS.map(item => (
@@ -36,8 +35,7 @@ export default function Nav({ activePath = '/' }) {
       {/* ── MOBILE top bar ── */}
       <header style={styles.mobileBar}>
         <div style={styles.mobileLogo}>
-          <span style={{ fontSize: 18 }}>⚡</span>
-          <span style={styles.logoText}>CONDUIT</span>
+          <img src="/logo.png" alt="Conduit" style={styles.mobileLogoImg} />
         </div>
         <button onClick={() => setMenuOpen(o => !o)} style={styles.hamburger} aria-label="Menu">
           {menuOpen
@@ -88,9 +86,8 @@ const styles = {
     flexDirection: 'column', padding: '28px 16px', zIndex: 100,
     gap: 4,
   },
-  logo: { display: 'flex', alignItems: 'center', gap: 8, padding: '0 8px 24px' },
-  bolt: { fontSize: 22 },
-  logoText: { fontFamily: 'monospace', fontWeight: 900, fontSize: 16, color: '#7c3aed', letterSpacing: 3 },
+  logo: { display: 'flex', alignItems: 'center', padding: '0 8px 24px' },
+  logoImg: { height: 36, width: 'auto', objectFit: 'contain' },
   navList: { display: 'flex', flexDirection: 'column', gap: 4 },
   navItem: {
     display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10,
@@ -108,10 +105,11 @@ const styles = {
     alignItems: 'center', justifyContent: 'space-between', padding: '0 16px',
     backdropFilter: 'blur(12px)',
   },
-  mobileLogo: { display: 'flex', alignItems: 'center', gap: 8 },
+  mobileLogo: { display: 'flex', alignItems: 'center' },
+  mobileLogoImg: { height: 28, width: 'auto', objectFit: 'contain' },
   hamburger: {
-    background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-    borderRadius: 8, padding: '7px 8px', cursor: 'pointer', color: 'rgba(255,255,255,0.6)',
+    background: 'transparent', border: 'none',
+    borderRadius: 8, padding: '7px 4px', cursor: 'pointer', color: 'rgba(255,255,255,0.6)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
   },
 
