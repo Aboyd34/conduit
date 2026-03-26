@@ -13,6 +13,9 @@ export default function AgeGate({ onVerify }) {
   const [checked, setChecked] = useState(false)
   const [error, setError] = useState('')
   const [dob, setDob] = useState('')
+  const [showAdmin, setShowAdmin] = useState(false)
+  const [adminPass, setAdminPass] = useState('')
+  const [adminError, setAdminError] = useState('')
 
   function verify() {
     setError('')
@@ -27,44 +30,77 @@ export default function AgeGate({ onVerify }) {
     onVerify()
   }
 
+  function tryAdmin() {
+    const ADMIN_HASH = 'Q2xhdWRldHRlLUFudGhvbnktVXM='
+    if (btoa(adminPass.trim()) === ADMIN_HASH) {
+      localStorage.setItem('conduit_admin_role', 'admin')
+      const token = buildAgeToken()
+      localStorage.setItem(AGE_KEY, token)
+      onVerify()
+    } else {
+      setAdminError('Invalid admin key.')
+    }
+  }
+
   return (
     <div style={overlay}>
       <div style={modal}>
         <div style={logo}>⚡ CONDUIT</div>
-        <h2 style={title}>Age Verification</h2>
-        <p style={sub}>You must be 18 or older to access this platform.</p>
 
-        <label style={label}>Date of Birth</label>
-        <input
-          type="date"
-          value={dob}
-          onChange={e => setDob(e.target.value)}
-          max={new Date(Date.now() - 18 * 365.25 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
-          style={input}
-        />
+        {!showAdmin ? (
+          <>
+            <h2 style={title}>Age Verification</h2>
+            <p style={sub}>You must be 18 or older to access this platform.</p>
 
-        <div style={checkRow}>
-          <input
-            type="checkbox"
-            id="tos"
-            checked={checked}
-            onChange={e => setChecked(e.target.checked)}
-            style={{ width: 18, height: 18, accentColor: '#7c3aed', cursor: 'pointer' }}
-          />
-          <label htmlFor="tos" style={{ color: '#a78bfa', fontSize: 13, cursor: 'pointer' }}>
-            I agree to the{' '}
-            <a href="/privacy-policy.html" target="_blank" rel="noreferrer" style={{ color: '#c4b5fd' }}>Terms of Service</a>
-            {' '}and confirm I am 18+
-          </label>
-        </div>
+            <label style={labelStyle}>Date of Birth</label>
+            <input
+              type="date"
+              value={dob}
+              onChange={e => setDob(e.target.value)}
+              max={new Date(Date.now() - 18 * 365.25 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+              style={inputStyle}
+            />
 
-        {error && <div style={errorBox}>{error}</div>}
+            <div style={checkRow}>
+              <input
+                type="checkbox"
+                id="tos"
+                checked={checked}
+                onChange={e => setChecked(e.target.checked)}
+                style={{ width: 18, height: 18, accentColor: '#7c3aed', cursor: 'pointer' }}
+              />
+              <label htmlFor="tos" style={{ color: '#a78bfa', fontSize: 13, cursor: 'pointer' }}>
+                I agree to the{' '}
+                <a href="/terms-of-service.html" target="_blank" rel="noreferrer" style={{ color: '#c4b5fd' }}>Terms of Service</a>
+                {' '}and{' '}
+                <a href="/privacy-policy.html" target="_blank" rel="noreferrer" style={{ color: '#c4b5fd' }}>Privacy Policy</a>
+                {' '}and confirm I am 18+
+              </label>
+            </div>
 
-        <button onClick={verify} style={btn}>Enter Conduit</button>
-
-        <p style={disclaimer}>
-          Age tokens are stored locally and never transmitted to our servers unverified.
-        </p>
+            {error && <div style={errorBox}>{error}</div>}
+            <button onClick={verify} style={btn}>Enter Conduit</button>
+            <p style={disclaimer}>Age tokens are stored locally and never transmitted to our servers unverified.</p>
+            <button onClick={() => setShowAdmin(true)} style={adminToggle}>Admin Access</button>
+          </>
+        ) : (
+          <>
+            <h2 style={title}>Admin Access</h2>
+            <p style={sub}>Enter your admin key to continue.</p>
+            <input
+              type="password"
+              value={adminPass}
+              onChange={e => setAdminPass(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && tryAdmin()}
+              placeholder="Admin key…"
+              style={inputStyle}
+              autoFocus
+            />
+            {adminError && <div style={errorBox}>{adminError}</div>}
+            <button onClick={tryAdmin} style={btn}>Unlock</button>
+            <button onClick={() => { setShowAdmin(false); setAdminError('') }} style={adminToggle}>← Back</button>
+          </>
+        )}
       </div>
     </div>
   )
@@ -85,8 +121,8 @@ const modal = {
 const logo = { color: '#7c3aed', fontSize: 22, fontWeight: 800, letterSpacing: 3, textAlign: 'center' }
 const title = { color: '#e2e8f0', fontSize: 22, fontWeight: 700, margin: 0, textAlign: 'center' }
 const sub = { color: '#94a3b8', fontSize: 14, margin: 0, textAlign: 'center' }
-const label = { color: '#a78bfa', fontSize: 13, fontWeight: 600 }
-const input = {
+const labelStyle = { color: '#a78bfa', fontSize: 13, fontWeight: 600 }
+const inputStyle = {
   width: '100%', padding: '10px 14px', borderRadius: 8,
   background: '#1e1c30', border: '1px solid #3b3560',
   color: '#e2e8f0', fontSize: 15, outline: 'none', boxSizing: 'border-box'
@@ -102,3 +138,8 @@ const btn = {
   color: '#fff', fontWeight: 700, fontSize: 16, cursor: 'pointer', marginTop: 4
 }
 const disclaimer = { color: '#475569', fontSize: 11, textAlign: 'center', lineHeight: 1.5, margin: 0 }
+const adminToggle = {
+  background: 'none', border: 'none', color: 'rgba(255,255,255,0.15)',
+  fontSize: 11, cursor: 'pointer', textAlign: 'center', fontFamily: 'monospace',
+  letterSpacing: 1, marginTop: 4, padding: 4
+}

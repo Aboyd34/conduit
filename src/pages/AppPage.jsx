@@ -12,6 +12,7 @@ import { Web3Provider } from '../providers/Web3Provider.jsx';
 
 const AGE_KEY     = 'conduit_age_verified';
 const ONBOARD_KEY = 'conduit_onboarded';
+const ADMIN_KEY   = 'conduit_admin_role';
 
 export default function AppPage() {
   const [verified,  setVerified]  = useState(false);
@@ -19,24 +20,31 @@ export default function AppPage() {
   const [view,      setView]      = useState('rooms');
   const [profileId, setProfileId] = useState(null);
   const [pulses,    setPulses]    = useState([]);
+  const [userRole,  setUserRole]  = useState('user');
 
   useEffect(() => {
     setVerified(!!localStorage.getItem(AGE_KEY));
     setOnboarded(!!localStorage.getItem(ONBOARD_KEY));
+    setUserRole(localStorage.getItem(ADMIN_KEY) || 'user');
   }, []);
 
-  if (!verified)  return <AgeGate onVerify={() => setVerified(true)} />;
+  function handleVerify() {
+    setVerified(true);
+    setUserRole(localStorage.getItem(ADMIN_KEY) || 'user');
+  }
+
+  if (!verified)  return <AgeGate onVerify={handleVerify} />;
   if (!onboarded) return <Onboarding onDone={() => setOnboarded(true)} />;
 
   function renderView() {
     switch (view) {
-      case 'rooms':   return <RoomsView onViewProfile={(id) => { setProfileId(id); setView('you'); }} />;
+      case 'rooms':   return <RoomsView userRole={userRole} onViewProfile={(id) => { setProfileId(id); setView('you'); }} />;
       case 'pulse':   return <PulseView pulses={pulses} />;
       case 'search':  return <SearchView onViewProfile={(id) => { setProfileId(id); setView('you'); }} />;
       case 'you':     return <YouView profileId={profileId} onBack={() => setView('rooms')} />;
       case 'ai':      return <AetherAI />;
       case 'airdrop': return <AirdropPage />;
-      default:        return <RoomsView onViewProfile={(id) => { setProfileId(id); setView('you'); }} />;
+      default:        return <RoomsView userRole={userRole} onViewProfile={(id) => { setProfileId(id); setView('you'); }} />;
     }
   }
 
