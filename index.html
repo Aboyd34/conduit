@@ -1,36 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#7c3aed" />
-    <meta name="description" content="Conduit — encrypted, decentralized social network" />
-    <!-- PWA: replaced deprecated apple-mobile-web-app-capable -->
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Conduit" />
-    <link rel="manifest" href="/manifest.json" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="shortcut icon" href="/favicon.svg" />
-    <title>Conduit</title>
-    <style>
-      body { margin: 0; background: #05050a; color: #f1f1f7; font-family: system-ui, sans-serif; }
-      #root { min-height: 100vh; }
-      #fallback {
-        display: flex; align-items: center; justify-content: center;
-        height: 100vh; flex-direction: column; gap: 16px;
-      }
-      #fallback h1 { color: #5b8cff; letter-spacing: 4px; font-size: 2rem; margin: 0; }
-      #fallback p { color: #8c8ca3; font-size: 0.9rem; margin: 0; }
-    </style>
-  </head>
-  <body>
-    <div id="root">
-      <div id="fallback">
-        <h1>CONDUIT</h1>
-        <p>Loading…</p>
-      </div>
-    </div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Conduit — Private Signal Network</title>
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Conduit — Private Signal Network" />
+  <meta property="og:description" content="No accounts. No tracking. No witnesses. End-to-end encrypted real-time signal network." />
+  <meta property="og:image" content="https://conduitprotect.info/logo.png" />
+  <meta property="og:url" content="https://conduitprotect.info" />
+  <meta property="og:site_name" content="Conduit" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Conduit — Private Signal Network" />
+  <meta name="twitter:description" content="No accounts. No tracking. No witnesses." />
+  <meta name="twitter:image" content="https://conduitprotect.info/logo.png" />
+
+  <!-- SEO -->
+  <meta name="description" content="Conduit is a private encrypted real-time signal network. No accounts. No tracking. No central authority." />
+  <meta name="keywords" content="conduit, private messaging, encrypted, anonymous, signal network, AETH, Web3" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://conduitprotect.info" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#c8a014" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="apple-touch-icon" href="/logo.png" />
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
 </html>
