@@ -1,4 +1,28 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
+
+// SVG AI avatar — monogram initial in a styled circle
+function AIAvatar({ name, color }) {
+  return (
+    <div style={{
+      width: 36, height: 36, borderRadius: 10,
+      background: `${color}18`,
+      border: `1px solid ${color}45`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+    }}>
+      <svg width="20" height="20" viewBox="0 0 20 20">
+        <text
+          x="10" y="14"
+          textAnchor="middle"
+          fontSize="11"
+          fontFamily="monospace"
+          fontWeight="700"
+          fill={color}
+          letterSpacing="0.5"
+        >{name.slice(0,2)}</text>
+      </svg>
+    </div>
+  )
+}
 
 const ROOMS = [
   {
@@ -11,7 +35,6 @@ const ROOMS = [
     placeholder: 'Broadcast to the network…',
     ai: {
       name: 'RELAY',
-      avatar: '📡',
       greeting: "Signal locked in. I'm RELAY — I keep the frequency clean in #general. Ask me anything, or just start broadcasting. The network is listening.",
     },
   },
@@ -25,8 +48,7 @@ const ROOMS = [
     placeholder: 'Drop a build update, bug, or idea…',
     ai: {
       name: 'FORGE',
-      avatar: '⚡',
-      greeting: "You\'re in #dev. I\'m FORGE. Drop your code, bugs, or half-baked ideas. I debug, review, and ship with you. No rubber ducks needed.",
+      greeting: "You're in #dev. I'm FORGE. Drop your code, bugs, or half-baked ideas. I debug, review, and ship with you. No rubber ducks needed.",
     },
   },
   {
@@ -39,8 +61,7 @@ const ROOMS = [
     placeholder: 'Share a tool, technique, or thought on privacy…',
     ai: {
       name: 'NULL',
-      avatar: '🔐',
-      greeting: "I\'m NULL. I don\'t remember. I don\'t log. I don\'t judge. Ask me about encryption, opsec, threat models, or how to disappear. What\'s your concern?",
+      greeting: "I'm NULL. I don't remember. I don't log. I don't judge. Ask me about encryption, opsec, threat models, or how to disappear. What's your concern?",
     },
   },
   {
@@ -54,8 +75,7 @@ const ROOMS = [
     gated: true,
     ai: {
       name: 'AETHER',
-      avatar: '✨',
-      greeting: "Welcome, holder. I\'m AETHER — the intelligence behind the token. You earned this room. Ask me about your allocation, governance, or what\'s coming next.",
+      greeting: "Welcome, holder. I'm AETHER — the intelligence behind the token. You earned this room. Ask me about your allocation, governance, or what's coming next.",
     },
   },
   {
@@ -68,8 +88,7 @@ const ROOMS = [
     placeholder: 'Anything goes…',
     ai: {
       name: 'STATIC',
-      avatar: '🎲',
-      greeting: "Yo. I\'m STATIC. No rules here. No topic. No filter. Say something weird. I\'ll say something weirder.",
+      greeting: "Yo. I'm STATIC. No rules here. No topic. No filter. Say something weird. I'll say something weirder.",
     },
   },
 ]
@@ -81,7 +100,6 @@ const TOOLS = [
   { id: 'share',   label: 'Share Room'      },
 ]
 
-// Typewriter effect for AI greeting
 function useTypewriter(text, speed = 22) {
   const [displayed, setDisplayed] = useState('')
   const [done, setDone] = useState(false)
@@ -110,14 +128,13 @@ function AIGreeter({ room }) {
     if (!askText.trim()) return
     setThinking(true)
     setReply('')
-    // Simulated AI reply per room persona
     setTimeout(() => {
       const responses = {
-        general: `Received. Amplifying your signal across the network.`,
-        dev:     `Compiling… looks solid. Ship it and iterate.`,
-        privacy: `Noted. Zero traces. That\'s how it should be.`,
-        aether:  `Logged on-chain. Your signal has weight here.`,
-        random:  `lol okay. chaotic. I respect it.`,
+        general: 'Received. Amplifying your signal across the network.',
+        dev:     'Compiling… looks solid. Ship it and iterate.',
+        privacy: 'Noted. Zero traces. That\'s how it should be.',
+        aether:  'Logged on-chain. Your signal has weight here.',
+        random:  'lol okay. chaotic. I respect it.',
       }
       setReply(responses[room.id] || 'Signal acknowledged.')
       setThinking(false)
@@ -129,37 +146,27 @@ function AIGreeter({ room }) {
     <div style={{
       background: `${room.color}0c`,
       border: `1px solid ${room.color}30`,
-      borderRadius: 14, padding: '16px 18px',
-      marginBottom: '1.5rem',
+      borderRadius: 14, padding: '16px 18px', marginBottom: '1.5rem',
     }}>
-      {/* AI header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-        <div style={{
-          width: 36, height: 36, borderRadius: 10,
-          background: `${room.color}18`,
-          border: `1px solid ${room.color}40`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 18,
-        }}>{room.ai.avatar}</div>
+        <AIAvatar name={room.ai.name} color={room.color} />
         <div>
           <div style={{ fontFamily: 'monospace', fontSize: 12, color: room.color, fontWeight: 700, letterSpacing: 1 }}>
-            {room.ai.name} <span style={{ fontSize: 9, opacity: 0.5, fontWeight: 400 }}>AI · {room.label}</span>
+            {room.ai.name}
+            <span style={{ fontSize: 9, opacity: 0.45, fontWeight: 400, marginLeft: 6 }}>AI · {room.label}</span>
           </div>
-          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)' }}>Room Intelligence</div>
+          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.22)' }}>Room Intelligence</div>
         </div>
         <div style={{
           marginLeft: 'auto', width: 7, height: 7, borderRadius: '50%',
-          background: '#00ffc3',
-          boxShadow: '0 0 6px #00ffc3',
+          background: '#00ffc3', boxShadow: '0 0 6px #00ffc3',
         }} />
       </div>
 
-      {/* Greeting typewriter */}
-      <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)', lineHeight: 1.7, marginBottom: 12, minHeight: 40 }}>
-        {displayed}{!done && <span style={{ opacity: 0.6, animation: 'none' }}>|</span>}
+      <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.72)', lineHeight: 1.7, marginBottom: 12, minHeight: 40 }}>
+        {displayed}{!done && <span style={{ opacity: 0.5 }}>|</span>}
       </p>
 
-      {/* AI reply */}
       {reply && (
         <div style={{
           background: `${room.color}10`, borderRadius: 8,
@@ -170,12 +177,11 @@ function AIGreeter({ room }) {
         </div>
       )}
       {thinking && (
-        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace', marginBottom: 10 }}>
+        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)', fontFamily: 'monospace', marginBottom: 10 }}>
           {room.ai.name} is thinking…
         </div>
       )}
 
-      {/* Ask input */}
       <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
         <input
           value={askText}
@@ -186,21 +192,16 @@ function AIGreeter({ room }) {
             flex: 1, background: 'rgba(255,255,255,0.04)',
             border: `1px solid ${room.color}25`,
             borderRadius: 8, padding: '7px 12px',
-            color: '#f1f1f7', fontSize: 12, outline: 'none',
-            fontFamily: 'monospace',
+            color: '#f1f1f7', fontSize: 12, outline: 'none', fontFamily: 'monospace',
           }}
         />
-        <button
-          onClick={handleAsk}
-          disabled={!askText.trim()}
-          style={{
-            padding: '7px 14px', borderRadius: 8, border: 'none',
-            background: askText.trim() ? room.color : 'rgba(255,255,255,0.06)',
-            color: askText.trim() ? '#07060f' : 'rgba(255,255,255,0.2)',
-            fontSize: 11, fontWeight: 700, cursor: askText.trim() ? 'pointer' : 'default',
-            fontFamily: 'monospace', letterSpacing: 1, transition: 'all 0.15s',
-          }}
-        >ASK</button>
+        <button onClick={handleAsk} disabled={!askText.trim()} style={{
+          padding: '7px 14px', borderRadius: 8, border: 'none',
+          background: askText.trim() ? room.color : 'rgba(255,255,255,0.06)',
+          color: askText.trim() ? '#07060f' : 'rgba(255,255,255,0.2)',
+          fontSize: 11, fontWeight: 700, cursor: askText.trim() ? 'pointer' : 'default',
+          fontFamily: 'monospace', letterSpacing: 1, transition: 'all 0.15s',
+        }}>ASK</button>
       </div>
     </div>
   )
@@ -215,16 +216,14 @@ function PostBox({ onPost, room }) {
   }
   return (
     <div style={{
-      background: `${room.color}08`,
-      border: `1px solid ${room.color}28`,
+      background: `${room.color}08`, border: `1px solid ${room.color}28`,
       borderRadius: 14, padding: '12px 16px', marginBottom: '1rem',
     }}>
       <textarea
         value={text}
         onChange={e => setText(e.target.value)}
         onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) submit() }}
-        placeholder={room.placeholder}
-        rows={3}
+        placeholder={room.placeholder} rows={3}
         style={{
           width: '100%', background: 'transparent', border: 'none', outline: 'none',
           color: '#f1f1f7', fontSize: 14, resize: 'none', fontFamily: 'inherit', lineHeight: 1.6,
@@ -232,18 +231,13 @@ function PostBox({ onPost, room }) {
       />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
         <span style={{ fontSize: 11, color: `${room.color}60`, fontFamily: 'monospace' }}>Ctrl+Enter to send</span>
-        <button
-          onClick={submit}
-          disabled={!text.trim()}
-          style={{
-            padding: '6px 18px', borderRadius: 8,
-            background: text.trim() ? room.color : 'rgba(255,255,255,0.06)',
-            border: 'none',
-            color: text.trim() ? '#07060f' : 'rgba(255,255,255,0.25)',
-            fontSize: 12, fontWeight: 700, cursor: text.trim() ? 'pointer' : 'default',
-            transition: 'all 0.15s', fontFamily: 'monospace', letterSpacing: 1,
-          }}
-        >SEND</button>
+        <button onClick={submit} disabled={!text.trim()} style={{
+          padding: '6px 18px', borderRadius: 8,
+          background: text.trim() ? room.color : 'rgba(255,255,255,0.06)', border: 'none',
+          color: text.trim() ? '#07060f' : 'rgba(255,255,255,0.25)',
+          fontSize: 12, fontWeight: 700, cursor: text.trim() ? 'pointer' : 'default',
+          transition: 'all 0.15s', fontFamily: 'monospace', letterSpacing: 1,
+        }}>SEND</button>
       </div>
     </div>
   )
@@ -253,31 +247,25 @@ function PostCard({ post, room }) {
   const [signaled, setSignaled] = useState(false)
   return (
     <div style={{
-      background: 'rgba(255,255,255,0.02)',
-      border: `1px solid rgba(255,255,255,0.06)`,
-      borderRadius: 12, padding: '14px 16px',
-      transition: 'border-color 0.2s, background 0.2s',
+      background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)',
+      borderRadius: 12, padding: '14px 16px', transition: 'border-color 0.2s, background 0.2s',
     }}
     onMouseEnter={e => { e.currentTarget.style.borderColor = `${room.color}35`; e.currentTarget.style.background = `${room.color}05` }}
     onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'; e.currentTarget.style.background = 'rgba(255,255,255,0.02)' }}
     >
-      <div style={{ fontFamily: 'monospace', fontSize: 10, color: `${room.color}90`, marginBottom: 8, letterSpacing: 1 }}>
-        {post.fingerprint}
-      </div>
+      <div style={{ fontFamily: 'monospace', fontSize: 10, color: `${room.color}90`, marginBottom: 8, letterSpacing: 1 }}>{post.fingerprint}</div>
       <p style={{ fontSize: 14, color: '#e8e8f2', lineHeight: 1.65 }}>{post.text}</p>
       <div style={{ display: 'flex', gap: 6, marginTop: 12 }}>
         {[['Signal', true], ['Amplify', false], ['Reply', false], ['Recycle', false]].map(([label, isSignal]) => (
-          <button key={label}
-            onClick={isSignal ? () => setSignaled(s => !s) : undefined}
-            style={{
-              fontSize: 11, padding: '3px 10px', borderRadius: 6,
-              background: isSignal && signaled ? `${room.color}20` : 'transparent',
-              border: `1px solid ${isSignal && signaled ? room.color : 'rgba(255,255,255,0.08)'}`,
-              color: isSignal && signaled ? room.color : 'rgba(255,255,255,0.35)',
-              cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'monospace',
-            }}
-            onMouseEnter={e => { if (!(isSignal && signaled)) e.currentTarget.style.color = room.color }}
-            onMouseLeave={e => { if (!(isSignal && signaled)) e.currentTarget.style.color = 'rgba(255,255,255,0.35)' }}
+          <button key={label} onClick={isSignal ? () => setSignaled(s => !s) : undefined} style={{
+            fontSize: 11, padding: '3px 10px', borderRadius: 6,
+            background: isSignal && signaled ? `${room.color}20` : 'transparent',
+            border: `1px solid ${isSignal && signaled ? room.color : 'rgba(255,255,255,0.08)'}`,
+            color: isSignal && signaled ? room.color : 'rgba(255,255,255,0.35)',
+            cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'monospace',
+          }}
+          onMouseEnter={e => { if (!(isSignal && signaled)) e.currentTarget.style.color = room.color }}
+          onMouseLeave={e => { if (!(isSignal && signaled)) e.currentTarget.style.color = 'rgba(255,255,255,0.35)' }}
           >{label}</button>
         ))}
       </div>
@@ -292,14 +280,10 @@ export default function RoomsView({ onViewProfile }) {
       { id: '1', fingerprint: 'a1b2·c3d4', text: 'Conduit is live. No logs. No witnesses. Just signal.' },
       { id: '2', fingerprint: 'e5f6·g7h8', text: 'Privacy is not a feature — it is the foundation.' },
     ],
-    dev: [
-      { id: '1', fingerprint: 'x9y0·z1a2', text: 'WebSocket relay is stable. Latency under 40ms.' },
-    ],
+    dev:     [{ id: '1', fingerprint: 'x9y0·z1a2', text: 'WebSocket relay is stable. Latency under 40ms.' }],
     privacy: [],
-    aether: [],
-    random: [
-      { id: '1', fingerprint: 'b3c4·d5e6', text: 'why does my code work at 2am but not at 9am' },
-    ],
+    aether:  [],
+    random:  [{ id: '1', fingerprint: 'b3c4·d5e6', text: 'why does my code work at 2am but not at 9am' }],
   })
 
   const room = ROOMS.find(r => r.id === activeRoom)
@@ -333,32 +317,47 @@ export default function RoomsView({ onViewProfile }) {
           onMouseEnter={e => { if (activeRoom !== r.id) e.currentTarget.style.background = `${r.color}08` }}
           onMouseLeave={e => { if (activeRoom !== r.id) e.currentTarget.style.background = 'transparent' }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 12 }}>{r.ai.avatar}</span>
-              <span style={{ fontFamily: 'monospace', fontSize: 13, color: activeRoom === r.id ? r.color : 'rgba(255,255,255,0.4)' }}>
-                {r.label} {r.gated && <span style={{ fontSize: 9, color: '#ffd700' }}>🔒</span>}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <div style={{
+                width: 18, height: 18, borderRadius: 4,
+                background: `${r.color}22`, border: `1px solid ${r.color}40`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              }}>
+                <svg width="10" height="10" viewBox="0 0 10 10">
+                  <text x="5" y="8" textAnchor="middle" fontSize="7" fontFamily="monospace" fontWeight="700" fill={r.color}>
+                    {r.ai.name.slice(0,1)}
+                  </text>
+                </svg>
+              </div>
+              <span style={{ fontFamily: 'monospace', fontSize: 12, color: activeRoom === r.id ? r.color : 'rgba(255,255,255,0.4)' }}>
+                {r.label}
               </span>
+              {r.gated && (
+                <span style={{
+                  fontSize: 8, color: '#ffd700', border: '1px solid rgba(255,215,0,0.3)',
+                  padding: '1px 5px', borderRadius: 4, fontFamily: 'monospace', letterSpacing: 0.5,
+                }}>GATED</span>
+              )}
             </div>
-            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', marginTop: 2, paddingLeft: 18 }}>{r.desc}</div>
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.18)', marginTop: 3, paddingLeft: 25 }}>{r.desc}</div>
           </button>
         ))}
       </aside>
 
       {/* MAIN FEED */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: room.bg }}>
-
-        {/* HEADER */}
         <header style={{
-          padding: '14px 24px',
-          borderBottom: `1px solid ${room.color}22`,
+          padding: '14px 24px', borderBottom: `1px solid ${room.color}22`,
           flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 16 }}>{room.ai.avatar}</span>
               <span style={{ fontFamily: 'monospace', fontSize: 17, fontWeight: 700, color: room.color }}>{room.label}</span>
               {room.gated && (
-                <span style={{ fontSize: 10, color: '#ffd700', border: '1px solid rgba(255,215,0,0.3)', padding: '2px 8px', borderRadius: 20, fontFamily: 'monospace', letterSpacing: 1 }}>AETH GATED</span>
+                <span style={{
+                  fontSize: 9, color: '#ffd700', border: '1px solid rgba(255,215,0,0.3)',
+                  padding: '2px 8px', borderRadius: 20, fontFamily: 'monospace', letterSpacing: 1,
+                }}>AETH GATED</span>
               )}
             </div>
             <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 2, fontStyle: 'italic' }}>{room.vibe}</p>
@@ -369,7 +368,6 @@ export default function RoomsView({ onViewProfile }) {
           </div>
         </header>
 
-        {/* FEED */}
         <main style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
           <AIGreeter room={room} key={room.id} />
           <PostBox onPost={handlePost} room={room} />
@@ -396,7 +394,7 @@ export default function RoomsView({ onViewProfile }) {
         {TOOLS.map(t => (
           <button key={t.id} style={{
             width: '100%', textAlign: 'left', padding: '8px 12px', marginBottom: 4,
-            background: 'transparent', border: `1px solid rgba(255,255,255,0.06)`,
+            background: 'transparent', border: '1px solid rgba(255,255,255,0.06)',
             borderRadius: 8, color: 'rgba(255,255,255,0.4)', fontSize: 12,
             cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'monospace',
           }}
@@ -412,14 +410,31 @@ export default function RoomsView({ onViewProfile }) {
             transition: 'background 0.15s',
             background: activeRoom === r.id ? `${r.color}12` : 'transparent',
             borderLeft: `2px solid ${activeRoom === r.id ? r.color : 'transparent'}`,
+            display: 'flex', alignItems: 'center', gap: 7,
           }}
           onMouseEnter={e => { e.currentTarget.style.background = `${r.color}0e` }}
           onMouseLeave={e => { e.currentTarget.style.background = activeRoom === r.id ? `${r.color}12` : 'transparent' }}
           >
-            <span style={{ fontSize: 11, marginRight: 5 }}>{r.ai.avatar}</span>
-            <span style={{ fontFamily: 'monospace', fontSize: 12, color: activeRoom === r.id ? r.color : 'rgba(255,255,255,0.4)' }}>
-              {r.label} {r.gated && <span style={{ fontSize: 9, color: '#ffd700' }}>🔒</span>}
+            <div style={{
+              width: 16, height: 16, borderRadius: 4,
+              background: `${r.color}20`, border: `1px solid ${r.color}40`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            }}>
+              <svg width="9" height="9" viewBox="0 0 9 9">
+                <text x="4.5" y="7" textAnchor="middle" fontSize="6" fontFamily="monospace" fontWeight="700" fill={r.color}>
+                  {r.ai.name.slice(0,1)}
+                </text>
+              </svg>
+            </div>
+            <span style={{ fontFamily: 'monospace', fontSize: 11, color: activeRoom === r.id ? r.color : 'rgba(255,255,255,0.38)' }}>
+              {r.label}
             </span>
+            {r.gated && (
+              <span style={{
+                fontSize: 7, color: '#ffd700', border: '1px solid rgba(255,215,0,0.25)',
+                padding: '1px 4px', borderRadius: 3, fontFamily: 'monospace', marginLeft: 'auto',
+              }}>GATED</span>
+            )}
           </div>
         ))}
       </aside>
