@@ -1,40 +1,50 @@
 /**
- * Set Merkle root on a deployed Aether contract
+ * Sets the Merkle root on the deployed Aether contract
+ * Run AFTER airdrop-snapshot.js has generated airdrop-snapshot.json
  *
- * Usage:
- *   MERKLE_ROOT=0x<root> npx hardhat run scripts/set-merkle-root.js --network base-sepolia
+ * Usage: npx hardhat run scripts/set-merkle-root.js --network sepolia
  *
- * Reads contract address from aether-deployment.json (written by deploy-aether.js)
+ * Env vars:
+ *   AETHER_CONTRACT_ADDRESS — from deploy step
+ *   PRIVATE_KEY
+ *   SEPOLIA_RPC_URL
  */
 
-const hre = require('hardhat');
-const fs  = require('fs');
-const path = require('path');
-require('dotenv').config();
+const { ethers } = require('hardhat')
+const fs = require('fs')
+const path = require('path')
 
 async function main() {
-  const deploymentPath = path.join(__dirname, '..', 'aether-deployment.json');
-  if (!fs.existsSync(deploymentPath)) throw new Error('aether-deployment.json not found. Run deploy-aether.js first.');
+  const snapshotPath = path.join(__dirname, '..', 'airdrop-snapshot.json')
+  if (!fs.existsSync(snapshotPath)) {
+    throw new Error('airdrop-snapshot.json not found. Run airdrop-snapshot.js first.')
+  }
 
-  const deployment = JSON.parse(fs.readFileSync(deploymentPath, 'utf8'));
-  const contractAddress = deployment.address;
-  const merkleRoot = process.env.MERKLE_ROOT;
+  const snapshot = JSON.parse(fs.readFileSync(snapshotPath, 'utf8'))
+  const { merkleRoot } = snapshot
 
-  if (!merkleRoot) throw new Error('Set MERKLE_ROOT=0x<root> in your env before running this script.');
-  if (!/^0x[0-9a-f]{64}$/i.test(merkleRoot)) throw new Error('MERKLE_ROOT must be a 32-byte hex string (0x + 64 hex chars).');
+  const contractAddress = process.env.AETHER_CONTRACT_ADDRESS
+  if (!contractAddress) throw new Error('Set AETHER_CONTRACT_ADDRESS in .env')
 
-  console.log(`Setting Merkle root on ${contractAddress} (${hre.network.name})...`);
-  console.log(`Root: ${merkleRoot}`);
+  const [owner] = await ethers.getSigners()
+  const Aether = await ethers.getContractFactory('Aether')
+  const aether = Aether.attach(contractAddress)
 
-  const Aether = await hre.ethers.getContractFactory('Aether');
-  const aether = Aether.attach(contractAddress);
+  console.log('Setting Merkle root...')
+  console.log('  Contract:', contractAddress)
+  console.log('  Root:', merkleRoot)
+  console.log('  Recipients:', snapshot.totalRecipients)
 
-  const tx = await aether.setMerkleRoot(merkleRoot);
-  process.stdout.write('  Waiting for confirmation...');
-  await tx.wait();
-  console.log(' done');
-  console.log(`\n✅ Merkle root set. Tx: ${tx.hash}`);
-  console.log('  Run open-airdrop.js when ready to let users claim.');
+  const tx = await aether.setMerkleRoot(merkleRoot)
+  await tx.wait()
+  console.log('✅ Merkle root set. Tx:', tx.hash)
+
+  const tx2 = await aether.setAirdropOpen(true)
+  await tx2.wait()
+  console.log('✅ Airdrop opened. Tx:', tx2.hash)
 }
 
-main().catch((e) => { console.error('❌', e.message); process.exit(1); });
+main().catch(err => {
+  console.error(err)
+  process.exitCode = 1
+})
