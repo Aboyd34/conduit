@@ -18,65 +18,79 @@ export default function WalletConnect({ compact = false }) {
 
   if (isConnected) {
     return (
-      <button
-        onClick={() => disconnect()}
-        title={address}
-        style={{
-          width: 40,
-          height: 40,
-          borderRadius: 10,
-          border: '1px solid rgba(0,212,255,0.25)',
-          background: 'rgba(0,212,255,0.08)',
-          color: '#00d4ff',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexDirection: 'column',
-          gap: 2,
-          transition: 'all 0.15s',
-          padding: 0,
-        }}
-        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,212,255,0.14)'; }}
-        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,212,255,0.08)'; }}
-      >
-        <WalletIcon />
-        <span style={{ fontSize: 8, fontFamily: 'monospace', color: '#00d4ff', letterSpacing: 0 }}>
-          {address?.slice(0, 4)}…{address?.slice(-3)}
-        </span>
-      </button>
+      <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <span style={{
+          fontSize: 9,
+          fontFamily: 'monospace',
+          color: 'rgba(0,212,255,0.6)',
+          letterSpacing: 1,
+          textTransform: 'uppercase',
+          marginBottom: 4,
+        }}>Wallet</span>
+        <button
+          onClick={() => disconnect()}
+          title={`Connected: ${address}\nClick to disconnect`}
+          style={{
+            width: 40, height: 40, borderRadius: 10,
+            border: '1px solid rgba(0,212,255,0.35)',
+            background: 'rgba(0,212,255,0.08)',
+            color: '#00d4ff', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexDirection: 'column', gap: 2, transition: 'all 0.15s', padding: 0,
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,212,255,0.18)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,212,255,0.08)'; }}
+        >
+          <WalletIcon />
+          <span style={{ fontSize: 8, fontFamily: 'monospace', color: '#00d4ff' }}>
+            {address?.slice(0, 4)}…{address?.slice(-3)}
+          </span>
+        </button>
+      </div>
     );
   }
 
   return (
-    <button
-      onClick={() => connect({ connector: connectors[0] })}
-      title="Connect Wallet"
-      style={{
-        width: 40,
-        height: 40,
-        borderRadius: 10,
-        border: '1px solid rgba(122,92,255,0.3)',
-        background: 'rgba(122,92,255,0.1)',
-        color: 'rgba(255,255,255,0.45)',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        transition: 'all 0.15s',
-      }}
-      onMouseEnter={e => {
-        e.currentTarget.style.background = 'rgba(122,92,255,0.2)';
-        e.currentTarget.style.color = '#7a5cff';
-        e.currentTarget.style.borderColor = 'rgba(122,92,255,0.6)';
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.background = 'rgba(122,92,255,0.1)';
-        e.currentTarget.style.color = 'rgba(255,255,255,0.45)';
-        e.currentTarget.style.borderColor = 'rgba(122,92,255,0.3)';
-      }}
-    >
-      <WalletIcon />
-    </button>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <span style={{
+        fontSize: 9,
+        fontFamily: 'monospace',
+        color: 'rgba(255,255,255,0.25)',
+        letterSpacing: 1,
+        textTransform: 'uppercase',
+        marginBottom: 4,
+      }}>Wallet</span>
+      <button
+        onClick={() => connect({ connector: connectors[0] })}
+        title="Connect your wallet to unlock Airdrop, Aether gating & on-chain features"
+        style={{
+          width: 40, height: 40, borderRadius: 10,
+          border: '1px solid rgba(122,92,255,0.35)',
+          background: 'rgba(122,92,255,0.08)',
+          color: 'rgba(255,255,255,0.45)', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          transition: 'all 0.15s',
+        }}
+        onMouseEnter={e => {
+          e.currentTarget.style.background = 'rgba(122,92,255,0.2)';
+          e.currentTarget.style.color = '#7a5cff';
+          e.currentTarget.style.borderColor = 'rgba(122,92,255,0.7)';
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.background = 'rgba(122,92,255,0.08)';
+          e.currentTarget.style.color = 'rgba(255,255,255,0.45)';
+          e.currentTarget.style.borderColor = 'rgba(122,92,255,0.35)';
+        }}
+      >
+        <WalletIcon />
+      </button>
+      <span style={{
+        fontSize: 8,
+        color: 'rgba(122,92,255,0.6)',
+        fontFamily: 'monospace',
+        marginTop: 3,
+        letterSpacing: 0.5,
+      }}>Connect</span>
+    </div>
   );
 }
