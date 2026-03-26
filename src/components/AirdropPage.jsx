@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useWallet } from '../hooks/useWallet'
 
-// ─ Floating particle
 function Particle({ x, delay, dur, size }) {
   return (
     <div style={{
@@ -15,8 +15,7 @@ function Particle({ x, delay, dur, size }) {
 function EarnRow({ icon, action, amount, highlight }) {
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px',
-      borderRadius: 10,
+      display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px', borderRadius: 10,
       background: highlight ? 'rgba(255,215,0,0.06)' : 'rgba(255,255,255,0.03)',
       border: `1px solid ${highlight ? 'rgba(255,215,0,0.2)' : 'rgba(255,255,255,0.06)'}`,
     }}>
@@ -42,83 +41,6 @@ function StatTile({ value, label, color = '#7c3aed' }) {
   )
 }
 
-// ─ Wallet hook (raw window.ethereum, no extra deps)
-function useWallet() {
-  const [address, setAddress] = useState(null)
-  const [chainId, setChainId] = useState(null)
-  const [connecting, setConnecting] = useState(false)
-  const [error, setError] = useState(null)
-
-  const connect = useCallback(async () => {
-    if (!window.ethereum) {
-      setError('MetaMask not detected. Install it at metamask.io')
-      return
-    }
-    try {
-      setConnecting(true)
-      setError(null)
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
-      const chain = await window.ethereum.request({ method: 'eth_chainId' })
-      setAddress(accounts[0])
-      setChainId(parseInt(chain, 16))
-    } catch (e) {
-      setError(e.message)
-    } finally {
-      setConnecting(false)
-    }
-  }, [])
-
-  const switchToSepolia = useCallback(async () => {
-    if (!window.ethereum) return
-    try {
-      await window.ethereum.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: '0xaa36a7' }], // Sepolia
-      })
-    } catch (e) {
-      // chain not added — add it
-      if (e.code === 4902) {
-        await window.ethereum.request({
-          method: 'wallet_addEthereumChain',
-          params: [{
-            chainId: '0xaa36a7',
-            chainName: 'Sepolia Testnet',
-            nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
-            rpcUrls: ['https://rpc.sepolia.org'],
-            blockExplorerUrls: ['https://sepolia.etherscan.io'],
-          }],
-        })
-      }
-    }
-  }, [])
-
-  // auto-detect on load
-  useEffect(() => {
-    if (!window.ethereum) return
-    window.ethereum.request({ method: 'eth_accounts' }).then(accounts => {
-      if (accounts.length) {
-        setAddress(accounts[0])
-        window.ethereum.request({ method: 'eth_chainId' }).then(chain => {
-          setChainId(parseInt(chain, 16))
-        })
-      }
-    })
-    const onAcct = (a) => setAddress(a[0] ?? null)
-    const onChain = (c) => setChainId(parseInt(c, 16))
-    window.ethereum.on('accountsChanged', onAcct)
-    window.ethereum.on('chainChanged', onChain)
-    return () => {
-      window.ethereum.removeListener('accountsChanged', onAcct)
-      window.ethereum.removeListener('chainChanged', onChain)
-    }
-  }, [])
-
-  const shortAddress = address ? `${address.slice(0,6)}…${address.slice(-4)}` : null
-  const isCorrectChain = chainId === 11155111 // Sepolia
-
-  return { address, chainId, connecting, error, connect, switchToSepolia, shortAddress, isCorrectChain }
-}
-
 export function AirdropPage() {
   const [particles] = useState(() =>
     Array.from({ length: 18 }, (_, i) => ({
@@ -127,15 +49,21 @@ export function AirdropPage() {
     }))
   )
 
-  const { address, connecting, error, connect, switchToSepolia, shortAddress, isCorrectChain } = useWallet()
+  const {
+    address, isConnected, connecting,
+    shortAddress, isCorrectChain,
+    connectSmartWallet, connectMetaMask,
+    switchToSepolia, disconnect
+  } = useWallet()
+
   const [phase, setPhase] = useState('idle')
   const [allocation] = useState(Math.floor(Math.random() * 4000) + 500)
+  const [showWalletMenu, setShowWalletMenu] = useState(false)
 
-  // Reset phase when wallet disconnects
-  useEffect(() => { if (!address) setPhase('idle') }, [address])
+  useEffect(() => { if (!isConnected) setPhase('idle') }, [isConnected])
 
   function checkAllocation() {
-    if (!address) { connect(); return }
+    if (!isConnected) { setShowWalletMenu(true); return }
     if (!isCorrectChain) { switchToSepolia(); return }
     setPhase('checking')
     setTimeout(() => setPhase('eligible'), 2000)
@@ -159,10 +87,10 @@ export function AirdropPage() {
 
       <div style={{ width: '100%', maxWidth: 520, position: 'relative', zIndex: 1, paddingTop: 40 }}>
 
-        {/* ── WALLET CONNECT BAR ── */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 20 }}>
-          {!address ? (
-            <button onClick={connect} disabled={connecting} style={styles.walletBtn}>
+        {/* ── WALLET BAR ── */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 20, position: 'relative' }}>
+          {!isConnected ? (
+            <button onClick={() => setShowWalletMenu(v => !v)} style={styles.walletBtn}>
               {connecting ? 'Connecting…' : '🦊 Connect Wallet'}
             </button>
           ) : !isCorrectChain ? (
@@ -170,13 +98,34 @@ export function AirdropPage() {
               ⚠️ Switch to Sepolia
             </button>
           ) : (
-            <div style={styles.walletChip}>
+            <button onClick={disconnect} style={styles.walletChip} title="Click to disconnect">
               <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', display: 'inline-block', marginRight: 6 }} />
               {shortAddress}
+            </button>
+          )}
+
+          {/* Wallet menu */}
+          {showWalletMenu && !isConnected && (
+            <div style={styles.walletMenu}>
+              <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace', letterSpacing: 1, marginBottom: 10 }}>CONNECT WITH</p>
+              <button onClick={() => { connectSmartWallet(); setShowWalletMenu(false) }} style={styles.walletOption}>
+                <span style={{ fontSize: 18 }}>🔵</span>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0' }}>Smart Wallet</div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>Email / passkey — no seed phrase</div>
+                </div>
+              </button>
+              <button onClick={() => { connectMetaMask(); setShowWalletMenu(false) }} style={styles.walletOption}>
+                <span style={{ fontSize: 18 }}>🦊</span>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0' }}>MetaMask</div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>Browser extension wallet</div>
+                </div>
+              </button>
+              <button onClick={() => setShowWalletMenu(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.2)', fontSize: 11, cursor: 'pointer', marginTop: 6, width: '100%', textAlign: 'center' }}>× Cancel</button>
             </div>
           )}
         </div>
-        {error && <p style={{ fontSize: 12, color: '#f87171', textAlign: 'center', marginBottom: 12 }}>{error}</p>}
 
         {/* ── HERO ── */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
@@ -202,24 +151,22 @@ export function AirdropPage() {
         {/* ── TIMELINE ── */}
         <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '18px 20px', marginBottom: 20 }}>
           <div style={{ fontFamily: 'monospace', fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginBottom: 14 }}>AIRDROP TIMELINE</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-            {[
-              { label: 'Activity Snapshot', date: 'Jun 2026', active: true },
-              { label: 'Claim Window Opens', date: 'Jul 2026', active: false },
-              { label: 'Token Goes Live', date: 'Q3 2026', active: false },
-            ].map((step, i, arr) => (
-              <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', paddingBottom: i < arr.length - 1 ? 12 : 0 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
-                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: step.active ? '#7c3aed' : 'rgba(255,255,255,0.1)', border: `2px solid ${step.active ? '#a78bfa' : 'rgba(255,255,255,0.15)'}`, boxShadow: step.active ? '0 0 8px rgba(124,58,237,0.6)' : 'none', marginTop: 2 }} />
-                  {i < arr.length - 1 && <div style={{ width: 1, flex: 1, background: 'rgba(255,255,255,0.07)', marginTop: 4, minHeight: 20 }} />}
-                </div>
-                <div style={{ paddingBottom: 4 }}>
-                  <div style={{ fontSize: 13, color: step.active ? '#e2e8f0' : 'rgba(255,255,255,0.4)', fontWeight: step.active ? 600 : 400 }}>{step.label}</div>
-                  <div style={{ fontSize: 11, color: step.active ? '#a78bfa' : 'rgba(255,255,255,0.2)', fontFamily: 'monospace', marginTop: 2 }}>{step.date}</div>
-                </div>
+          {[
+            { label: 'Activity Snapshot', date: 'Jun 2026', active: true },
+            { label: 'Claim Window Opens', date: 'Jul 2026', active: false },
+            { label: 'Token Goes Live', date: 'Q3 2026', active: false },
+          ].map((step, i, arr) => (
+            <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', paddingBottom: i < arr.length - 1 ? 12 : 0 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+                <div style={{ width: 10, height: 10, borderRadius: '50%', background: step.active ? '#7c3aed' : 'rgba(255,255,255,0.1)', border: `2px solid ${step.active ? '#a78bfa' : 'rgba(255,255,255,0.15)'}`, boxShadow: step.active ? '0 0 8px rgba(124,58,237,0.6)' : 'none', marginTop: 2 }} />
+                {i < arr.length - 1 && <div style={{ width: 1, flex: 1, background: 'rgba(255,255,255,0.07)', marginTop: 4, minHeight: 20 }} />}
               </div>
-            ))}
-          </div>
+              <div>
+                <div style={{ fontSize: 13, color: step.active ? '#e2e8f0' : 'rgba(255,255,255,0.4)', fontWeight: step.active ? 600 : 400 }}>{step.label}</div>
+                <div style={{ fontSize: 11, color: step.active ? '#a78bfa' : 'rgba(255,255,255,0.2)', fontFamily: 'monospace', marginTop: 2 }}>{step.date}</div>
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* ── HOW AETH IS EARNED ── */}
@@ -233,14 +180,14 @@ export function AirdropPage() {
           </div>
         </div>
 
-        {/* ── PROGRESS BAR ── */}
+        {/* ── PROGRESS ── */}
         <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '18px 20px', marginBottom: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
             <span style={{ fontFamily: 'monospace', fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: 2 }}>DISTRIBUTION PROGRESS</span>
             <span style={{ fontFamily: 'monospace', fontSize: 11, color: '#a78bfa' }}>12.4% claimed</span>
           </div>
           <div style={{ height: 8, borderRadius: 8, background: 'rgba(255,255,255,0.05)', overflow: 'hidden' }}>
-            <div style={{ width: '12.4%', height: '100%', background: 'linear-gradient(90deg,#7c3aed,#a78bfa)', borderRadius: 8, transition: 'width 1s ease' }} />
+            <div style={{ width: '12.4%', height: '100%', background: 'linear-gradient(90deg,#7c3aed,#a78bfa)', borderRadius: 8 }} />
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
             <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', fontFamily: 'monospace' }}>62M / 500M AETH distributed</span>
@@ -248,48 +195,43 @@ export function AirdropPage() {
           </div>
         </div>
 
-        {/* ── CTA ZONE ── */}
+        {/* ── CTA ── */}
         <div style={{ background: 'linear-gradient(135deg,rgba(124,58,237,0.1),rgba(255,215,0,0.04))', border: '1px solid rgba(124,58,237,0.25)', borderRadius: 16, padding: '24px 22px', textAlign: 'center' }}>
-
           {phase === 'idle' && (
             <>
               <div style={{ fontSize: 28, marginBottom: 10 }}>🔍</div>
               <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: '0 0 16px' }}>
-                {address ? 'Check your allocation based on your Conduit activity.' : 'Connect your wallet to check your AETH allocation.'}
+                {isConnected ? 'Check your allocation based on your Conduit activity.' : 'Connect your wallet to check your AETH allocation.'}
               </p>
               <button onClick={checkAllocation} style={styles.ctaBtn}>
-                {!address ? '🦊 Connect & Check' : !isCorrectChain ? '⚠️ Switch to Sepolia' : 'Check My Allocation'}
+                {!isConnected ? '🦊 Connect & Check' : !isCorrectChain ? '⚠️ Switch to Sepolia' : 'Check My Allocation'}
               </button>
             </>
           )}
-
           {phase === 'checking' && (
             <><div style={styles.spinner} />
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 14, fontFamily: 'monospace' }}>Scanning activity snapshot…</p></>
           )}
-
           {phase === 'eligible' && (
             <>
               <div style={{ fontSize: 36, marginBottom: 8 }}>🌟</div>
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', margin: '0 0 4px', fontFamily: 'monospace', letterSpacing: 1 }}>YOUR ALLOCATION</p>
               <div style={{ fontFamily: 'monospace', fontSize: 42, fontWeight: 900, color: '#a78bfa', lineHeight: 1, marginBottom: 4 }}>{allocation.toLocaleString()}</div>
-              <div style={{ fontFamily: 'monospace', fontSize: 14, color: 'rgba(255,255,255,0.25)', marginBottom: 18 }}>AETH</div>
+              <div style={{ fontFamily: 'monospace', fontSize: 14, color: 'rgba(255,255,255,0.25)', marginBottom: 4 }}>AETH</div>
               <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', fontFamily: 'monospace', marginBottom: 18 }}>{shortAddress}</div>
               <button onClick={claimAeth} style={styles.ctaBtn}>Claim AETH →</button>
             </>
           )}
-
           {phase === 'claiming' && (
             <><div style={styles.spinner} />
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 14, fontFamily: 'monospace' }}>Submitting transaction…</p></>
           )}
-
           {phase === 'claimed' && (
             <>
               <div style={{ fontSize: 48, marginBottom: 8 }}>⚡</div>
               <div style={{ fontFamily: 'monospace', fontSize: 20, fontWeight: 900, color: '#ffd700', marginBottom: 4, letterSpacing: 2 }}>CLAIMED</div>
               <div style={{ fontFamily: 'monospace', fontSize: 36, fontWeight: 900, color: '#a78bfa', lineHeight: 1 }}>{allocation.toLocaleString()} AETH</div>
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 10, lineHeight: 1.5 }}>🔓 #aether room unlocked. Head to Rooms to join the holders-only channel.</p>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 10 }}>🔓 #aether room unlocked.</p>
             </>
           )}
         </div>
@@ -297,7 +239,7 @@ export function AirdropPage() {
 
       <style>{`
         @keyframes floatUp {
-          0%   { transform: translateY(0) scale(1);   opacity: 0; }
+          0%   { transform: translateY(0) scale(1); opacity: 0; }
           10%  { opacity: 0.6; }
           90%  { opacity: 0.3; }
           100% { transform: translateY(-110vh) scale(0.4); opacity: 0; }
@@ -314,7 +256,7 @@ const styles = {
     background: 'linear-gradient(135deg,#7c3aed,#6d28d9)',
     color: '#fff', fontWeight: 800, fontSize: 14,
     cursor: 'pointer', fontFamily: 'monospace', letterSpacing: 1,
-    boxShadow: '0 4px 20px rgba(124,58,237,0.4)', transition: 'transform 0.1s',
+    boxShadow: '0 4px 20px rgba(124,58,237,0.4)',
   },
   walletBtn: {
     padding: '8px 16px', borderRadius: 8, border: 'none',
@@ -324,10 +266,22 @@ const styles = {
     boxShadow: '0 2px 12px rgba(124,58,237,0.35)',
   },
   walletChip: {
-    padding: '6px 14px', borderRadius: 8,
-    background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)',
-    color: '#86efac', fontFamily: 'monospace', fontSize: 12, fontWeight: 600,
-    display: 'flex', alignItems: 'center',
+    padding: '6px 14px', borderRadius: 8, border: '1px solid rgba(34,197,94,0.25)',
+    background: 'rgba(34,197,94,0.1)', color: '#86efac',
+    fontFamily: 'monospace', fontSize: 12, fontWeight: 600,
+    display: 'flex', alignItems: 'center', cursor: 'pointer',
+  },
+  walletMenu: {
+    position: 'absolute', top: '110%', right: 0, zIndex: 50,
+    background: '#0f0e1f', border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: 12, padding: '14px 16px', minWidth: 260,
+    boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+  },
+  walletOption: {
+    display: 'flex', alignItems: 'center', gap: 12,
+    width: '100%', padding: '10px 12px', borderRadius: 8,
+    background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
+    cursor: 'pointer', marginBottom: 8, textAlign: 'left',
   },
   spinner: {
     width: 32, height: 32, border: '3px solid rgba(255,255,255,0.07)',
