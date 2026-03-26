@@ -7,7 +7,11 @@ export default defineConfig({
   ],
   server: {
     port: 5173,
-    hmr: true,
+    hmr: {
+      host: 'localhost',
+      port: 5173,
+      protocol: 'ws',
+    },
     proxy: {
       '/api': 'http://localhost:3001',
       '/ws': { target: 'ws://localhost:3001', ws: true }
