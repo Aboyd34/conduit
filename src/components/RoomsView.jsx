@@ -1,5 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react'
 
+// ─── ROLE SYSTEM ──────────────────────────────────────────────────────────────
+// Roles: 'admin' | 'moderator' | 'user'
+// Admin  = you (full mod controls, always ON, cannot be turned off)
+// Moderator = assigned by admin (mod controls ON)
+// User   = no mod controls visible at all
+// To wire to real auth, pass userRole prop from your auth context.
+const canModerate = (role) => role === 'admin' || role === 'moderator'
+
 // ─── ICONS ───────────────────────────────────────────────────────────────────
 const RoomIcon = ({ id, color, size = 14 }) => {
   const s = { width: size, height: size, fill: 'none', stroke: color, strokeWidth: 1.6, strokeLinecap: 'round', strokeLinejoin: 'round' }
@@ -23,15 +31,15 @@ const AIIcon = ({ id, color, size = 20 }) => {
     default: return null
   }
 }
-const IconImage = ({ color }) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-const IconVideo = ({ color }) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
-const IconClose = ({ color }) => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+const IconImage  = ({ color }) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+const IconVideo  = ({ color }) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+const IconClose  = ({ color }) => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
 const IconShield = ({ color, size = 14 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-const IconWarn = ({ color, size = 13 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-const IconBan = ({ color, size = 13 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
-const IconTrash = ({ color, size = 13 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+const IconWarn   = ({ color, size = 13 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+const IconTrash  = ({ color, size = 13 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+const IconMenu   = ({ color }) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
 
-// ─── AI MODERATION ENGINE ─────────────────────────────────────────────────────
+// ─── AI MOD ENGINE ────────────────────────────────────────────────────────────
 const MOD_RULES = {
   general: ['spam', 'hate', 'slur', 'scam', 'porn', 'nsfw', 'racist', 'sexist'],
   dev:     ['spam', 'hate', 'slur', 'scam', 'porn', 'nsfw', 'racist', 'sexist'],
@@ -39,7 +47,6 @@ const MOD_RULES = {
   aether:  ['spam', 'scam', 'rug', 'porn', 'nsfw', 'racist', 'sexist', 'hate'],
   random:  ['spam', 'scam', 'porn', 'nsfw', 'racist', 'sexist', 'hate', 'slur'],
 }
-
 const MOD_RESPONSES = {
   general: (w) => `Signal flagged. "${w}" violates #general standards. Keep the frequency clean.`,
   dev:     (w) => `FORGE flagged this. "${w}" doesn't belong in #dev. This room is for builders.`,
@@ -47,11 +54,9 @@ const MOD_RESPONSES = {
   aether:  (w) => `AETHER flagged "${w}". Holders are held to a higher standard.`,
   random:  (w) => `Even STATIC has limits. "${w}" crossed the line. Watch it.`,
 }
-
 function scanPost(text, roomId) {
   const lower = text.toLowerCase()
-  const rules = MOD_RULES[roomId] || []
-  for (const word of rules) {
+  for (const word of (MOD_RULES[roomId] || [])) {
     if (lower.includes(word)) return word
   }
   return null
@@ -100,7 +105,6 @@ const ROOMS = [
     ai: { name: 'STATIC', greeting: "Yo. I'm STATIC. No rules here. No topic. No filter. Say something weird. I'll say something weirder." },
   },
 ]
-
 const TOOLS = [
   { id: 'encrypt', label: 'Encrypt Message' },
   { id: 'thread',  label: 'Start Thread'    },
@@ -131,7 +135,6 @@ function AIGreeter({ room }) {
   const [askText, setAskText] = useState('')
   const [reply, setReply]     = useState('')
   const [thinking, setThinking] = useState(false)
-
   function handleAsk() {
     if (!askText.trim()) return
     setThinking(true); setReply('')
@@ -142,7 +145,6 @@ function AIGreeter({ room }) {
     }, 1200)
     setAskText('')
   }
-
   return (
     <div style={{ background: `${room.color}0c`, border: `1px solid ${room.color}30`, borderRadius: 14, padding: '16px 18px', marginBottom: '1.5rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
@@ -180,24 +182,16 @@ function AIGreeter({ room }) {
   )
 }
 
-// ─── AI MOD ALERT (shown in feed when violation detected) ─────────────────────
+// ─── MOD ALERT ────────────────────────────────────────────────────────────────
 function ModAlert({ room, message, onDismiss }) {
   return (
-    <div style={{
-      background: 'rgba(255,60,60,0.07)', border: '1px solid rgba(255,60,60,0.3)',
-      borderRadius: 10, padding: '10px 14px', marginBottom: 10,
-      display: 'flex', alignItems: 'flex-start', gap: 10,
-    }}>
+    <div style={{ background: 'rgba(255,60,60,0.07)', border: '1px solid rgba(255,60,60,0.3)', borderRadius: 10, padding: '10px 14px', marginBottom: 10, display: 'flex', alignItems: 'flex-start', gap: 10 }}>
       <IconShield color="#ff4444" size={15} />
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 10, color: '#ff6666', fontFamily: 'monospace', fontWeight: 700, marginBottom: 3 }}>
-          {room.ai.name} · AI MODERATOR
-        </div>
+        <div style={{ fontSize: 10, color: '#ff6666', fontFamily: 'monospace', fontWeight: 700, marginBottom: 3 }}>{room.ai.name} · AI MODERATOR</div>
         <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>{message}</div>
       </div>
-      <button onClick={onDismiss} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}>
-        <IconClose color="rgba(255,255,255,0.3)" />
-      </button>
+      <button onClick={onDismiss} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}><IconClose color="rgba(255,255,255,0.3)" /></button>
     </div>
   )
 }
@@ -208,20 +202,17 @@ function PostBox({ onPost, room }) {
   const [media, setMedia] = useState(null)
   const imgRef = useRef()
   const vidRef = useRef()
-
   function handleMedia(e, type) {
     const file = e.target.files[0]
     if (!file) return
     setMedia({ url: URL.createObjectURL(file), type, name: file.name })
     e.target.value = ''
   }
-
   function submit() {
     if (!text.trim() && !media) return
     onPost(text.trim(), media)
     setText(''); setMedia(null)
   }
-
   const canSend = text.trim() || media
   return (
     <div style={{ background: `${room.color}08`, border: `1px solid ${room.color}28`, borderRadius: 14, padding: '12px 16px', marginBottom: '1rem' }}>
@@ -267,7 +258,7 @@ function PostCard({ post, room, onRemove, isMod }) {
   const [signaled, setSignaled] = useState(false)
   if (post.removed) return (
     <div style={{ background: 'rgba(255,60,60,0.04)', border: '1px solid rgba(255,60,60,0.15)', borderRadius: 12, padding: '12px 16px' }}>
-      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', fontFamily: 'monospace', fontStyle: 'italic' }}>
+      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', fontFamily: 'monospace', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: 5 }}>
         <IconShield color="rgba(255,80,80,0.5)" size={11} /> Signal removed by {room.ai.name}
       </div>
     </div>
@@ -278,15 +269,18 @@ function PostCard({ post, room, onRemove, isMod }) {
     onMouseLeave={e => { if (!post.flagged) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'; e.currentTarget.style.background = 'rgba(255,255,255,0.02)' }}}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div style={{ fontFamily: 'monospace', fontSize: 10, color: post.flagged ? '#ff6666' : `${room.color}90`, marginBottom: 8, letterSpacing: 1 }}>
-          {post.flagged && <><IconWarn color="#ff6666" size={10} /> </>}{post.fingerprint}
+        <div style={{ fontFamily: 'monospace', fontSize: 10, color: post.flagged ? '#ff6666' : `${room.color}90`, marginBottom: 8, letterSpacing: 1, display: 'flex', alignItems: 'center', gap: 4 }}>
+          {post.flagged && <IconWarn color="#ff6666" size={10} />}{post.fingerprint}
         </div>
+        {/* Mod actions — only visible to admin/moderator */}
         {isMod && !post.removed && (
           <div style={{ display: 'flex', gap: 4 }}>
-            <button title="Warn" onClick={() => onRemove(post.id, 'warn')} style={{ background: 'transparent', border: '1px solid rgba(255,200,0,0.2)', borderRadius: 5, padding: '2px 6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}>
+            <button title="Warn user" onClick={() => onRemove(post.id, 'warn')}
+              style={{ background: 'transparent', border: '1px solid rgba(255,200,0,0.2)', borderRadius: 5, padding: '2px 6px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
               <IconWarn color="#ffcc00" size={11} />
             </button>
-            <button title="Remove" onClick={() => onRemove(post.id, 'remove')} style={{ background: 'transparent', border: '1px solid rgba(255,60,60,0.2)', borderRadius: 5, padding: '2px 6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}>
+            <button title="Remove post" onClick={() => onRemove(post.id, 'remove')}
+              style={{ background: 'transparent', border: '1px solid rgba(255,60,60,0.2)', borderRadius: 5, padding: '2px 6px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
               <IconTrash color="#ff4444" size={11} />
             </button>
           </div>
@@ -316,8 +310,8 @@ function PostCard({ post, room, onRemove, isMod }) {
   )
 }
 
-// ─── MOD LOG PANEL (right sidebar) ────────────────────────────────────────────
-function ModLog({ log, room }) {
+// ─── MOD LOG PANEL ────────────────────────────────────────────────────────────
+function ModLog({ log }) {
   return (
     <div>
       <p style={{ fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, margin: '20px 0 8px', display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -342,11 +336,17 @@ function ModLog({ log, room }) {
 }
 
 // ─── MAIN VIEW ────────────────────────────────────────────────────────────────
-export default function RoomsView({ onViewProfile }) {
-  const [activeRoom, setActiveRoom] = useState('general')
-  const [isMod, setIsMod] = useState(true)   // toggle for demo — wire to auth later
-  const [modLog, setModLog] = useState([])
-  const [modAlerts, setModAlerts] = useState([])  // AI auto-mod alerts in feed
+// userRole prop: 'admin' | 'moderator' | 'user'
+// Pass from your auth context. Defaults to 'admin' until auth is wired up.
+export default function RoomsView({ onViewProfile, userRole = 'admin' }) {
+  const isMod = canModerate(userRole)   // true for admin + moderator only
+  const isAdmin = userRole === 'admin'
+
+  const [activeRoom, setActiveRoom]   = useState('general')
+  const [modLog, setModLog]           = useState([])
+  const [modAlerts, setModAlerts]     = useState([])
+  const [drawerOpen, setDrawerOpen]   = useState(false)  // mobile: left channel drawer
+  const [sideOpen, setSideOpen]       = useState(false)  // mobile: right sidebar
 
   const [postsByRoom, setPostsByRoom] = useState({
     general: [
@@ -359,22 +359,18 @@ export default function RoomsView({ onViewProfile }) {
     random:  [{ id: '1', fingerprint: 'b3c4·d5e6', text: 'why does my code work at 2am but not at 9am' }],
   })
 
-  const room  = ROOMS.find(r => r.id === activeRoom)
-  const posts = postsByRoom[activeRoom] || []
+  const room       = ROOMS.find(r => r.id === activeRoom)
+  const posts      = postsByRoom[activeRoom] || []
   const roomAlerts = modAlerts.filter(a => a.roomId === activeRoom)
 
   function handlePost(text, media) {
     const fp = Math.random().toString(36).slice(2,6) + '·' + Math.random().toString(36).slice(2,6)
     const violation = text ? scanPost(text, activeRoom) : null
     const newPost = { id: Date.now().toString(), fingerprint: fp, text, media, flagged: !!violation }
-
     setPostsByRoom(prev => ({ ...prev, [activeRoom]: [newPost, ...(prev[activeRoom] || [])] }))
-
     if (violation) {
       const msg = (MOD_RESPONSES[activeRoom] || MOD_RESPONSES.general)(violation)
-      const alertId = Date.now().toString()
-      setModAlerts(prev => [...prev, { id: alertId, roomId: activeRoom, message: msg }])
-      // auto-log the flag
+      setModAlerts(prev => [...prev, { id: Date.now().toString(), roomId: activeRoom, message: msg }])
       setModLog(prev => [...prev, { action: 'warn', fp, reason: `Auto-flagged: "${violation}"`, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), roomId: activeRoom }])
     }
   }
@@ -384,65 +380,152 @@ export default function RoomsView({ onViewProfile }) {
     if (!post) return
     if (action === 'remove') {
       setPostsByRoom(prev => ({ ...prev, [activeRoom]: prev[activeRoom].map(p => p.id === postId ? { ...p, removed: true } : p) }))
-    } else if (action === 'warn') {
+    } else {
       setPostsByRoom(prev => ({ ...prev, [activeRoom]: prev[activeRoom].map(p => p.id === postId ? { ...p, flagged: true } : p) }))
     }
-    setModLog(prev => [...prev, { action, fp: post.fingerprint, reason: 'Manual mod action', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), roomId: activeRoom }])
+    setModLog(prev => [...prev, { action, fp: post.fingerprint, reason: 'Manual action', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), roomId: activeRoom }])
   }
+
+  // ─── shared channel list (used in sidebar + mobile drawer)
+  const ChannelList = () => (
+    <>
+      <p style={{ fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, padding: '0 16px', marginBottom: 10 }}>CHANNELS</p>
+      {ROOMS.map(r => (
+        <button key={r.id} onClick={() => { setActiveRoom(r.id); setDrawerOpen(false) }}
+          style={{ width: '100%', textAlign: 'left', padding: '9px 16px', background: activeRoom === r.id ? `${r.color}12` : 'transparent', border: 'none', borderLeft: `2px solid ${activeRoom === r.id ? r.color : 'transparent'}`, cursor: 'pointer', transition: 'all 0.15s' }}
+          onMouseEnter={e => { if (activeRoom !== r.id) e.currentTarget.style.background = `${r.color}08` }}
+          onMouseLeave={e => { if (activeRoom !== r.id) e.currentTarget.style.background = 'transparent' }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <RoomIcon id={r.id} color={activeRoom === r.id ? r.color : 'rgba(255,255,255,0.3)'} size={13} />
+            <span style={{ fontFamily: 'monospace', fontSize: 12, color: activeRoom === r.id ? r.color : 'rgba(255,255,255,0.4)' }}>{r.label}</span>
+            {r.gated && <span style={{ fontSize: 8, color: '#ffd700', border: '1px solid rgba(255,215,0,0.3)', padding: '1px 5px', borderRadius: 4, fontFamily: 'monospace', marginLeft: 'auto' }}>GATED</span>}
+          </div>
+          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.18)', marginTop: 3, paddingLeft: 21 }}>{r.desc}</div>
+        </button>
+      ))}
+    </>
+  )
+
+  // ─── shared right panel content
+  const RightPanelContent = () => (
+    <>
+      <p style={{ fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginBottom: 10 }}>TOOLS</p>
+      {TOOLS.map(t => (
+        <button key={t.id} style={{ width: '100%', textAlign: 'left', padding: '8px 12px', marginBottom: 4, background: 'transparent', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, color: 'rgba(255,255,255,0.4)', fontSize: 12, cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'monospace' }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = `${room.color}50`; e.currentTarget.style.color = room.color }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = 'rgba(255,255,255,0.4)' }}
+        >{t.label}</button>
+      ))}
+      <p style={{ fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, margin: '20px 0 10px' }}>ALL ROOMS</p>
+      {ROOMS.map(r => (
+        <div key={r.id} onClick={() => { setActiveRoom(r.id); setSideOpen(false) }}
+          style={{ padding: '7px 10px', marginBottom: 3, borderRadius: 8, cursor: 'pointer', background: activeRoom === r.id ? `${r.color}12` : 'transparent', borderLeft: `2px solid ${activeRoom === r.id ? r.color : 'transparent'}`, display: 'flex', alignItems: 'center', gap: 8, transition: 'background 0.15s' }}
+          onMouseEnter={e => { e.currentTarget.style.background = `${r.color}0e` }}
+          onMouseLeave={e => { e.currentTarget.style.background = activeRoom === r.id ? `${r.color}12` : 'transparent' }}
+        >
+          <RoomIcon id={r.id} color={activeRoom === r.id ? r.color : 'rgba(255,255,255,0.28)'} size={12} />
+          <span style={{ fontFamily: 'monospace', fontSize: 11, color: activeRoom === r.id ? r.color : 'rgba(255,255,255,0.38)' }}>{r.label}</span>
+          {r.gated && <span style={{ fontSize: 7, color: '#ffd700', border: '1px solid rgba(255,215,0,0.25)', padding: '1px 4px', borderRadius: 3, fontFamily: 'monospace', marginLeft: 'auto' }}>GATED</span>}
+        </div>
+      ))}
+      {/* Mod log — only shown to admin / moderator */}
+      {isMod && <ModLog log={modLog.filter(e => e.roomId === activeRoom)} />}
+    </>
+  )
 
   return (
     <div style={{ display: 'flex', height: '100vh', background: '#07060f', color: '#f1f1f7', overflow: 'hidden' }}>
 
-      {/* ROOM LIST */}
-      <aside style={{ width: 190, background: '#07060f', borderRight: '1px solid rgba(255,255,255,0.05)', padding: '20px 0', flexShrink: 0, overflowY: 'auto' }}>
-        <p style={{ fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, padding: '0 16px', marginBottom: 10 }}>CHANNELS</p>
-        {ROOMS.map(r => (
-          <button key={r.id} onClick={() => setActiveRoom(r.id)} style={{ width: '100%', textAlign: 'left', padding: '9px 16px', background: activeRoom === r.id ? `${r.color}12` : 'transparent', border: 'none', borderLeft: `2px solid ${activeRoom === r.id ? r.color : 'transparent'}`, cursor: 'pointer', transition: 'all 0.15s' }}
-          onMouseEnter={e => { if (activeRoom !== r.id) e.currentTarget.style.background = `${r.color}08` }}
-          onMouseLeave={e => { if (activeRoom !== r.id) e.currentTarget.style.background = 'transparent' }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <RoomIcon id={r.id} color={activeRoom === r.id ? r.color : 'rgba(255,255,255,0.3)'} size={13} />
-              <span style={{ fontFamily: 'monospace', fontSize: 12, color: activeRoom === r.id ? r.color : 'rgba(255,255,255,0.4)' }}>{r.label}</span>
-              {r.gated && <span style={{ fontSize: 8, color: '#ffd700', border: '1px solid rgba(255,215,0,0.3)', padding: '1px 5px', borderRadius: 4, fontFamily: 'monospace', marginLeft: 'auto' }}>GATED</span>}
-            </div>
-            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.18)', marginTop: 3, paddingLeft: 21 }}>{r.desc}</div>
+      {/* ── MOBILE OVERLAY (channel drawer) ─────────────────────── */}
+      {drawerOpen && (
+        <div onClick={() => setDrawerOpen(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 299 }} />
+      )}
+      {/* ── MOBILE OVERLAY (right sidebar) ──────────────────────── */}
+      {sideOpen && (
+        <div onClick={() => setSideOpen(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 299 }} />
+      )}
+
+      {/* ── LEFT RAIL — desktop always visible, mobile slides in ─── */}
+      <aside style={{
+        width: 190, background: '#07060f',
+        borderRight: '1px solid rgba(255,255,255,0.05)',
+        padding: '20px 0', flexShrink: 0, overflowY: 'auto',
+        // mobile: fixed drawer
+        ...(typeof window !== 'undefined' && window.innerWidth <= 768 ? {
+          position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 300,
+          transform: drawerOpen ? 'translateX(0)' : 'translateX(-100%)',
+          transition: 'transform 0.22s ease',
+        } : {}),
+      }}>
+        {/* Close drawer button on mobile */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px 12px' }}>
+          <span style={{ fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2 }}>CONDUIT</span>
+          <button onClick={() => setDrawerOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+            <IconClose color="rgba(255,255,255,0.2)" />
           </button>
-        ))}
+        </div>
+        <ChannelList />
       </aside>
 
-      {/* MAIN FEED */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: room.bg }}>
-        <header style={{ padding: '14px 24px', borderBottom: `1px solid ${room.color}22`, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <RoomIcon id={room.id} color={room.color} size={16} />
-              <span style={{ fontFamily: 'monospace', fontSize: 17, fontWeight: 700, color: room.color }}>{room.label}</span>
-              {room.gated && <span style={{ fontSize: 9, color: '#ffd700', border: '1px solid rgba(255,215,0,0.3)', padding: '2px 8px', borderRadius: 20, fontFamily: 'monospace', letterSpacing: 1 }}>AETH GATED</span>}
-            </div>
-            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 2, fontStyle: 'italic' }}>{room.vibe}</p>
+      {/* ── MAIN FEED ───────────────────────────────────────────── */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: room.bg, minWidth: 0 }}>
+
+        {/* Mobile top bar */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: `1px solid ${room.color}22`, background: '#07060f' }}>
+          {/* Hamburger — mobile only */}
+          <button onClick={() => setDrawerOpen(true)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center' }}>
+            <IconMenu color="rgba(255,255,255,0.4)" />
+          </button>
+
+          {/* Room title */}
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+            <RoomIcon id={room.id} color={room.color} size={15} />
+            <span style={{ fontFamily: 'monospace', fontSize: 15, fontWeight: 700, color: room.color, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{room.label}</span>
+            {room.gated && <span style={{ fontSize: 8, color: '#ffd700', border: '1px solid rgba(255,215,0,0.3)', padding: '1px 6px', borderRadius: 20, fontFamily: 'monospace', letterSpacing: 1, flexShrink: 0 }}>AETH GATED</span>}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            {/* Mod toggle */}
-            <button onClick={() => setIsMod(m => !m)} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 6, border: `1px solid ${isMod ? 'rgba(255,60,60,0.35)' : 'rgba(255,255,255,0.1)'}`, background: isMod ? 'rgba(255,60,60,0.08)' : 'transparent', cursor: 'pointer', fontFamily: 'monospace', fontSize: 10, color: isMod ? '#ff6666' : 'rgba(255,255,255,0.3)', transition: 'all 0.15s' }}>
-              <IconShield color={isMod ? '#ff6666' : 'rgba(255,255,255,0.3)'} size={11} />
-              {isMod ? 'MOD ON' : 'MOD OFF'}
-            </button>
+
+          {/* Admin badge — only shown to admin */}
+          {isAdmin && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 6, background: 'rgba(255,60,60,0.1)', border: '1px solid rgba(255,60,60,0.25)', flexShrink: 0 }}>
+              <IconShield color="#ff6666" size={10} />
+              <span style={{ fontFamily: 'monospace', fontSize: 9, color: '#ff6666', fontWeight: 700, letterSpacing: 1 }}>ADMIN</span>
+            </div>
+          )}
+          {/* Moderator badge — shown to assigned mods (not admin) */}
+          {!isAdmin && isMod && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 6, background: 'rgba(255,200,0,0.08)', border: '1px solid rgba(255,200,0,0.2)', flexShrink: 0 }}>
+              <IconShield color="#ffcc00" size={10} />
+              <span style={{ fontFamily: 'monospace', fontSize: 9, color: '#ffcc00', fontWeight: 700, letterSpacing: 1 }}>MOD</span>
+            </div>
+          )}
+
+          {/* Signal count + right panel toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 11, color: room.color, fontFamily: 'monospace' }}>{room.ai.name}</div>
-              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>{posts.filter(p => !p.removed).length} signal{posts.filter(p => !p.removed).length !== 1 ? 's' : ''}</div>
+              <div style={{ fontSize: 10, color: room.color, fontFamily: 'monospace' }}>{room.ai.name}</div>
+              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)' }}>{posts.filter(p => !p.removed).length} signals</div>
             </div>
+            <button onClick={() => setSideOpen(s => !s)}
+              style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, cursor: 'pointer', padding: '4px 8px', fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>
+              ···
+            </button>
           </div>
-        </header>
+        </div>
 
-        <main style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
+        {/* Vibe line — hidden on very small screens via inline clamp */}
+        <div style={{ padding: '4px 14px', borderBottom: `1px solid ${room.color}10` }}>
+          <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', fontStyle: 'italic', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{room.vibe}</p>
+        </div>
+
+        <main style={{ flex: 1, overflowY: 'auto', padding: '16px 14px' }}>
           <AIGreeter room={room} key={room.id} />
-
-          {/* AI mod alerts */}
           {roomAlerts.map(a => (
             <ModAlert key={a.id} room={room} message={a.message} onDismiss={() => setModAlerts(prev => prev.filter(x => x.id !== a.id))} />
           ))}
-
           <PostBox onPost={handlePost} room={room} />
           {posts.length === 0 ? (
             <div style={{ textAlign: 'center', opacity: 0.3, marginTop: '3rem' }}>
@@ -457,31 +540,21 @@ export default function RoomsView({ onViewProfile }) {
         </main>
       </div>
 
-      {/* RIGHT SIDEBAR */}
-      <aside style={{ width: 210, background: '#07060f', borderLeft: '1px solid rgba(255,255,255,0.05)', padding: '20px 14px', flexShrink: 0, overflowY: 'auto' }}>
-        <p style={{ fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginBottom: 10 }}>TOOLS</p>
-        {TOOLS.map(t => (
-          <button key={t.id} style={{ width: '100%', textAlign: 'left', padding: '8px 12px', marginBottom: 4, background: 'transparent', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, color: 'rgba(255,255,255,0.4)', fontSize: 12, cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'monospace' }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = `${room.color}50`; e.currentTarget.style.color = room.color }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = 'rgba(255,255,255,0.4)' }}
-          >{t.label}</button>
-        ))}
-
-        <p style={{ fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, margin: '20px 0 10px' }}>ALL ROOMS</p>
-        {ROOMS.map(r => (
-          <div key={r.id} onClick={() => setActiveRoom(r.id)} style={{ padding: '7px 10px', marginBottom: 3, borderRadius: 8, cursor: 'pointer', transition: 'background 0.15s', background: activeRoom === r.id ? `${r.color}12` : 'transparent', borderLeft: `2px solid ${activeRoom === r.id ? r.color : 'transparent'}`, display: 'flex', alignItems: 'center', gap: 8 }}
-          onMouseEnter={e => { e.currentTarget.style.background = `${r.color}0e` }}
-          onMouseLeave={e => { e.currentTarget.style.background = activeRoom === r.id ? `${r.color}12` : 'transparent' }}
-          >
-            <RoomIcon id={r.id} color={activeRoom === r.id ? r.color : 'rgba(255,255,255,0.28)'} size={12} />
-            <span style={{ fontFamily: 'monospace', fontSize: 11, color: activeRoom === r.id ? r.color : 'rgba(255,255,255,0.38)' }}>{r.label}</span>
-            {r.gated && <span style={{ fontSize: 7, color: '#ffd700', border: '1px solid rgba(255,215,0,0.25)', padding: '1px 4px', borderRadius: 3, fontFamily: 'monospace', marginLeft: 'auto' }}>GATED</span>}
-          </div>
-        ))}
-
-        {/* Mod Log */}
-        <ModLog log={modLog.filter(e => e.roomId === activeRoom)} room={room} />
+      {/* ── RIGHT SIDEBAR — desktop always visible, mobile slides in ── */}
+      <aside style={{
+        width: 210, background: '#07060f',
+        borderLeft: '1px solid rgba(255,255,255,0.05)',
+        padding: '20px 14px', flexShrink: 0, overflowY: 'auto',
+        // mobile: fixed drawer from right
+        ...(typeof window !== 'undefined' && window.innerWidth <= 768 ? {
+          position: 'fixed', top: 0, right: 0, height: '100vh', zIndex: 300,
+          transform: sideOpen ? 'translateX(0)' : 'translateX(100%)',
+          transition: 'transform 0.22s ease',
+        } : {}),
+      }}>
+        <RightPanelContent />
       </aside>
+
     </div>
   )
 }
