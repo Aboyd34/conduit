@@ -11,7 +11,12 @@ function Root() {
   return (
     <>
       {!splashDone && <SplashScreen onDone={() => setSplashDone(true)} />}
-      <BrowserRouter>
+      <BrowserRouter
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
         <App />
       </BrowserRouter>
     </>
