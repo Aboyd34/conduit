@@ -1,3 +1,4 @@
+import React from 'react'
 import { useState, useMemo } from 'react'
 import { useConduitSocket } from '../hooks/useConduitSocket.js'
 
@@ -19,7 +20,10 @@ export default function SearchView({ onViewProfile }) {
 
   return (
     <div style={{ padding: '1.5rem', maxWidth: 720, margin: '0 auto' }}>
-      <h2 style={{ color: '#f0f0f0', fontFamily: 'Space Grotesk, sans-serif', fontSize: '1.4rem', fontWeight: 700, marginBottom: '1.25rem' }}>🔍 Search</h2>
+      <h2 style={{ color: '#f0f0f0', fontFamily: 'Space Grotesk, sans-serif', fontSize: '1.4rem', fontWeight: 700, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+        Search
+      </h2>
 
       {/* Search input */}
       <input
@@ -62,7 +66,7 @@ export default function SearchView({ onViewProfile }) {
       {/* Results */}
       {results.length === 0 ? (
         <div style={{ textAlign: 'center', color: '#3f3f5a', marginTop: '3rem' }}>
-          <p style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔍</p>
+          <p style={{ marginBottom: '0.5rem' }}><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></p>
           <p>{query || topicFilter !== 'all' ? 'No signals found.' : 'Type to search all signals.'}</p>
         </div>
       ) : (

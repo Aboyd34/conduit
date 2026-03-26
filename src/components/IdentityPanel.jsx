@@ -1,3 +1,4 @@
+import React from 'react'
 import { useState, useEffect } from 'react'
 
 function generateKey() {
@@ -76,7 +77,7 @@ export default function IdentityPanel() {
           onMouseOver={e => e.currentTarget.style.background='rgba(122,92,255,0.1)'}
           onMouseOut={e => e.currentTarget.style.background='transparent'}
         >
-          🔄 Rotate Key
+          Rotate Key
         </button>
       </div>
     </div>

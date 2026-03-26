@@ -1,8 +1,10 @@
+import React from 'react'
+
 const TOOLS = [
   { icon: '⊞', label: 'Terminal',  hint: 'Encrypted CLI' },
-  { icon: '📝', label: 'Code Share', hint: 'E2E snippets' },
-  { icon: '🔐', label: 'Vault',      hint: 'Encrypted files' },
-  { icon: '🌐', label: 'Mesh',       hint: 'P2P bridge' },
+  { icon: '[]', label: 'Code Share', hint: 'E2E snippets' },
+  { icon: '◇', label: 'Vault',      hint: 'Encrypted files' },
+  { icon: '◎', label: 'Mesh',       hint: 'P2P bridge' },
 ]
 
 export default function ToolsPanel() {

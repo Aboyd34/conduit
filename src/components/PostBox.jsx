@@ -84,7 +84,11 @@ export default function PostBox({ defaultTopic = 'public', onPosted }) {
 
       {/* Compose area */}
       <div className="postbox-compose">
-        <div className="postbox-avatar">⚡</div>
+        <div className="postbox-avatar" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M13 2L4 14h7l-1 8 10-12h-7l1-8z" />
+          </svg>
+        </div>
         <textarea
           ref={textareaRef}
           className="postbox-textarea"
@@ -103,7 +107,7 @@ export default function PostBox({ defaultTopic = 'public', onPosted }) {
       {/* Footer */}
       <div className="postbox-footer">
         <div className="postbox-hints">
-          <span className="postbox-hint">🔒 Anonymous · Signed locally</span>
+          <span className="postbox-hint">Anonymous · Signed locally</span>
           <span className="postbox-hint">Ctrl+Enter to send</span>
         </div>
         <div className="postbox-footer-right">
@@ -119,7 +123,7 @@ export default function PostBox({ defaultTopic = 'public', onPosted }) {
             {sending ? (
               <><span className="postbox-spinner" /> Transmitting…</>
             ) : (
-              <>⚡ Transmit</>
+              <>Transmit</>
             )}
           </button>
         </div>

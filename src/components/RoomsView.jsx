@@ -3,8 +3,11 @@ import { useConduitSocket } from '../hooks/useConduitSocket.js';
 import { PostCard } from './PostCard.jsx';
 import PostBox from './PostBox.jsx';
 import { AetherRoom } from './AetherRoom.jsx';
-import { ROOMS, getRoomMeta, estimateOnline, getTrendingPosts } from './roomModules.js';
+import { ROOMS, getRoomMeta, estimateOnline, getTrendingPosts } from './roomModules.jsx';
 import './PostBox.css';
+const X_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>;
+const TOOLS_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/><circle cx="12" cy="12" r="3"/></svg>;
+const INFO_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 10v6M12 7h.01"/></svg>;
 
 /* ─── Room Header ─────────────────────────────── */
 function RoomHeader({ room, onlineCount, onStartThread, onShare }) {
@@ -42,20 +45,20 @@ function ToolButton({ tool, roomId }) {
     switch (tool.label) {
       case 'Pinned Discussions':
       case 'Governance':
-        setMsg('📌 Pinned content coming soon');
+        setMsg('Pinned content coming soon');
         break;
       case 'Announcements':
-        setMsg('📢 No new announcements');
+        setMsg('No new announcements');
         break;
       case "Who's Online":
-        setMsg('👥 Presence tracking active');
+        setMsg('Presence tracking active');
         break;
       case 'Quick Poll':
       case 'Vibe Check':
-        setMsg('🗳️ Polls launching next update');
+        setMsg('Polls launching next update');
         break;
       case 'Wallet Panel':
-        setMsg('👛 Use the wallet button in the header');
+        setMsg('Use the wallet button in the header');
         break;
       case 'Token Tracker':
         window.open('https://www.coingecko.com', '_blank', 'noopener');
@@ -73,10 +76,10 @@ function ToolButton({ tool, roomId }) {
         window.open('https://news.ycombinator.com', '_blank', 'noopener');
         return;
       case 'Share Code':
-        setMsg('📄 Code sharing in next update');
+        setMsg('Code sharing in next update');
         break;
       case 'Conduit Terminal':
-        setMsg('🧠 Terminal panel coming soon');
+        setMsg('Terminal panel coming soon');
         break;
       case 'Random Prompt': {
         const prompts = [
@@ -86,26 +89,26 @@ function ToolButton({ tool, roomId }) {
           'What would you build if compute was free?',
           'Best anonymous post you\'ve ever seen?',
         ];
-        setMsg('🎲 ' + prompts[Math.floor(Math.random() * prompts.length)]);
+        setMsg(prompts[Math.floor(Math.random() * prompts.length)]);
         break;
       }
       case 'Meme Drop':
-        setMsg('🪄 Meme drops coming in next update');
+        setMsg('Meme drops coming in next update');
         break;
       case 'Open Mic':
-        setMsg('🎤 Speak freely — that\'s the whole room');
+        setMsg('Speak freely — that\'s the whole room');
         break;
       case 'AETH Dashboard':
-        setMsg('⚡ Connect wallet to see AETH balance');
+        setMsg('Connect wallet to see AETH balance');
         break;
       case 'Recycle Board':
-        setMsg('🔥 Most recycled posts shown in feed');
+        setMsg('Most recycled posts shown in feed');
         break;
       case 'Exclusive Drops':
-        setMsg('🎁 Drops announced in #aether room');
+        setMsg('Drops announced in #aether room');
         break;
       default:
-        setMsg('⚙️ Coming soon');
+        setMsg('Coming soon');
     }
     setTimeout(() => setMsg(''), 3000);
   }, [tool.label]);
@@ -136,7 +139,7 @@ function RoomTools({ room, mobileOpen, onClose }) {
       <aside className={`room-tools room-tools--${room.accent}${mobileOpen ? ' room-tools--open' : ''}`}>
         <div className="room-panel-head">
           <h3>{room.toolsTitle}</h3>
-          <button className="room-panel-close" onClick={onClose} type="button">✕</button>
+          <button className="room-panel-close" onClick={onClose} type="button">{X_ICON}</button>
         </div>
         <div className="room-tool-list">
           {room.tools.map(tool => (
@@ -157,7 +160,7 @@ function RoomSidebar({ room, posts, roomId, mobileOpen, onClose }) {
       <aside className={`room-sidebar room-sidebar--${room.accent}${mobileOpen ? ' room-sidebar--open' : ''}`}>
         <div className="room-panel-head">
           <h3>Info</h3>
-          <button className="room-panel-close" onClick={onClose} type="button">✕</button>
+          <button className="room-panel-close" onClick={onClose} type="button">{X_ICON}</button>
         </div>
         <section className="room-side-card">
           <div className="room-panel-head"><h3>Trending</h3><span>Live</span></div>
@@ -189,8 +192,8 @@ function RoomSidebar({ room, posts, roomId, mobileOpen, onClose }) {
 function MobileRoomBar({ onTools, onInfo }) {
   return (
     <div className="room-mobile-bar">
-      <button className="room-mobile-btn" onClick={onTools} type="button">⚙️ Tools</button>
-      <button className="room-mobile-btn" onClick={onInfo}  type="button">📊 Info</button>
+      <button className="room-mobile-btn" onClick={onTools} type="button"><span>{TOOLS_ICON}</span>Tools</button>
+      <button className="room-mobile-btn" onClick={onInfo}  type="button"><span>{INFO_ICON}</span>Info</button>
     </div>
   );
 }
@@ -204,7 +207,7 @@ function shareRoom(roomLabel) {
     navigator.clipboard.writeText(url).then(() => {
       // small toast via alert fallback
       const el = document.createElement('div');
-      el.textContent = '🔗 Link copied!';
+      el.textContent = 'Link copied';
       Object.assign(el.style, {
         position:'fixed', bottom:'1.5rem', left:'50%', transform:'translateX(-50%)',
         background:'#7C5CFF', color:'#fff', padding:'0.5rem 1.2rem',
@@ -245,8 +248,8 @@ function StandardRoom({ room, posts, onViewProfile }) {
           {/* Thread mode banner */}
           {threadMode && (
             <div className="room-thread-banner">
-              🧵 Thread mode — your next post starts a thread in {room.label}
-              <button onClick={() => setThreadMode(false)} type="button">✕</button>
+              Thread mode — your next post starts a thread in {room.label}
+              <button onClick={() => setThreadMode(false)} type="button">{X_ICON}</button>
             </div>
           )}
           {/* Feed */}
@@ -279,7 +282,7 @@ export function RoomsView({ onViewProfile }) {
       {/* Rail */}
       <div className="rooms-rail">
         <div className="rooms-rail-header">
-          <h2 className="rooms-rail-title">📡 Rooms</h2>
+          <h2 className="rooms-rail-title">Rooms</h2>
           <p className="rooms-rail-sub">Choose your environment</p>
         </div>
         <div className="rooms-rail-list">

@@ -1,3 +1,5 @@
+import React from 'react'
+
 export default function Hero() {
   return (
     <div className="h-screen flex flex-col justify-center items-center text-center px-6 relative overflow-hidden">

@@ -21,6 +21,8 @@ export function PostCard({ post = {}, onViewProfile }) {
   const [signaled,       setSignaled]       = useState(false);
   const [amplified,      setAmplified]      = useState(false);
   const [showReplies,    setShowReplies]    = useState(false);
+  const [signalPulse, setSignalPulse] = useState(false);
+  const [amplifyPulse, setAmplifyPulse] = useState(false);
 
   // BUG FIX 1: post.timestamp field was ignored — server uses `timestamp`, client expected `ts`
   const rawTime = timestamp || ts;
@@ -33,6 +35,8 @@ export function PostCard({ post = {}, onViewProfile }) {
   // BUG FIX 2: signal/amplify buttons had no actual API calls — wired up
   const handleSignal = useCallback(async () => {
     if (signaled || !id) return;
+    setSignalPulse(true);
+    setTimeout(() => setSignalPulse(false), 160);
     setSignaled(true);
     setLocalSignals(s => s + 1);
     try { await broadcastSignal(id); } catch { /* optimistic — ignore */ }
@@ -40,6 +44,8 @@ export function PostCard({ post = {}, onViewProfile }) {
 
   const handleAmplify = useCallback(async () => {
     if (amplified || !id) return;
+    setAmplifyPulse(true);
+    setTimeout(() => setAmplifyPulse(false), 160);
     setAmplified(true);
     setLocalAmplifies(a => a + 1);
     try { await broadcastAmplify(id); } catch { /* optimistic — ignore */ }
@@ -47,10 +53,8 @@ export function PostCard({ post = {}, onViewProfile }) {
 
   return (
     <div
-      className="rounded-xl p-4 transition-all"
+      className="post-card rounded-xl p-4 transition-all"
       style={{ background: '#0f0e1f', border: '1px solid #1e1e2e', marginBottom: '0.65rem' }}
-      onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(122,92,255,0.35)'; e.currentTarget.style.boxShadow = '0 0 20px rgba(122,92,255,0.08)'; }}
-      onMouseOut={e => { e.currentTarget.style.borderColor = '#1e1e2e'; e.currentTarget.style.boxShadow = 'none'; }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00ff9f', display: 'inline-block' }} className="pulse" />
@@ -68,29 +72,41 @@ export function PostCard({ post = {}, onViewProfile }) {
           style={{ background: 'none', border: 'none', color: signaled ? '#00ff9f' : 'inherit', cursor: signaled ? 'default' : 'pointer' }}
           onClick={handleSignal}
           disabled={signaled}
-        >↑ signal ({localSignals})</button>
+          className={`post-card-action${signalPulse ? ' post-card-action--pulse' : ''}`}
+        >
+          Signal ({localSignals})
+        </button>
         <button
           type="button"
-          style={{ background: 'none', border: 'none', color: amplified ? '#7a5cff' : 'inherit', cursor: amplified ? 'default' : 'pointer' }}
+          style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', color: amplified ? '#7a5cff' : 'inherit', cursor: amplified ? 'default' : 'pointer', borderRadius: 8, padding: '2px 8px' }}
           onClick={handleAmplify}
           disabled={amplified}
-        >⟳ amplify ({localAmplifies})</button>
+          className={`post-card-action${amplifyPulse ? ' post-card-action--pulse' : ''}`}
+        >
+          Amplify ({localAmplifies})
+        </button>
         <button
           type="button"
-          style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}
+          style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', color: 'inherit', cursor: 'pointer', borderRadius: 8, padding: '2px 8px' }}
           onClick={() => setShowReplies(v => !v)}
-        >↩ reply{replies.length > 0 ? ` (${replies.length})` : ''}</button>
-        <button type="button" style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', marginLeft: 'auto' }}
+          className="post-card-action"
+        >Reply{replies.length > 0 ? ` (${replies.length})` : ''}</button>
+        <button type="button" style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', color: 'inherit', cursor: 'pointer', marginLeft: 'auto', borderRadius: 8, padding: '2px 8px' }}
           onMouseOver={e => e.currentTarget.style.color = '#ef4444'}
           onMouseOut={e => e.currentTarget.style.color = '#52525b'}
-        >🚩</button>
+          className="post-card-action"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 20V4" /><path d="M4 4h11l-2.5 4L15 12H4" />
+          </svg>
+        </button>
       </div>
       {/* BUG FIX 3: replies array was never rendered */}
       {showReplies && replies.length > 0 && (
         <div style={{ marginTop: '0.75rem', borderLeft: '2px solid #1e1e2e', paddingLeft: '0.75rem' }}>
           {replies.map((r, i) => (
             <div key={r.id || i} style={{ marginBottom: '0.4rem', color: '#a1a1aa', fontSize: '0.8rem' }}>
-              <span style={{ color: '#52525b', marginRight: '0.4rem' }}>↩</span>
+              <span style={{ color: '#52525b', marginRight: '0.4rem' }}>›</span>
               {r.content || r.text || ''}
             </div>
           ))}

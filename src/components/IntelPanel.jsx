@@ -1,3 +1,5 @@
+import React from 'react'
+
 const SIGNALS = [
   { tag: '#ZK',      text: 'Zero-knowledge thread',    delta: '+14' },
   { tag: '#E2E',     text: 'Encryption protocol debate', delta: '+9' },

@@ -96,7 +96,7 @@ export default function Nav({ view, setView }) {
               style={{
                 width: 40,
                 height: 40,
-                borderRadius: 10,
+                borderRadius: 8,
                 border: 'none',
                 background: active ? 'rgba(122,92,255,0.18)' : 'transparent',
                 color: active ? '#7a5cff' : 'rgba(255,255,255,0.28)',
@@ -104,7 +104,7 @@ export default function Nav({ view, setView }) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                transition: 'background 0.15s, color 0.15s',
+                transition: 'background 0.15s ease, color 0.15s ease, transform 0.15s ease',
                 position: 'relative',
               }}
               onMouseEnter={e => {
@@ -118,7 +118,7 @@ export default function Nav({ view, setView }) {
             >
               {/* Active indicator bar */}
               {active && (
-                <span style={{
+                <span className="nav-active-indicator" style={{
                   position: 'absolute',
                   left: -1,
                   top: '50%',

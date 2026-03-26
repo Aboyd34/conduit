@@ -2,16 +2,15 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 
 function getWsUrl() {
   if (import.meta.env.VITE_WS_URL) return import.meta.env.VITE_WS_URL;
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const host = import.meta.env.DEV
-    ? window.location.hostname + ':3001'
-    : window.location.host;
-  return `${protocol}//${host}/ws`;
+  const apiBase = getApiUrl();
+  const wsBase = apiBase.startsWith('https:')
+    ? apiBase.replace('https:', 'wss:')
+    : apiBase.replace('http:', 'ws:');
+  return `${wsBase}/ws`;
 }
 
 function getApiUrl() {
-  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
-  return import.meta.env.DEV ? 'http://localhost:3001' : window.location.origin;
+  return import.meta.env.VITE_API_URL || window.location.origin;
 }
 
 const MAX_RETRIES   = 15;
