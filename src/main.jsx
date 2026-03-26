@@ -30,5 +30,3 @@ root.render(
     </ErrorBoundary>
   </React.StrictMode>
 )
-
-window.addEventListener('unload', () => {})
