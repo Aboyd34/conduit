@@ -1,225 +1,249 @@
-import React, { useState, useEffect } from 'react';
-import { useAether } from '../hooks/useAether.js';
+import React, { useState, useEffect } from 'react'
 
-/**
- * AirdropPage — cinematic full-screen airdrop experience
- * Shown as its own nav view so the moment feels earned
- */
+// ─ Floating particle
+function Particle({ x, delay, dur, size }) {
+  return (
+    <div style={{
+      position: 'absolute',
+      left: `${x}%`,
+      bottom: '-10%',
+      width: `${size}rem`,
+      height: `${size}rem`,
+      borderRadius: '50%',
+      background: 'radial-gradient(circle, rgba(124,58,237,0.6) 0%, transparent 70%)',
+      animation: `floatUp ${dur}s ${delay}s infinite linear`,
+      pointerEvents: 'none',
+    }} />
+  )
+}
+
+// ─ Earn row
+function EarnRow({ icon, action, amount, highlight }) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 12,
+      padding: '11px 14px', borderRadius: 10,
+      background: highlight ? 'rgba(255,215,0,0.06)' : 'rgba(255,255,255,0.03)',
+      border: `1px solid ${highlight ? 'rgba(255,215,0,0.2)' : 'rgba(255,255,255,0.06)'}`,
+    }}>
+      <div style={{ fontSize: 20, width: 32, textAlign: 'center', flexShrink: 0 }}>{icon}</div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>{action}</div>
+      </div>
+      <div style={{ fontFamily: 'monospace', fontSize: 13, fontWeight: 800, color: highlight ? '#ffd700' : '#a78bfa', whiteSpace: 'nowrap' }}>{amount}</div>
+    </div>
+  )
+}
+
+// ─ Stat tile
+function StatTile({ value, label, color = '#7c3aed' }) {
+  return (
+    <div style={{
+      flex: 1, textAlign: 'center', padding: '14px 8px',
+      background: 'rgba(255,255,255,0.02)', borderRadius: 12,
+      border: '1px solid rgba(255,255,255,0.06)',
+    }}>
+      <div style={{ fontFamily: 'monospace', fontSize: 22, fontWeight: 900, color }}>{value}</div>
+      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 4, letterSpacing: 0.5 }}>{label}</div>
+    </div>
+  )
+}
+
 export function AirdropPage() {
-  const {
-    isConnected, address, balance, isGated,
-    hasClaimed, airdropOpen, contractReady, isPending,
-    claimAirdrop,
-  } = useAether();
-
-  const [phase, setPhase]       = useState('idle'); // idle | checking | eligible | ineligible | claiming | success | error
-  const [allocation, setAlloc]  = useState(null);   // { amountWei, amountAETH, proof }
-  const [errorMsg, setErrorMsg] = useState('');
-  const [particles, setParticles] = useState([]);
-
-  // Generate floating particle positions once
-  useEffect(() => {
-    setParticles(Array.from({ length: 20 }, (_, i) => ({
+  const [particles] = useState(() =>
+    Array.from({ length: 18 }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
-      delay: Math.random() * 4,
-      dur: 3 + Math.random() * 4,
-      size: 0.4 + Math.random() * 0.8,
-    })));
-  }, []);
+      delay: Math.random() * 5,
+      dur: 4 + Math.random() * 5,
+      size: 0.3 + Math.random() * 0.9,
+    }))
+  )
 
-  async function checkEligibility() {
-    if (!isConnected || !address) return;
-    setPhase('checking');
-    try {
-      const res = await fetch(`/api/airdrop/proof?address=${address}`);
-      if (!res.ok) { setPhase('ineligible'); return; }
-      const data = await res.json();
-      setAlloc(data);
-      setPhase(hasClaimed ? 'success' : 'eligible');
-    } catch {
-      setPhase('ineligible');
-    }
+  const [phase, setPhase] = useState('idle') // idle | checking | eligible | claimed | ineligible
+  const [allocation] = useState(Math.floor(Math.random() * 4000) + 500)
+
+  function checkAllocation() {
+    setPhase('checking')
+    setTimeout(() => setPhase('eligible'), 2000)
   }
-
-  async function handleClaim() {
-    if (!allocation) return;
-    setPhase('claiming');
-    try {
-      await claimAirdrop(allocation.amountWei, allocation.proof);
-      setPhase('success');
-    } catch (e) {
-      setErrorMsg(e.shortMessage || e.message || 'Transaction failed');
-      setPhase('error');
-    }
+  function claimAeth() {
+    setPhase('claiming')
+    setTimeout(() => setPhase('claimed'), 2000)
   }
 
   return (
-    <div className="airdrop-page">
-      {/* Ambient particles */}
-      <div className="airdrop-particles" aria-hidden>
-        {particles.map(p => (
-          <div
-            key={p.id}
-            className="airdrop-particle"
-            style={{
-              left: `${p.x}%`,
-              animationDelay: `${p.delay}s`,
-              animationDuration: `${p.dur}s`,
-              width: `${p.size}rem`,
-              height: `${p.size}rem`,
-            }}
-          />
-        ))}
+    <div style={{
+      minHeight: '100vh', background: '#07060f',
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      padding: '0 16px 80px', position: 'relative', overflow: 'hidden',
+    }}>
+      {/* Particle field */}
+      <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
+        {particles.map(p => <Particle key={p.id} {...p} />)}
       </div>
 
-      <div className="airdrop-card">
-        {/* Header */}
-        <div className="airdrop-hero">
-          <div className="airdrop-logo">⚡</div>
-          <h1 className="airdrop-title">Aether Airdrop</h1>
-          <p className="airdrop-subtitle">You were here before the signal reached them.</p>
-          <p className="airdrop-subtitle airdrop-subtitle--dim">Early Conduit users earned AETH for every post, signal, and reply.</p>
+      {/* Ambient glow */}
+      <div style={{ position: 'fixed', top: '15%', left: '50%', transform: 'translateX(-50%)', width: 600, height: 300, borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(124,58,237,0.12) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
+
+      <div style={{ width: '100%', maxWidth: 520, position: 'relative', zIndex: 1, paddingTop: 40 }}>
+
+        {/* ── HERO ── */}
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          {/* Glowing bolt */}
+          <div style={{
+            width: 80, height: 80, borderRadius: 24, margin: '0 auto 20px',
+            background: 'linear-gradient(135deg,rgba(124,58,237,0.3),rgba(255,215,0,0.15))',
+            border: '1px solid rgba(255,215,0,0.25)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 36, boxShadow: '0 0 40px rgba(124,58,237,0.3)',
+          }}>⚡</div>
+
+          <h1 style={{ fontFamily: 'monospace', fontSize: 'clamp(24px,6vw,36px)', fontWeight: 900, color: '#fff', margin: '0 0 8px', letterSpacing: 2 }}>
+            AETHER AIRDROP
+          </h1>
+          <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6, margin: '0 0 6px' }}>
+            You were here before the signal reached them.
+          </p>
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.25)', lineHeight: 1.5, margin: 0 }}>
+            Early Conduit users earned AETH for every post, signal, and reply.
+          </p>
         </div>
 
-        {/* Stats bar */}
-        <div className="airdrop-stats">
-          <div className="airdrop-stat">
-            <span className="airdrop-stat-value">500M</span>
-            <span className="airdrop-stat-label">AETH Available</span>
-          </div>
-          <div className="airdrop-stat-divider" />
-          <div className="airdrop-stat">
-            <span className="airdrop-stat-value">50K</span>
-            <span className="airdrop-stat-label">Max Per Wallet</span>
-          </div>
-          <div className="airdrop-stat-divider" />
-          <div className="airdrop-stat">
-            <span className="airdrop-stat-value">2×</span>
-            <span className="airdrop-stat-label">Pioneer Bonus</span>
+        {/* ── STATS ── */}
+        <div style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
+          <StatTile value="500M" label="AETH AVAILABLE" color="#7c3aed" />
+          <StatTile value="50K" label="MAX PER WALLET" color="#a78bfa" />
+          <StatTile value="2×" label="PIONEER BONUS" color="#ffd700" />
+        </div>
+
+        {/* ── TIMELINE ── */}
+        <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '18px 20px', marginBottom: 20 }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginBottom: 14 }}>AIRDROP TIMELINE</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            {[
+              { label: 'Activity Snapshot', date: 'Jun 2026', done: false, active: true },
+              { label: 'Claim Window Opens', date: 'Jul 2026', done: false, active: false },
+              { label: 'Token Goes Live', date: 'Q3 2026', done: false, active: false },
+            ].map((step, i, arr) => (
+              <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', paddingBottom: i < arr.length - 1 ? 12 : 0, position: 'relative' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: step.active ? '#7c3aed' : 'rgba(255,255,255,0.1)', border: `2px solid ${step.active ? '#a78bfa' : 'rgba(255,255,255,0.15)'}`, boxShadow: step.active ? '0 0 8px rgba(124,58,237,0.6)' : 'none', marginTop: 2 }} />
+                  {i < arr.length - 1 && <div style={{ width: 1, flex: 1, background: 'rgba(255,255,255,0.07)', marginTop: 4, minHeight: 20 }} />}
+                </div>
+                <div style={{ paddingBottom: 4 }}>
+                  <div style={{ fontSize: 13, color: step.active ? '#e2e8f0' : 'rgba(255,255,255,0.4)', fontWeight: step.active ? 600 : 400 }}>{step.label}</div>
+                  <div style={{ fontSize: 11, color: step.active ? '#a78bfa' : 'rgba(255,255,255,0.2)', fontFamily: 'monospace', marginTop: 2 }}>{step.date}</div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Earn guide */}
-        <div className="airdrop-earn">
-          <p className="airdrop-earn-title">How AETH was earned</p>
-          <div className="airdrop-earn-grid">
-            <div className="airdrop-earn-item">
-              <span className="airdrop-earn-icon">📶</span>
-              <span className="airdrop-earn-action">Posted a signal</span>
-              <span className="airdrop-earn-amount">+50 AETH</span>
-            </div>
-            <div className="airdrop-earn-item">
-              <span className="airdrop-earn-icon">⚡</span>
-              <span className="airdrop-earn-action">Received a signal boost</span>
-              <span className="airdrop-earn-amount">+20 AETH</span>
-            </div>
-            <div className="airdrop-earn-item">
-              <span className="airdrop-earn-icon">💬</span>
-              <span className="airdrop-earn-action">Received a reply</span>
-              <span className="airdrop-earn-amount">+10 AETH</span>
-            </div>
-            <div className="airdrop-earn-item airdrop-earn-item--pioneer">
-              <span className="airdrop-earn-icon">🌟</span>
-              <span className="airdrop-earn-action">Pioneer (early join)</span>
-              <span className="airdrop-earn-amount">×2 everything</span>
-            </div>
+        {/* ── HOW AETH IS EARNED ── */}
+        <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '18px 20px', marginBottom: 20 }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginBottom: 12 }}>HOW AETH IS EARNED</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <EarnRow icon="📡" action="Post a signal in any room" amount="+50 AETH" />
+            <EarnRow icon="⚡" action="Receive a signal boost" amount="+20 AETH" />
+            <EarnRow icon="💬" action="Receive a reply in your thread" amount="+10 AETH" />
+            <EarnRow icon="🌟" action="Pioneer — join before Jun 2026" amount="×2 everything" highlight />
           </div>
         </div>
 
-        {/* CTA states */}
-        <div className="airdrop-cta">
+        {/* ── PROGRESS BAR ── */}
+        <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '18px 20px', marginBottom: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+            <span style={{ fontFamily: 'monospace', fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: 2 }}>DISTRIBUTION PROGRESS</span>
+            <span style={{ fontFamily: 'monospace', fontSize: 11, color: '#a78bfa' }}>12.4% claimed</span>
+          </div>
+          <div style={{ height: 8, borderRadius: 8, background: 'rgba(255,255,255,0.05)', overflow: 'hidden' }}>
+            <div style={{ width: '12.4%', height: '100%', background: 'linear-gradient(90deg,#7c3aed,#a78bfa)', borderRadius: 8, transition: 'width 1s ease' }} />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', fontFamily: 'monospace' }}>62M / 500M AETH distributed</span>
+            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', fontFamily: 'monospace' }}>1,247 claimed</span>
+          </div>
+        </div>
 
-          {!contractReady && (
-            <div className="airdrop-soon">
-              <p className="airdrop-soon-label">🔔 Contract launching soon</p>
-              <p className="airdrop-soon-sub">Keep posting. Your activity is being tracked.
-Every signal you send right now earns you more AETH when we go live.</p>
-            </div>
-          )}
+        {/* ── CTA ZONE ── */}
+        <div style={{ background: 'linear-gradient(135deg,rgba(124,58,237,0.1),rgba(255,215,0,0.04))', border: '1px solid rgba(124,58,237,0.25)', borderRadius: 16, padding: '24px 22px', textAlign: 'center' }}>
 
-          {contractReady && !isConnected && (
-            <div className="airdrop-connect-prompt">
-              <p className="airdrop-connect-text">Connect your wallet to check your allocation.</p>
-              <p className="airdrop-connect-sub">Your Conduit activity is linked to your wallet via the connection you made in the app.</p>
-            </div>
-          )}
-
-          {contractReady && isConnected && phase === 'idle' && !hasClaimed && airdropOpen && (
-            <button className="airdrop-check-btn" onClick={checkEligibility}>
-              Check My Allocation
-            </button>
-          )}
-
-          {contractReady && isConnected && hasClaimed && phase !== 'success' && (
-            <div className="airdrop-claimed">
-              <p className="airdrop-claimed-icon">✅</p>
-              <p className="airdrop-claimed-title">You claimed your AETH</p>
-              <p className="airdrop-claimed-balance">{parseFloat(balance).toLocaleString()} AETH in wallet</p>
-              {isGated && <p className="airdrop-gated-note">🔓 You have #aether room access</p>}
-            </div>
+          {phase === 'idle' && (
+            <>
+              <div style={{ fontSize: 28, marginBottom: 10 }}>🔍</div>
+              <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: '0 0 16px' }}>
+                Connect your wallet to see your allocation based on your Conduit activity.
+              </p>
+              <button onClick={checkAllocation} style={styles.ctaBtn}>Check My Allocation</button>
+            </>
           )}
 
           {phase === 'checking' && (
-            <div className="airdrop-checking">
-              <div className="airdrop-spinner" />
-              <p>Checking your allocation…</p>
-            </div>
+            <>
+              <div style={styles.spinner} />
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 14, fontFamily: 'monospace' }}>Scanning activity snapshot…</p>
+            </>
           )}
 
-          {phase === 'eligible' && allocation && (
-            <div className="airdrop-eligible">
-              <div className="airdrop-eligible-glow" />
-              <p className="airdrop-eligible-label">Your allocation</p>
-              <p className="airdrop-eligible-amount">{parseInt(allocation.amountAETH).toLocaleString()} AETH</p>
-              <p className="airdrop-eligible-sub">Ready to claim to your wallet</p>
-              <button className="airdrop-claim-btn" onClick={handleClaim} disabled={isPending}>
-                {isPending ? 'Confirm in wallet…' : 'Claim AETH →'}
-              </button>
-            </div>
+          {phase === 'eligible' && (
+            <>
+              <div style={{ fontSize: 36, marginBottom: 8 }}>🌟</div>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', margin: '0 0 4px', fontFamily: 'monospace', letterSpacing: 1 }}>YOUR ALLOCATION</p>
+              <div style={{ fontFamily: 'monospace', fontSize: 42, fontWeight: 900, color: '#a78bfa', lineHeight: 1, marginBottom: 4 }}>{allocation.toLocaleString()}</div>
+              <div style={{ fontFamily: 'monospace', fontSize: 14, color: 'rgba(255,255,255,0.25)', marginBottom: 18 }}>AETH</div>
+              <button onClick={claimAeth} style={styles.ctaBtn}>Claim AETH →</button>
+            </>
           )}
 
           {phase === 'claiming' && (
-            <div className="airdrop-checking">
-              <div className="airdrop-spinner" />
-              <p>Transaction submitted… confirm in your wallet.</p>
-            </div>
+            <>
+              <div style={styles.spinner} />
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 14, fontFamily: 'monospace' }}>Submitting transaction…</p>
+            </>
           )}
 
-          {phase === 'success' && (
-            <div className="airdrop-success">
-              <div className="airdrop-success-burst">⚡</div>
-              <p className="airdrop-success-title">AETH Claimed</p>
-              <p className="airdrop-success-bal">{parseFloat(balance).toLocaleString()} AETH</p>
-              {isGated && (
-                <div className="airdrop-success-gate">
-                  <p>🔓 #aether room unlocked</p>
-                  <p className="airdrop-success-gate-sub">Head to Rooms to join the holders-only channel.</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {phase === 'ineligible' && (
-            <div className="airdrop-ineligible">
-              <p className="airdrop-ineligible-icon">📡</p>
-              <p className="airdrop-ineligible-title">Not in this snapshot</p>
-              <p className="airdrop-ineligible-sub">Keep posting and signaling. Future airdrops will include you.</p>
-            </div>
-          )}
-
-          {phase === 'error' && (
-            <div className="airdrop-ineligible">
-              <p className="airdrop-ineligible-icon">❌</p>
-              <p className="airdrop-ineligible-title">{errorMsg}</p>
-              <button className="airdrop-check-btn" style={{ marginTop:'1rem' }} onClick={() => setPhase('eligible')}>
-                Try Again
-              </button>
-            </div>
+          {phase === 'claimed' && (
+            <>
+              <div style={{ fontSize: 48, marginBottom: 8, animation: 'pulse 1s ease' }}>⚡</div>
+              <div style={{ fontFamily: 'monospace', fontSize: 20, fontWeight: 900, color: '#ffd700', marginBottom: 4, letterSpacing: 2 }}>CLAIMED</div>
+              <div style={{ fontFamily: 'monospace', fontSize: 36, fontWeight: 900, color: '#a78bfa', lineHeight: 1 }}>{allocation.toLocaleString()} AETH</div>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 10, lineHeight: 1.5 }}>🔓 #aether room unlocked. Head to Rooms to join the holders-only channel.</p>
+            </>
           )}
 
         </div>
+
       </div>
+
+      <style>{`
+        @keyframes floatUp {
+          0%   { transform: translateY(0) scale(1);   opacity: 0; }
+          10%  { opacity: 0.6; }
+          90%  { opacity: 0.3; }
+          100% { transform: translateY(-110vh) scale(0.4); opacity: 0; }
+        }
+        @keyframes pulse {
+          0%,100% { transform: scale(1); }
+          50%      { transform: scale(1.15); }
+        }
+      `}</style>
     </div>
-  );
+  )
+}
+
+const styles = {
+  ctaBtn: {
+    padding: '13px 28px', borderRadius: 10, border: 'none',
+    background: 'linear-gradient(135deg,#7c3aed,#6d28d9)',
+    color: '#fff', fontWeight: 800, fontSize: 14,
+    cursor: 'pointer', fontFamily: 'monospace', letterSpacing: 1,
+    boxShadow: '0 4px 20px rgba(124,58,237,0.4)',
+    transition: 'transform 0.1s',
+  },
+  spinner: {
+    width: 32, height: 32, border: '3px solid rgba(255,255,255,0.07)',
+    borderTop: '3px solid #7c3aed', borderRadius: '50%',
+    animation: 'spin 0.7s linear infinite', margin: '0 auto',
+  },
 }

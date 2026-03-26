@@ -1,138 +1,147 @@
-import React from 'react';
-import WalletConnect from './WalletConnect.jsx';
-
-const Icons = {
-  rooms: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="3" width="7" height="7" rx="1.5"/>
-      <rect x="14" y="3" width="7" height="7" rx="1.5"/>
-      <rect x="3" y="14" width="7" height="7" rx="1.5"/>
-      <rect x="14" y="14" width="7" height="7" rx="1.5"/>
-    </svg>
-  ),
-  pulse: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M2 12h3l3-8 4 16 3-10 2 4 2-2h3"/>
-    </svg>
-  ),
-  search: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="10" cy="10" r="7"/>
-      <line x1="17" y1="17" x2="22" y2="22"/>
-    </svg>
-  ),
-  ai: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="3"/>
-      <path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/>
-    </svg>
-  ),
-  airdrop: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-    </svg>
-  ),
-  you: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-    </svg>
-  ),
-  logo: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-    </svg>
-  ),
-};
+import React, { useState } from 'react'
 
 const NAV_ITEMS = [
-  { id: 'rooms',   icon: Icons.rooms,   label: 'Rooms'   },
-  { id: 'pulse',   icon: Icons.pulse,   label: 'Pulse'   },
-  { id: 'search',  icon: Icons.search,  label: 'Search'  },
-  { id: 'ai',      icon: Icons.ai,      label: 'Aether'  },
-  { id: 'airdrop', icon: Icons.airdrop, label: 'Airdrop' },
-  { id: 'you',     icon: Icons.you,     label: 'You'     },
-];
+  { id: 'rooms',   label: 'Rooms',   icon: '📶', path: '/rooms' },
+  { id: 'airdrop', label: 'Airdrop', icon: '⚡',    path: '/airdrop' },
+  { id: 'pulse',   label: 'Pulse',   icon: '📡',   path: '/pulse' },
+  { id: 'you',     label: 'You',     icon: '👤',   path: '/you' },
+]
 
-export default function Nav({ view, setView }) {
+export default function Nav({ activePath = '/' }) {
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  const isActive = (path) => activePath === path || activePath.startsWith(path + '/')
+
   return (
-    <nav style={{
-      width: 72,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      background: '#08071a',
-      borderRight: '1px solid rgba(255,255,255,0.05)',
-      padding: '14px 0 12px',
-      flexShrink: 0,
-      height: '100vh',
-      justifyContent: 'space-between',
-    }}>
-
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, width: '100%' }}>
-        {/* Logo */}
-        <div style={{
-          color: '#7a5cff',
-          marginBottom: 14,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          width: 36, height: 36, borderRadius: 10,
-          background: 'rgba(122,92,255,0.12)',
-        }}>
-          {Icons.logo}
+    <>
+      {/* ── DESKTOP sidebar ── */}
+      <nav style={styles.desktop}>
+        <div style={styles.logo}>
+          <span style={styles.bolt}>⚡</span>
+          <span style={styles.logoText}>CONDUIT</span>
         </div>
+        <div style={styles.navList}>
+          {NAV_ITEMS.map(item => (
+            <a key={item.id} href={item.path} style={{
+              ...styles.navItem,
+              ...(isActive(item.path) ? styles.navItemActive : {}),
+            }}>
+              <span style={styles.navIcon}>{item.icon}</span>
+              <span>{item.label}</span>
+            </a>
+          ))}
+        </div>
+      </nav>
 
-        {NAV_ITEMS.map(item => {
-          const active = view === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => setView(item.id)}
-              style={{
-                width: 56, minHeight: 52, borderRadius: 12, border: 'none',
-                background: active ? 'rgba(122,92,255,0.16)' : 'transparent',
-                color: active ? '#7a5cff' : 'rgba(255,255,255,0.28)',
-                cursor: 'pointer',
-                display: 'flex', flexDirection: 'column',
-                alignItems: 'center', justifyContent: 'center', gap: 4,
-                transition: 'background 0.15s, color 0.15s',
-                position: 'relative',
-                padding: '6px 0',
-              }}
-              onMouseEnter={e => {
-                if (!active) e.currentTarget.style.color = 'rgba(255,255,255,0.75)';
-                e.currentTarget.style.background = active ? 'rgba(122,92,255,0.22)' : 'rgba(255,255,255,0.05)';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.color = active ? '#7a5cff' : 'rgba(255,255,255,0.28)';
-                e.currentTarget.style.background = active ? 'rgba(122,92,255,0.16)' : 'transparent';
-              }}
-            >
-              {active && (
-                <span style={{
-                  position: 'absolute', left: 0, top: '50%',
-                  transform: 'translateY(-50%)',
-                  width: 3, height: 24,
-                  borderRadius: '0 3px 3px 0',
-                  background: '#7a5cff',
-                }} />
-              )}
-              {item.icon}
-              <span style={{
-                fontSize: 9,
-                fontFamily: 'monospace',
-                letterSpacing: 0.5,
-                textTransform: 'uppercase',
-                lineHeight: 1,
-                color: 'inherit',
-              }}>{item.label}</span>
-            </button>
-          );
-        })}
-      </div>
+      {/* ── MOBILE top bar ── */}
+      <header style={styles.mobileBar}>
+        <div style={styles.mobileLogo}>
+          <span style={{ fontSize: 18 }}>⚡</span>
+          <span style={styles.logoText}>CONDUIT</span>
+        </div>
+        <button onClick={() => setMenuOpen(o => !o)} style={styles.hamburger} aria-label="Menu">
+          {menuOpen
+            ? <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          }
+        </button>
+      </header>
 
-      {/* Wallet */}
-      <div style={{ width: '100%', display: 'flex', justifyContent: 'center', paddingBottom: 4 }}>
-        <WalletConnect compact />
-      </div>
-    </nav>
-  );
+      {/* ── MOBILE dropdown menu ── */}
+      {menuOpen && (
+        <div style={styles.mobileMenu} onClick={() => setMenuOpen(false)}>
+          {NAV_ITEMS.map(item => (
+            <a key={item.id} href={item.path} style={{
+              ...styles.mobileNavItem,
+              ...(isActive(item.path) ? styles.mobileNavItemActive : {}),
+            }}>
+              <span style={{ fontSize: 18 }}>{item.icon}</span>
+              <span>{item.label}</span>
+            </a>
+          ))}
+        </div>
+      )}
+
+      {/* ── MOBILE bottom tab bar ── */}
+      <nav style={styles.mobileBottom}>
+        {NAV_ITEMS.map(item => (
+          <a key={item.id} href={item.path} style={{
+            ...styles.mobileTab,
+            ...(isActive(item.path) ? styles.mobileTabActive : {}),
+          }}>
+            <span style={{ fontSize: 20, lineHeight: 1 }}>{item.icon}</span>
+            <span style={{ fontSize: 9, marginTop: 2, fontFamily: 'monospace', letterSpacing: 0.5 }}>{item.label}</span>
+          </a>
+        ))}
+      </nav>
+    </>
+  )
+}
+
+const styles = {
+  /* DESKTOP */
+  desktop: {
+    display: 'none',
+    '@media (min-width: 768px)': { display: 'flex' },
+    position: 'fixed', left: 0, top: 0, bottom: 0, width: 220,
+    background: '#0a0916', borderRight: '1px solid #1e1c30',
+    flexDirection: 'column', padding: '28px 16px', zIndex: 100,
+    gap: 4,
+  },
+  logo: { display: 'flex', alignItems: 'center', gap: 8, padding: '0 8px 24px' },
+  bolt: { fontSize: 22 },
+  logoText: { fontFamily: 'monospace', fontWeight: 900, fontSize: 16, color: '#7c3aed', letterSpacing: 3 },
+  navList: { display: 'flex', flexDirection: 'column', gap: 4 },
+  navItem: {
+    display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10,
+    color: 'rgba(255,255,255,0.4)', fontSize: 14, fontWeight: 500,
+    textDecoration: 'none', transition: 'all 0.15s', fontFamily: 'monospace',
+  },
+  navItemActive: { background: 'rgba(124,58,237,0.15)', color: '#a78bfa', borderLeft: '2px solid #7c3aed' },
+  navIcon: { fontSize: 16, width: 22, textAlign: 'center' },
+
+  /* MOBILE TOP BAR */
+  mobileBar: {
+    display: 'flex',
+    position: 'fixed', top: 0, left: 0, right: 0, height: 52, zIndex: 200,
+    background: 'rgba(10,9,22,0.96)', borderBottom: '1px solid #1e1c30',
+    alignItems: 'center', justifyContent: 'space-between', padding: '0 16px',
+    backdropFilter: 'blur(12px)',
+  },
+  mobileLogo: { display: 'flex', alignItems: 'center', gap: 8 },
+  hamburger: {
+    background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: 8, padding: '7px 8px', cursor: 'pointer', color: 'rgba(255,255,255,0.6)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+  },
+
+  /* MOBILE DROPDOWN */
+  mobileMenu: {
+    position: 'fixed', top: 52, left: 0, right: 0, zIndex: 199,
+    background: 'rgba(10,9,22,0.98)', borderBottom: '1px solid #1e1c30',
+    display: 'flex', flexDirection: 'column', padding: '8px 12px 12px',
+    backdropFilter: 'blur(16px)',
+  },
+  mobileNavItem: {
+    display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
+    borderRadius: 10, color: 'rgba(255,255,255,0.5)', fontSize: 15,
+    textDecoration: 'none', fontFamily: 'monospace', transition: 'all 0.12s',
+    fontWeight: 500,
+  },
+  mobileNavItemActive: { background: 'rgba(124,58,237,0.12)', color: '#a78bfa' },
+
+  /* MOBILE BOTTOM TAB BAR */
+  mobileBottom: {
+    display: 'flex',
+    position: 'fixed', bottom: 0, left: 0, right: 0, height: 60, zIndex: 200,
+    background: 'rgba(10,9,22,0.97)', borderTop: '1px solid #1e1c30',
+    alignItems: 'center', justifyContent: 'space-around',
+    backdropFilter: 'blur(12px)',
+  },
+  mobileTab: {
+    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+    flex: 1, height: '100%', textDecoration: 'none',
+    color: 'rgba(255,255,255,0.3)', transition: 'all 0.15s',
+  },
+  mobileTabActive: { color: '#a78bfa' },
 }
