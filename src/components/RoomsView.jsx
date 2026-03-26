@@ -1,95 +1,115 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 
-// SVG AI avatar — monogram initial in a styled circle
-function AIAvatar({ name, color }) {
-  return (
-    <div style={{
-      width: 36, height: 36, borderRadius: 10,
-      background: `${color}18`,
-      border: `1px solid ${color}45`,
-      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-    }}>
-      <svg width="20" height="20" viewBox="0 0 20 20">
-        <text
-          x="10" y="14"
-          textAnchor="middle"
-          fontSize="11"
-          fontFamily="monospace"
-          fontWeight="700"
-          fill={color}
-          letterSpacing="0.5"
-        >{name.slice(0,2)}</text>
+// Sharp SVG icons per room — no emoji, no monograms
+const RoomIcon = ({ id, color, size = 14 }) => {
+  const s = { width: size, height: size, fill: 'none', stroke: color, strokeWidth: 1.6, strokeLinecap: 'round', strokeLinejoin: 'round' }
+  switch (id) {
+    case 'general': return (
+      <svg {...s} viewBox="0 0 24 24">
+        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
       </svg>
-    </div>
-  )
+    )
+    case 'dev': return (
+      <svg {...s} viewBox="0 0 24 24">
+        <polyline points="16 18 22 12 16 6"/>
+        <polyline points="8 6 2 12 8 18"/>
+      </svg>
+    )
+    case 'privacy': return (
+      <svg {...s} viewBox="0 0 24 24">
+        <rect x="3" y="11" width="18" height="11" rx="2"/>
+        <path d="M7 11V7a5 5 0 0110 0v4"/>
+      </svg>
+    )
+    case 'aether': return (
+      <svg {...s} viewBox="0 0 24 24">
+        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+      </svg>
+    )
+    case 'random': return (
+      <svg {...s} viewBox="0 0 24 24">
+        <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>
+      </svg>
+    )
+    default: return null
+  }
+}
+
+// AI avatar — clean geometric SVG shape, unique per AI
+const AIIcon = ({ id, color, size = 20 }) => {
+  const s = { width: size, height: size, fill: 'none', stroke: color, strokeWidth: 1.5, strokeLinecap: 'round', strokeLinejoin: 'round' }
+  switch (id) {
+    case 'general': return (
+      <svg {...s} viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/>
+      </svg>
+    )
+    case 'dev': return (
+      <svg {...s} viewBox="0 0 24 24">
+        <polyline points="16 18 22 12 16 6"/>
+        <polyline points="8 6 2 12 8 18"/>
+      </svg>
+    )
+    case 'privacy': return (
+      <svg {...s} viewBox="0 0 24 24">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+    )
+    case 'aether': return (
+      <svg {...s} viewBox="0 0 24 24">
+        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+      </svg>
+    )
+    case 'random': return (
+      <svg {...s} viewBox="0 0 24 24">
+        <path d="M2 12h3l3-8 4 16 3-10 2 4 2-2h3"/>
+      </svg>
+    )
+    default: return null
+  }
 }
 
 const ROOMS = [
   {
-    id: 'general',
-    label: '#general',
-    desc: 'Open signals — everyone welcome',
+    id: 'general', label: '#general', desc: 'Open signals — everyone welcome',
     color: '#5b8cff',
     bg: 'radial-gradient(ellipse at 30% 0%, rgba(91,140,255,0.07) 0%, transparent 60%)',
     vibe: 'The main frequency. Everyone transmits here.',
     placeholder: 'Broadcast to the network…',
-    ai: {
-      name: 'RELAY',
-      greeting: "Signal locked in. I'm RELAY — I keep the frequency clean in #general. Ask me anything, or just start broadcasting. The network is listening.",
-    },
+    ai: { name: 'RELAY', greeting: "Signal locked in. I'm RELAY — I keep the frequency clean in #general. Ask me anything, or just start broadcasting. The network is listening." },
   },
   {
-    id: 'dev',
-    label: '#dev',
-    desc: 'Builders, code, raw ideas',
+    id: 'dev', label: '#dev', desc: 'Builders, code, raw ideas',
     color: '#9b5cff',
     bg: 'radial-gradient(ellipse at 30% 0%, rgba(155,92,255,0.07) 0%, transparent 60%)',
     vibe: 'Ship fast. Break things. Leave no logs.',
     placeholder: 'Drop a build update, bug, or idea…',
-    ai: {
-      name: 'FORGE',
-      greeting: "You're in #dev. I'm FORGE. Drop your code, bugs, or half-baked ideas. I debug, review, and ship with you. No rubber ducks needed.",
-    },
+    ai: { name: 'FORGE', greeting: "You're in #dev. I'm FORGE. Drop your code, bugs, or half-baked ideas. I debug, review, and ship with you. No rubber ducks needed." },
   },
   {
-    id: 'privacy',
-    label: '#privacy',
-    desc: 'Encryption, opsec, right to hide',
+    id: 'privacy', label: '#privacy', desc: 'Encryption, opsec, right to hide',
     color: '#00ffc3',
     bg: 'radial-gradient(ellipse at 30% 0%, rgba(0,255,195,0.06) 0%, transparent 60%)',
     vibe: 'The signal dies here. Nothing leaves this room.',
     placeholder: 'Share a tool, technique, or thought on privacy…',
-    ai: {
-      name: 'NULL',
-      greeting: "I'm NULL. I don't remember. I don't log. I don't judge. Ask me about encryption, opsec, threat models, or how to disappear. What's your concern?",
-    },
+    ai: { name: 'NULL', greeting: "I'm NULL. I don't remember. I don't log. I don't judge. Ask me about encryption, opsec, threat models, or how to disappear. What's your concern?" },
   },
   {
-    id: 'aether',
-    label: '#aether',
-    desc: 'AETH holders only — gated',
-    color: '#ffd700',
+    id: 'aether', label: '#aether', desc: 'AETH holders only — gated',
+    color: '#ffd700', gated: true,
     bg: 'radial-gradient(ellipse at 30% 0%, rgba(255,215,0,0.06) 0%, transparent 60%)',
     vibe: 'You earned access. This is where it matters.',
     placeholder: 'Holders only. Speak freely…',
-    gated: true,
-    ai: {
-      name: 'AETHER',
-      greeting: "Welcome, holder. I'm AETHER — the intelligence behind the token. You earned this room. Ask me about your allocation, governance, or what's coming next.",
-    },
+    ai: { name: 'AETHER', greeting: "Welcome, holder. I'm AETHER — the intelligence behind the token. You earned this room. Ask me about your allocation, governance, or what's coming next." },
   },
   {
-    id: 'random',
-    label: '#random',
-    desc: 'Noise, sparks, off-topic',
+    id: 'random', label: '#random', desc: 'Noise, sparks, off-topic',
     color: '#ff6b6b',
     bg: 'radial-gradient(ellipse at 30% 0%, rgba(255,107,107,0.06) 0%, transparent 60%)',
     vibe: 'Chaos is a signal too.',
     placeholder: 'Anything goes…',
-    ai: {
-      name: 'STATIC',
-      greeting: "Yo. I'm STATIC. No rules here. No topic. No filter. Say something weird. I'll say something weirder.",
-    },
+    ai: { name: 'STATIC', greeting: "Yo. I'm STATIC. No rules here. No topic. No filter. Say something weird. I'll say something weirder." },
   },
 ]
 
@@ -126,13 +146,12 @@ function AIGreeter({ room }) {
 
   function handleAsk() {
     if (!askText.trim()) return
-    setThinking(true)
-    setReply('')
+    setThinking(true); setReply('')
     setTimeout(() => {
       const responses = {
         general: 'Received. Amplifying your signal across the network.',
         dev:     'Compiling… looks solid. Ship it and iterate.',
-        privacy: 'Noted. Zero traces. That\'s how it should be.',
+        privacy: "Noted. Zero traces. That's how it should be.",
         aether:  'Logged on-chain. Your signal has weight here.',
         random:  'lol okay. chaotic. I respect it.',
       }
@@ -143,57 +162,31 @@ function AIGreeter({ room }) {
   }
 
   return (
-    <div style={{
-      background: `${room.color}0c`,
-      border: `1px solid ${room.color}30`,
-      borderRadius: 14, padding: '16px 18px', marginBottom: '1.5rem',
-    }}>
+    <div style={{ background: `${room.color}0c`, border: `1px solid ${room.color}30`, borderRadius: 14, padding: '16px 18px', marginBottom: '1.5rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-        <AIAvatar name={room.ai.name} color={room.color} />
+        <div style={{ width: 36, height: 36, borderRadius: 10, background: `${room.color}18`, border: `1px solid ${room.color}45`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <AIIcon id={room.id} color={room.color} size={18} />
+        </div>
         <div>
           <div style={{ fontFamily: 'monospace', fontSize: 12, color: room.color, fontWeight: 700, letterSpacing: 1 }}>
-            {room.ai.name}
-            <span style={{ fontSize: 9, opacity: 0.45, fontWeight: 400, marginLeft: 6 }}>AI · {room.label}</span>
+            {room.ai.name} <span style={{ fontSize: 9, opacity: 0.4, fontWeight: 400, marginLeft: 4 }}>AI · {room.label}</span>
           </div>
           <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.22)' }}>Room Intelligence</div>
         </div>
-        <div style={{
-          marginLeft: 'auto', width: 7, height: 7, borderRadius: '50%',
-          background: '#00ffc3', boxShadow: '0 0 6px #00ffc3',
-        }} />
+        <div style={{ marginLeft: 'auto', width: 7, height: 7, borderRadius: '50%', background: '#00ffc3', boxShadow: '0 0 6px #00ffc3' }} />
       </div>
 
       <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.72)', lineHeight: 1.7, marginBottom: 12, minHeight: 40 }}>
         {displayed}{!done && <span style={{ opacity: 0.5 }}>|</span>}
       </p>
 
-      {reply && (
-        <div style={{
-          background: `${room.color}10`, borderRadius: 8,
-          padding: '8px 12px', marginBottom: 10,
-          fontSize: 12, color: room.color, fontFamily: 'monospace',
-        }}>
-          {room.ai.name}: {reply}
-        </div>
-      )}
-      {thinking && (
-        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)', fontFamily: 'monospace', marginBottom: 10 }}>
-          {room.ai.name} is thinking…
-        </div>
-      )}
+      {reply && <div style={{ background: `${room.color}10`, borderRadius: 8, padding: '8px 12px', marginBottom: 10, fontSize: 12, color: room.color, fontFamily: 'monospace' }}>{room.ai.name}: {reply}</div>}
+      {thinking && <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)', fontFamily: 'monospace', marginBottom: 10 }}>{room.ai.name} is thinking…</div>}
 
-      <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-        <input
-          value={askText}
-          onChange={e => setAskText(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') handleAsk() }}
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input value={askText} onChange={e => setAskText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleAsk() }}
           placeholder={`Ask ${room.ai.name} something…`}
-          style={{
-            flex: 1, background: 'rgba(255,255,255,0.04)',
-            border: `1px solid ${room.color}25`,
-            borderRadius: 8, padding: '7px 12px',
-            color: '#f1f1f7', fontSize: 12, outline: 'none', fontFamily: 'monospace',
-          }}
+          style={{ flex: 1, background: 'rgba(255,255,255,0.04)', border: `1px solid ${room.color}25`, borderRadius: 8, padding: '7px 12px', color: '#f1f1f7', fontSize: 12, outline: 'none', fontFamily: 'monospace' }}
         />
         <button onClick={handleAsk} disabled={!askText.trim()} style={{
           padding: '7px 14px', borderRadius: 8, border: 'none',
@@ -207,37 +200,113 @@ function AIGreeter({ room }) {
   )
 }
 
+// SVG icons for PostBox toolbar
+const IconImage = ({ color }) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="2"/>
+    <circle cx="8.5" cy="8.5" r="1.5"/>
+    <polyline points="21 15 16 10 5 21"/>
+  </svg>
+)
+const IconVideo = ({ color }) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="23 7 16 12 23 17 23 7"/>
+    <rect x="1" y="5" width="15" height="14" rx="2"/>
+  </svg>
+)
+const IconClose = ({ color }) => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round">
+    <line x1="18" y1="6" x2="6" y2="18"/>
+    <line x1="6" y1="6" x2="18" y2="18"/>
+  </svg>
+)
+
 function PostBox({ onPost, room }) {
   const [text, setText] = useState('')
-  function submit() {
-    if (!text.trim()) return
-    onPost(text.trim())
-    setText('')
+  const [media, setMedia] = useState(null)   // { url, type: 'image'|'video', name }
+  const imgRef = useRef()
+  const vidRef = useRef()
+
+  function handleMedia(e, type) {
+    const file = e.target.files[0]
+    if (!file) return
+    const url = URL.createObjectURL(file)
+    setMedia({ url, type, name: file.name })
+    e.target.value = ''
   }
+
+  function submit() {
+    if (!text.trim() && !media) return
+    onPost(text.trim(), media)
+    setText('')
+    setMedia(null)
+  }
+
+  const canSend = text.trim() || media
+
   return (
-    <div style={{
-      background: `${room.color}08`, border: `1px solid ${room.color}28`,
-      borderRadius: 14, padding: '12px 16px', marginBottom: '1rem',
-    }}>
+    <div style={{ background: `${room.color}08`, border: `1px solid ${room.color}28`, borderRadius: 14, padding: '12px 16px', marginBottom: '1rem' }}>
       <textarea
         value={text}
         onChange={e => setText(e.target.value)}
         onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) submit() }}
         placeholder={room.placeholder} rows={3}
-        style={{
-          width: '100%', background: 'transparent', border: 'none', outline: 'none',
-          color: '#f1f1f7', fontSize: 14, resize: 'none', fontFamily: 'inherit', lineHeight: 1.6,
-        }}
+        style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', color: '#f1f1f7', fontSize: 14, resize: 'none', fontFamily: 'inherit', lineHeight: 1.6 }}
       />
+
+      {/* Media preview */}
+      {media && (
+        <div style={{ position: 'relative', marginBottom: 10, display: 'inline-block' }}>
+          {media.type === 'image'
+            ? <img src={media.url} alt="preview" style={{ maxHeight: 180, maxWidth: '100%', borderRadius: 8, display: 'block', border: `1px solid ${room.color}30` }} />
+            : <video src={media.url} controls style={{ maxHeight: 180, maxWidth: '100%', borderRadius: 8, display: 'block', border: `1px solid ${room.color}30` }} />
+          }
+          <button onClick={() => setMedia(null)} style={{
+            position: 'absolute', top: 6, right: 6,
+            width: 22, height: 22, borderRadius: '50%',
+            background: 'rgba(0,0,0,0.7)', border: 'none',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+          }}>
+            <IconClose color="#fff" />
+          </button>
+        </div>
+      )}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
-        <span style={{ fontSize: 11, color: `${room.color}60`, fontFamily: 'monospace' }}>Ctrl+Enter to send</span>
-        <button onClick={submit} disabled={!text.trim()} style={{
-          padding: '6px 18px', borderRadius: 8,
-          background: text.trim() ? room.color : 'rgba(255,255,255,0.06)', border: 'none',
-          color: text.trim() ? '#07060f' : 'rgba(255,255,255,0.25)',
-          fontSize: 12, fontWeight: 700, cursor: text.trim() ? 'pointer' : 'default',
-          transition: 'all 0.15s', fontFamily: 'monospace', letterSpacing: 1,
-        }}>SEND</button>
+        {/* Media buttons */}
+        <div style={{ display: 'flex', gap: 6 }}>
+          <input ref={imgRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleMedia(e, 'image')} />
+          <input ref={vidRef} type="file" accept="video/*" style={{ display: 'none' }} onChange={e => handleMedia(e, 'video')} />
+          <button onClick={() => imgRef.current.click()} title="Attach image" style={{
+            width: 32, height: 32, borderRadius: 7, border: `1px solid rgba(255,255,255,0.09)`,
+            background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'border-color 0.15s',
+          }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = `${room.color}60`}
+          onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.09)'}
+          >
+            <IconImage color="rgba(255,255,255,0.4)" />
+          </button>
+          <button onClick={() => vidRef.current.click()} title="Attach video" style={{
+            width: 32, height: 32, borderRadius: 7, border: `1px solid rgba(255,255,255,0.09)`,
+            background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'border-color 0.15s',
+          }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = `${room.color}60`}
+          onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.09)'}
+          >
+            <IconVideo color="rgba(255,255,255,0.4)" />
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontSize: 10, color: `${room.color}50`, fontFamily: 'monospace' }}>Ctrl+Enter</span>
+          <button onClick={submit} disabled={!canSend} style={{
+            padding: '6px 18px', borderRadius: 8, border: 'none',
+            background: canSend ? room.color : 'rgba(255,255,255,0.06)',
+            color: canSend ? '#07060f' : 'rgba(255,255,255,0.25)',
+            fontSize: 12, fontWeight: 700, cursor: canSend ? 'pointer' : 'default',
+            transition: 'all 0.15s', fontFamily: 'monospace', letterSpacing: 1,
+          }}>SEND</button>
+        </div>
       </div>
     </div>
   )
@@ -246,15 +315,17 @@ function PostBox({ onPost, room }) {
 function PostCard({ post, room }) {
   const [signaled, setSignaled] = useState(false)
   return (
-    <div style={{
-      background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)',
-      borderRadius: 12, padding: '14px 16px', transition: 'border-color 0.2s, background 0.2s',
-    }}
+    <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '14px 16px', transition: 'border-color 0.2s, background 0.2s' }}
     onMouseEnter={e => { e.currentTarget.style.borderColor = `${room.color}35`; e.currentTarget.style.background = `${room.color}05` }}
     onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'; e.currentTarget.style.background = 'rgba(255,255,255,0.02)' }}
     >
       <div style={{ fontFamily: 'monospace', fontSize: 10, color: `${room.color}90`, marginBottom: 8, letterSpacing: 1 }}>{post.fingerprint}</div>
-      <p style={{ fontSize: 14, color: '#e8e8f2', lineHeight: 1.65 }}>{post.text}</p>
+      {post.text && <p style={{ fontSize: 14, color: '#e8e8f2', lineHeight: 1.65, marginBottom: post.media ? 10 : 0 }}>{post.text}</p>}
+      {post.media && (
+        post.media.type === 'image'
+          ? <img src={post.media.url} alt="" style={{ maxWidth: '100%', maxHeight: 300, borderRadius: 8, display: 'block', border: `1px solid ${room.color}25` }} />
+          : <video src={post.media.url} controls style={{ maxWidth: '100%', maxHeight: 300, borderRadius: 8, display: 'block', border: `1px solid ${room.color}25` }} />
+      )}
       <div style={{ display: 'flex', gap: 6, marginTop: 12 }}>
         {[['Signal', true], ['Amplify', false], ['Reply', false], ['Recycle', false]].map(([label, isSignal]) => (
           <button key={label} onClick={isSignal ? () => setSignaled(s => !s) : undefined} style={{
@@ -289,11 +360,11 @@ export default function RoomsView({ onViewProfile }) {
   const room = ROOMS.find(r => r.id === activeRoom)
   const posts = postsByRoom[activeRoom] || []
 
-  function handlePost(text) {
+  function handlePost(text, media) {
     const fp = Math.random().toString(36).slice(2,6) + '·' + Math.random().toString(36).slice(2,6)
     setPostsByRoom(prev => ({
       ...prev,
-      [activeRoom]: [{ id: Date.now().toString(), fingerprint: fp, text }, ...(prev[activeRoom] || [])],
+      [activeRoom]: [{ id: Date.now().toString(), fingerprint: fp, text, media }, ...(prev[activeRoom] || [])],
     }))
   }
 
@@ -301,11 +372,7 @@ export default function RoomsView({ onViewProfile }) {
     <div style={{ display: 'flex', height: '100vh', background: '#07060f', color: '#f1f1f7', overflow: 'hidden' }}>
 
       {/* ROOM LIST */}
-      <aside style={{
-        width: 190, background: '#07060f',
-        borderRight: '1px solid rgba(255,255,255,0.05)',
-        padding: '20px 0', flexShrink: 0, overflowY: 'auto',
-      }}>
+      <aside style={{ width: 190, background: '#07060f', borderRight: '1px solid rgba(255,255,255,0.05)', padding: '20px 0', flexShrink: 0, overflowY: 'auto' }}>
         <p style={{ fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, padding: '0 16px', marginBottom: 10 }}>CHANNELS</p>
         {ROOMS.map(r => (
           <button key={r.id} onClick={() => setActiveRoom(r.id)} style={{
@@ -317,48 +384,24 @@ export default function RoomsView({ onViewProfile }) {
           onMouseEnter={e => { if (activeRoom !== r.id) e.currentTarget.style.background = `${r.color}08` }}
           onMouseLeave={e => { if (activeRoom !== r.id) e.currentTarget.style.background = 'transparent' }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-              <div style={{
-                width: 18, height: 18, borderRadius: 4,
-                background: `${r.color}22`, border: `1px solid ${r.color}40`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              }}>
-                <svg width="10" height="10" viewBox="0 0 10 10">
-                  <text x="5" y="8" textAnchor="middle" fontSize="7" fontFamily="monospace" fontWeight="700" fill={r.color}>
-                    {r.ai.name.slice(0,1)}
-                  </text>
-                </svg>
-              </div>
-              <span style={{ fontFamily: 'monospace', fontSize: 12, color: activeRoom === r.id ? r.color : 'rgba(255,255,255,0.4)' }}>
-                {r.label}
-              </span>
-              {r.gated && (
-                <span style={{
-                  fontSize: 8, color: '#ffd700', border: '1px solid rgba(255,215,0,0.3)',
-                  padding: '1px 5px', borderRadius: 4, fontFamily: 'monospace', letterSpacing: 0.5,
-                }}>GATED</span>
-              )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <RoomIcon id={r.id} color={activeRoom === r.id ? r.color : 'rgba(255,255,255,0.3)'} size={13} />
+              <span style={{ fontFamily: 'monospace', fontSize: 12, color: activeRoom === r.id ? r.color : 'rgba(255,255,255,0.4)' }}>{r.label}</span>
+              {r.gated && <span style={{ fontSize: 8, color: '#ffd700', border: '1px solid rgba(255,215,0,0.3)', padding: '1px 5px', borderRadius: 4, fontFamily: 'monospace', marginLeft: 'auto' }}>GATED</span>}
             </div>
-            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.18)', marginTop: 3, paddingLeft: 25 }}>{r.desc}</div>
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.18)', marginTop: 3, paddingLeft: 21 }}>{r.desc}</div>
           </button>
         ))}
       </aside>
 
       {/* MAIN FEED */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: room.bg }}>
-        <header style={{
-          padding: '14px 24px', borderBottom: `1px solid ${room.color}22`,
-          flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        }}>
+        <header style={{ padding: '14px 24px', borderBottom: `1px solid ${room.color}22`, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <RoomIcon id={room.id} color={room.color} size={16} />
               <span style={{ fontFamily: 'monospace', fontSize: 17, fontWeight: 700, color: room.color }}>{room.label}</span>
-              {room.gated && (
-                <span style={{
-                  fontSize: 9, color: '#ffd700', border: '1px solid rgba(255,215,0,0.3)',
-                  padding: '2px 8px', borderRadius: 20, fontFamily: 'monospace', letterSpacing: 1,
-                }}>AETH GATED</span>
-              )}
+              {room.gated && <span style={{ fontSize: 9, color: '#ffd700', border: '1px solid rgba(255,215,0,0.3)', padding: '2px 8px', borderRadius: 20, fontFamily: 'monospace', letterSpacing: 1 }}>AETH GATED</span>}
             </div>
             <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 2, fontStyle: 'italic' }}>{room.vibe}</p>
           </div>
@@ -385,19 +428,10 @@ export default function RoomsView({ onViewProfile }) {
       </div>
 
       {/* RIGHT SIDEBAR */}
-      <aside style={{
-        width: 210, background: '#07060f',
-        borderLeft: '1px solid rgba(255,255,255,0.05)',
-        padding: '20px 14px', flexShrink: 0, overflowY: 'auto',
-      }}>
+      <aside style={{ width: 210, background: '#07060f', borderLeft: '1px solid rgba(255,255,255,0.05)', padding: '20px 14px', flexShrink: 0, overflowY: 'auto' }}>
         <p style={{ fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, marginBottom: 10 }}>TOOLS</p>
         {TOOLS.map(t => (
-          <button key={t.id} style={{
-            width: '100%', textAlign: 'left', padding: '8px 12px', marginBottom: 4,
-            background: 'transparent', border: '1px solid rgba(255,255,255,0.06)',
-            borderRadius: 8, color: 'rgba(255,255,255,0.4)', fontSize: 12,
-            cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'monospace',
-          }}
+          <button key={t.id} style={{ width: '100%', textAlign: 'left', padding: '8px 12px', marginBottom: 4, background: 'transparent', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, color: 'rgba(255,255,255,0.4)', fontSize: 12, cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'monospace' }}
           onMouseEnter={e => { e.currentTarget.style.borderColor = `${room.color}50`; e.currentTarget.style.color = room.color }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = 'rgba(255,255,255,0.4)' }}
           >{t.label}</button>
@@ -405,36 +439,13 @@ export default function RoomsView({ onViewProfile }) {
 
         <p style={{ fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 2, margin: '20px 0 10px' }}>ALL ROOMS</p>
         {ROOMS.map(r => (
-          <div key={r.id} onClick={() => setActiveRoom(r.id)} style={{
-            padding: '7px 10px', marginBottom: 3, borderRadius: 8, cursor: 'pointer',
-            transition: 'background 0.15s',
-            background: activeRoom === r.id ? `${r.color}12` : 'transparent',
-            borderLeft: `2px solid ${activeRoom === r.id ? r.color : 'transparent'}`,
-            display: 'flex', alignItems: 'center', gap: 7,
-          }}
+          <div key={r.id} onClick={() => setActiveRoom(r.id)} style={{ padding: '7px 10px', marginBottom: 3, borderRadius: 8, cursor: 'pointer', transition: 'background 0.15s', background: activeRoom === r.id ? `${r.color}12` : 'transparent', borderLeft: `2px solid ${activeRoom === r.id ? r.color : 'transparent'}`, display: 'flex', alignItems: 'center', gap: 8 }}
           onMouseEnter={e => { e.currentTarget.style.background = `${r.color}0e` }}
           onMouseLeave={e => { e.currentTarget.style.background = activeRoom === r.id ? `${r.color}12` : 'transparent' }}
           >
-            <div style={{
-              width: 16, height: 16, borderRadius: 4,
-              background: `${r.color}20`, border: `1px solid ${r.color}40`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            }}>
-              <svg width="9" height="9" viewBox="0 0 9 9">
-                <text x="4.5" y="7" textAnchor="middle" fontSize="6" fontFamily="monospace" fontWeight="700" fill={r.color}>
-                  {r.ai.name.slice(0,1)}
-                </text>
-              </svg>
-            </div>
-            <span style={{ fontFamily: 'monospace', fontSize: 11, color: activeRoom === r.id ? r.color : 'rgba(255,255,255,0.38)' }}>
-              {r.label}
-            </span>
-            {r.gated && (
-              <span style={{
-                fontSize: 7, color: '#ffd700', border: '1px solid rgba(255,215,0,0.25)',
-                padding: '1px 4px', borderRadius: 3, fontFamily: 'monospace', marginLeft: 'auto',
-              }}>GATED</span>
-            )}
+            <RoomIcon id={r.id} color={activeRoom === r.id ? r.color : 'rgba(255,255,255,0.28)'} size={12} />
+            <span style={{ fontFamily: 'monospace', fontSize: 11, color: activeRoom === r.id ? r.color : 'rgba(255,255,255,0.38)' }}>{r.label}</span>
+            {r.gated && <span style={{ fontSize: 7, color: '#ffd700', border: '1px solid rgba(255,215,0,0.25)', padding: '1px 4px', borderRadius: 3, fontFamily: 'monospace', marginLeft: 'auto' }}>GATED</span>}
           </div>
         ))}
       </aside>
