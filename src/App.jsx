@@ -2,12 +2,14 @@ import React from 'react'
 import { Routes, Route } from 'react-router-dom'
 import Home from './pages/Home.jsx'
 import AppPage from './pages/AppPage.jsx'
+import DesignSystemPage from './pages/DesignSystemPage.jsx'
 
 export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/app" element={<AppPage />} />
+      <Route path="/lab" element={<DesignSystemPage />} />
       <Route path="*" element={<Home />} />
     </Routes>
   )
