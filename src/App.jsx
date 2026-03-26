@@ -1,28 +1,12 @@
-import React from 'react'
-import { Routes, Route } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import Home from './pages/Home.jsx'
 import AppPage from './pages/AppPage.jsx'
 import DesignSystemPage from './pages/DesignSystemPage.jsx'
 import RoomsView from './components/RoomsView.jsx'
 import PulseView from './components/PulseView.jsx'
 import PulsePlus from './components/pulse/PulsePlus.jsx'
-
-// Demo data — replace with real props/context later
-const demoRoom = {
-  room: 'general',
-  online: 42,
-  tools: [
-    { id: '1', label: 'Signal Board' },
-    { id: '2', label: 'Code Snippets' },
-    { id: '3', label: 'Resources' },
-  ],
-  posts: [
-    { id: '1', fingerprint: 'a1b2c3d4', text: 'Welcome to the general room.' },
-    { id: '2', fingerprint: 'e5f6g7h8', text: 'Conduit is live and building.' },
-  ],
-  trending: ['#conduit', '#aether', '#web3', '#privacy'],
-  resources: ['Docs', 'GitHub', 'Whitepaper'],
-}
+import SignalKeyLogin, { loadSession, clearSession } from './components/SignalKeyLogin.jsx'
 
 const demoPulses = [
   { id: '1', fingerprint: 'a1b2c3', room: 'general', action: 'signaled a post', preview: 'New system initialized', time: '2m ago' },
@@ -31,15 +15,42 @@ const demoPulses = [
 ]
 
 export default function App() {
+  const [session, setSession] = useState(() => loadSession())
+
+  function handleLogin(sessionData) {
+    setSession(sessionData)
+  }
+
+  function handleLogout() {
+    clearSession()
+    setSession(null)
+  }
+
+  // Protected routes — require a Signal Key session
+  const requireAuth = (element) => {
+    if (!session) return <SignalKeyLogin onLogin={handleLogin} />
+    return element
+  }
+
   return (
     <Routes>
+      {/* Public */}
       <Route path="/" element={<Home />} />
-      <Route path="/app" element={<AppPage />} />
       <Route path="/lab" element={<DesignSystemPage />} />
-      <Route path="/rooms" element={<RoomsView {...demoRoom} />} />
-      <Route path="/pulse" element={<PulseView pulses={demoPulses} />} />
-      <Route path="/pulse-plus" element={<PulsePlus pulses={demoPulses} />} />
-      <Route path="*" element={<Home />} />
+
+      {/* Protected */}
+      <Route path="/app"        element={requireAuth(<AppPage />)} />
+      <Route path="/rooms"      element={requireAuth(
+        <RoomsView
+          userRole={session?.role || 'user'}
+          currentUser={session}
+          onLogout={handleLogout}
+        />
+      )} />
+      <Route path="/pulse"      element={requireAuth(<PulseView pulses={demoPulses} />)} />
+      <Route path="/pulse-plus" element={requireAuth(<PulsePlus pulses={demoPulses} />)} />
+
+      <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   )
 }
