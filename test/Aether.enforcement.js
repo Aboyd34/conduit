@@ -119,7 +119,6 @@ describe('Aether — Enforcement Tests', function () {
   // ─────────────────────────────────────────────
   describe('Recycle enforcement', () => {
     beforeEach(async () => {
-      // Give user1 some AETH to test recycle
       await aether.connect(ecosystem).transfer(user1.address, ethers.parseEther('100'))
     })
 
@@ -163,20 +162,24 @@ describe('Aether — Enforcement Tests', function () {
     })
 
     it('Can release after cliff — tokens go to teamWallet', async () => {
-      // Fast-forward 181 days
       await ethers.provider.send('evm_increaseTime', [181 * 24 * 60 * 60])
       await ethers.provider.send('evm_mine')
-
       const before = await aether.balanceOf(team.address)
       await aether.releaseTeamVesting()
       const after  = await aether.balanceOf(team.address)
       expect(after).to.be.gt(before)
     })
 
-    it('Nothing to release if called twice in same block', async () => {
+    it('Nothing to release if called twice with no time passing', async () => {
       await ethers.provider.send('evm_increaseTime', [181 * 24 * 60 * 60])
       await ethers.provider.send('evm_mine')
+      // First release
       await aether.releaseTeamVesting()
+      // Freeze timestamp so no new vesting accrues
+      const block = await ethers.provider.getBlock('latest')
+      await ethers.provider.send('evm_setNextBlockTimestamp', [block.timestamp])
+      await ethers.provider.send('evm_mine')
+      // Second call must revert — nothing new to release
       await expect(
         aether.releaseTeamVesting()
       ).to.be.revertedWith('Nothing to release')
