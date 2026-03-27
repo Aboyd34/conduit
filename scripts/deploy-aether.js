@@ -5,11 +5,12 @@
  *   npx hardhat run scripts/deploy-aether.js --network sepolia
  *
  * Env vars required in .env:
- *   PRIVATE_KEY         — deployer wallet private key (no 0x prefix)
+ *   DEPLOYER_KEY        — deployer wallet private key (with or without 0x prefix)
  *   SEPOLIA_RPC_URL     — e.g. https://eth-sepolia.g.alchemy.com/v2/YOUR_KEY
  *   ETHERSCAN_API_KEY   — for auto-verification (optional)
  */
 
+require('dotenv').config()
 const { ethers } = require('hardhat')
 
 async function main() {
@@ -19,8 +20,11 @@ async function main() {
   const balance = await deployer.provider.getBalance(deployer.address)
   console.log('Account balance:', ethers.formatEther(balance), 'ETH')
 
+  if (balance === 0n) {
+    throw new Error('Deployer wallet has 0 ETH. Get Sepolia ETH from https://sepoliafaucet.com')
+  }
+
   // ── Wallet config ────────────────────────────────────────────────────────
-  // In production replace these with real multi-sig / gnosis safe addresses
   const TEAM_WALLET      = deployer.address  // replace before mainnet
   const LIQUIDITY_WALLET = deployer.address  // replace before mainnet
   const TREASURY_WALLET  = deployer.address  // replace before mainnet
@@ -45,7 +49,7 @@ async function main() {
   console.log('   Team vesting: 150,000,000 AETH (6mo cliff, 2yr vest)')
   console.log('')
   console.log('Next steps:')
-  console.log('  1. Save contract address in .env as AETHER_CONTRACT_ADDRESS')
+  console.log('  1. Save contract address in .env as AETHER_CONTRACT_ADDRESS=' + address)
   console.log('  2. Run the airdrop snapshot: node scripts/airdrop-snapshot.js')
   console.log('  3. Set merkle root: npx hardhat run scripts/set-merkle-root.js --network sepolia')
   console.log('  4. Open airdrop: call setAirdropOpen(true) via Etherscan or script')
