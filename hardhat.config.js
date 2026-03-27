@@ -5,7 +5,10 @@ require('dotenv').config();
 module.exports = {
   solidity: {
     version: '0.8.26',
-    settings: { optimizer: { enabled: true, runs: 200 } },
+    settings: {
+      optimizer: { enabled: true, runs: 200 },
+      evmVersion: 'cancun',
+    },
   },
   networks: {
     sepolia: {
