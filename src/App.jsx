@@ -33,9 +33,9 @@ export default function App() {
   const [session, setSession]         = useState(() => loadSession())
   const [onboarded, setOnboarded]     = useState(() => !!localStorage.getItem('conduit_onboarded'))
   const [notifOpen, setNotifOpen]     = useState(false)
-  const [profileFp, setProfileFp]     = useState(null)   // fingerprint to show in ProfileCard
-  const [dmFp, setDmFp]               = useState(null)   // fingerprint to DM
-  const [activeThread, setActiveThread] = useState(null) // { post, roomId }
+  const [profileFp, setProfileFp]     = useState(null)
+  const [dmFp, setDmFp]               = useState(null)
+  const [activeThread, setActiveThread] = useState(null)
 
   const conduit = useConduit()
 
@@ -48,7 +48,6 @@ export default function App() {
 
   const isAdmin = session?.role === 'admin'
 
-  // Require auth + onboarding wrapper
   function guard(el) {
     if (!session) return <SignalKeyLogin onLogin={handleLogin} />
     if (!onboarded) return <Onboarding session={session} onFinish={finishOnboarding} />
