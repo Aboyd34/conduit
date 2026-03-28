@@ -41,6 +41,20 @@ function StatTile({ value, label, color = '#7c3aed' }) {
   )
 }
 
+// Safe wallet hook wrapper — gracefully handles missing WagmiProvider
+function useSafeWallet() {
+  try {
+    return useWallet()
+  } catch {
+    return {
+      address: null, isConnected: false, connecting: false,
+      shortAddress: null, isCorrectChain: false,
+      connectSmartWallet: () => {}, connectMetaMask: () => {},
+      switchToSepolia: () => {}, disconnect: () => {},
+    }
+  }
+}
+
 export function AirdropPage() {
   const [particles] = useState(() =>
     Array.from({ length: 18 }, (_, i) => ({
@@ -54,17 +68,24 @@ export function AirdropPage() {
     shortAddress, isCorrectChain,
     connectSmartWallet, connectMetaMask,
     switchToSepolia, disconnect
-  } = useWallet()
+  } = useSafeWallet()
 
   const [phase, setPhase] = useState('idle')
   const [allocation] = useState(Math.floor(Math.random() * 4000) + 500)
   const [showWalletMenu, setShowWalletMenu] = useState(false)
+  const [demoMode, setDemoMode] = useState(false)
 
-  useEffect(() => { if (!isConnected) setPhase('idle') }, [isConnected])
+  // Display address — real wallet or demo
+  const displayAddress = shortAddress || (demoMode ? '0xDem0…A1rd' : null)
+  const isActive = isConnected || demoMode
+
+  useEffect(() => { if (!isConnected && !demoMode) setPhase('idle') }, [isConnected, demoMode])
 
   function checkAllocation() {
-    if (!isConnected) { setShowWalletMenu(true); return }
-    if (!isCorrectChain) { switchToSepolia(); return }
+    if (!isActive) {
+      setShowWalletMenu(true)
+      return
+    }
     setPhase('checking')
     setTimeout(() => setPhase('eligible'), 2000)
   }
@@ -72,6 +93,11 @@ export function AirdropPage() {
   function claimAeth() {
     setPhase('claiming')
     setTimeout(() => setPhase('claimed'), 2500)
+  }
+
+  function resetDemo() {
+    setDemoMode(false)
+    setPhase('idle')
   }
 
   return (
@@ -89,7 +115,12 @@ export function AirdropPage() {
 
         {/* ── WALLET BAR ── */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 20, position: 'relative' }}>
-          {!isConnected ? (
+          {demoMode ? (
+            <button onClick={resetDemo} style={{ ...styles.walletChip, border: '1px solid rgba(255,215,0,0.3)', background: 'rgba(255,215,0,0.08)', color: '#fde68a' }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ffd700', display: 'inline-block', marginRight: 6 }} />
+              Demo Mode · Exit
+            </button>
+          ) : !isConnected ? (
             <button onClick={() => setShowWalletMenu(v => !v)} style={styles.walletBtn}>
               {connecting ? 'Connecting…' : '🦊 Connect Wallet'}
             </button>
@@ -105,7 +136,7 @@ export function AirdropPage() {
           )}
 
           {/* Wallet menu */}
-          {showWalletMenu && !isConnected && (
+          {showWalletMenu && !isActive && (
             <div style={styles.walletMenu}>
               <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace', letterSpacing: 1, marginBottom: 10 }}>CONNECT WITH</p>
               <button onClick={() => { connectSmartWallet(); setShowWalletMenu(false) }} style={styles.walletOption}>
@@ -120,6 +151,17 @@ export function AirdropPage() {
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0' }}>MetaMask</div>
                   <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>Browser extension wallet</div>
+                </div>
+              </button>
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', margin: '8px 0' }} />
+              <button
+                onClick={() => { setDemoMode(true); setShowWalletMenu(false) }}
+                style={{ ...styles.walletOption, border: '1px solid rgba(255,215,0,0.15)', background: 'rgba(255,215,0,0.04)' }}
+              >
+                <span style={{ fontSize: 18 }}>⚡</span>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#fde68a' }}>Demo Mode</div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>Preview without a wallet</div>
                 </div>
               </button>
               <button onClick={() => setShowWalletMenu(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.2)', fontSize: 11, cursor: 'pointer', marginTop: 6, width: '100%', textAlign: 'center' }}>× Cancel</button>
@@ -201,16 +243,18 @@ export function AirdropPage() {
             <>
               <div style={{ fontSize: 28, marginBottom: 10 }}>🔍</div>
               <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: '0 0 16px' }}>
-                {isConnected ? 'Check your allocation based on your Conduit activity.' : 'Connect your wallet to check your AETH allocation.'}
+                {isActive ? 'Check your allocation based on your Conduit activity.' : 'Connect your wallet to check your AETH allocation.'}
               </p>
               <button onClick={checkAllocation} style={styles.ctaBtn}>
-                {!isConnected ? '🦊 Connect & Check' : !isCorrectChain ? '⚠️ Switch to Sepolia' : 'Check My Allocation'}
+                {isActive ? 'Check My Allocation ✓' : '🦊 Connect & Check'}
               </button>
             </>
           )}
           {phase === 'checking' && (
-            <><div style={styles.spinner} />
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 14, fontFamily: 'monospace' }}>Scanning activity snapshot…</p></>
+            <>
+              <div style={styles.spinner} />
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 14, fontFamily: 'monospace' }}>Scanning activity snapshot…</p>
+            </>
           )}
           {phase === 'eligible' && (
             <>
@@ -218,13 +262,15 @@ export function AirdropPage() {
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', margin: '0 0 4px', fontFamily: 'monospace', letterSpacing: 1 }}>YOUR ALLOCATION</p>
               <div style={{ fontFamily: 'monospace', fontSize: 42, fontWeight: 900, color: '#a78bfa', lineHeight: 1, marginBottom: 4 }}>{allocation.toLocaleString()}</div>
               <div style={{ fontFamily: 'monospace', fontSize: 14, color: 'rgba(255,255,255,0.25)', marginBottom: 4 }}>AETH</div>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', fontFamily: 'monospace', marginBottom: 18 }}>{shortAddress}</div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', fontFamily: 'monospace', marginBottom: 18 }}>{displayAddress}</div>
               <button onClick={claimAeth} style={styles.ctaBtn}>Claim AETH →</button>
             </>
           )}
           {phase === 'claiming' && (
-            <><div style={styles.spinner} />
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 14, fontFamily: 'monospace' }}>Submitting transaction…</p></>
+            <>
+              <div style={styles.spinner} />
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 14, fontFamily: 'monospace' }}>Submitting transaction…</p>
+            </>
           )}
           {phase === 'claimed' && (
             <>
@@ -232,6 +278,9 @@ export function AirdropPage() {
               <div style={{ fontFamily: 'monospace', fontSize: 20, fontWeight: 900, color: '#ffd700', marginBottom: 4, letterSpacing: 2 }}>CLAIMED</div>
               <div style={{ fontFamily: 'monospace', fontSize: 36, fontWeight: 900, color: '#a78bfa', lineHeight: 1 }}>{allocation.toLocaleString()} AETH</div>
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 10 }}>🔓 #aether room unlocked.</p>
+              {demoMode && (
+                <button onClick={resetDemo} style={{ ...styles.ctaBtn, marginTop: 14, background: 'rgba(255,255,255,0.06)', fontSize: 12 }}>← Try Again</button>
+              )}
             </>
           )}
         </div>
