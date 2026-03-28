@@ -11,6 +11,9 @@ module.exports = {
     },
   },
   networks: {
+    hardhat: {
+      allowBlocksWithSameTimestamp: true,
+    },
     sepolia: {
       url: process.env.SEPOLIA_RPC_URL || 'https://rpc.sepolia.org',
       accounts: process.env.DEPLOYER_KEY ? [process.env.DEPLOYER_KEY] : [],
