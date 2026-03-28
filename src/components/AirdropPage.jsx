@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react'
+import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi'
+import { parseUnits } from 'viem'
 import { useWallet } from '../hooks/useWallet'
+import { AIRDROP_ABI, AIRDROP_CONTRACT_ADDRESS } from '../contracts/airdropABI'
+
+// ─── Demo merkle proof (replace with real generated proof per wallet) ────────
+const DEMO_PROOF = []
+const CONTRACT_DEPLOYED = AIRDROP_CONTRACT_ADDRESS !== '0x0000000000000000000000000000000000000000'
 
 function Particle({ x, delay, dur, size }) {
   return (
@@ -41,7 +48,6 @@ function StatTile({ value, label, color = '#7c3aed' }) {
   )
 }
 
-// Safe wallet hook wrapper — gracefully handles missing WagmiProvider
 function useSafeWallet() {
   try {
     return useWallet()
@@ -63,42 +69,87 @@ export function AirdropPage() {
     }))
   )
 
-  const {
-    address, isConnected, connecting,
-    shortAddress, isCorrectChain,
-    connectSmartWallet, connectMetaMask,
-    switchToSepolia, disconnect
-  } = useSafeWallet()
+  const { address, isConnected, connecting, shortAddress, isCorrectChain,
+    connectSmartWallet, connectMetaMask, switchToSepolia, disconnect } = useSafeWallet()
 
   const [phase, setPhase] = useState('idle')
   const [allocation] = useState(Math.floor(Math.random() * 4000) + 500)
   const [showWalletMenu, setShowWalletMenu] = useState(false)
   const [demoMode, setDemoMode] = useState(false)
+  const [txError, setTxError] = useState(null)
 
-  // Display address — real wallet or demo
   const displayAddress = shortAddress || (demoMode ? '0xDem0…A1rd' : null)
   const isActive = isConnected || demoMode
+
+  // ── Real on-chain claim (wagmi) ──────────────────────────────────────────
+  const { writeContract, data: txHash, isPending: isTxPending, error: writeError } = useWriteContract()
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash: txHash })
+
+  // Check if already claimed on-chain
+  const { data: alreadyClaimed } = useReadContract({
+    address: AIRDROP_CONTRACT_ADDRESS,
+    abi: AIRDROP_ABI,
+    functionName: 'hasClaimed',
+    args: [address],
+    query: { enabled: !!address && CONTRACT_DEPLOYED },
+  })
+
+  // Watch for confirmed tx
+  useEffect(() => {
+    if (isConfirmed) setPhase('claimed')
+  }, [isConfirmed])
+
+  // Watch for write errors
+  useEffect(() => {
+    if (writeError) {
+      setTxError(writeError.shortMessage || 'Transaction failed')
+      setPhase('eligible')
+    }
+  }, [writeError])
 
   useEffect(() => { if (!isConnected && !demoMode) setPhase('idle') }, [isConnected, demoMode])
 
   function checkAllocation() {
-    if (!isActive) {
-      setShowWalletMenu(true)
-      return
-    }
+    if (!isActive) { setShowWalletMenu(true); return }
+    setTxError(null)
     setPhase('checking')
     setTimeout(() => setPhase('eligible'), 2000)
   }
 
   function claimAeth() {
+    setTxError(null)
+
+    // Demo mode — simulate claim
+    if (demoMode || !CONTRACT_DEPLOYED) {
+      setPhase('claiming')
+      setTimeout(() => setPhase('claimed'), 2500)
+      return
+    }
+
+    // Real on-chain claim
     setPhase('claiming')
-    setTimeout(() => setPhase('claimed'), 2500)
+    writeContract({
+      address: AIRDROP_CONTRACT_ADDRESS,
+      abi: AIRDROP_ABI,
+      functionName: 'claim',
+      args: [
+        parseUnits(allocation.toString(), 18), // amount in wei
+        DEMO_PROOF,                             // replace with real merkle proof
+      ],
+    })
   }
 
   function resetDemo() {
     setDemoMode(false)
     setPhase('idle')
+    setTxError(null)
   }
+
+  const claimButtonLabel = alreadyClaimed
+    ? '✓ Already Claimed'
+    : isTxPending || isConfirming
+    ? 'Confirming…'
+    : 'Claim AETH →'
 
   return (
     <div style={{
@@ -112,6 +163,13 @@ export function AirdropPage() {
       <div style={{ position: 'fixed', top: '15%', left: '50%', transform: 'translateX(-50%)', width: 600, height: 300, borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(124,58,237,0.12) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
 
       <div style={{ width: '100%', maxWidth: 520, position: 'relative', zIndex: 1, paddingTop: 40 }}>
+
+        {/* ── CONTRACT STATUS BANNER ── */}
+        {!CONTRACT_DEPLOYED && (
+          <div style={{ background: 'rgba(255,215,0,0.06)', border: '1px solid rgba(255,215,0,0.2)', borderRadius: 10, padding: '10px 14px', marginBottom: 16, fontSize: 12, color: '#fde68a', fontFamily: 'monospace', textAlign: 'center' }}>
+            ⚠️ Contract not deployed yet — running in demo mode
+          </div>
+        )}
 
         {/* ── WALLET BAR ── */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 20, position: 'relative' }}>
@@ -135,7 +193,6 @@ export function AirdropPage() {
             </button>
           )}
 
-          {/* Wallet menu */}
           {showWalletMenu && !isActive && (
             <div style={styles.walletMenu}>
               <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace', letterSpacing: 1, marginBottom: 10 }}>CONNECT WITH</p>
@@ -154,10 +211,7 @@ export function AirdropPage() {
                 </div>
               </button>
               <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', margin: '8px 0' }} />
-              <button
-                onClick={() => { setDemoMode(true); setShowWalletMenu(false) }}
-                style={{ ...styles.walletOption, border: '1px solid rgba(255,215,0,0.15)', background: 'rgba(255,215,0,0.04)' }}
-              >
+              <button onClick={() => { setDemoMode(true); setShowWalletMenu(false) }} style={{ ...styles.walletOption, border: '1px solid rgba(255,215,0,0.15)', background: 'rgba(255,215,0,0.04)' }}>
                 <span style={{ fontSize: 18 }}>⚡</span>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#fde68a' }}>Demo Mode</div>
@@ -171,13 +225,7 @@ export function AirdropPage() {
 
         {/* ── HERO ── */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{
-            width: 80, height: 80, borderRadius: 24, margin: '0 auto 20px',
-            background: 'linear-gradient(135deg,rgba(124,58,237,0.3),rgba(255,215,0,0.15))',
-            border: '1px solid rgba(255,215,0,0.25)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 36, boxShadow: '0 0 40px rgba(124,58,237,0.3)',
-          }}>⚡</div>
+          <div style={{ width: 80, height: 80, borderRadius: 24, margin: '0 auto 20px', background: 'linear-gradient(135deg,rgba(124,58,237,0.3),rgba(255,215,0,0.15))', border: '1px solid rgba(255,215,0,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, boxShadow: '0 0 40px rgba(124,58,237,0.3)' }}>⚡</div>
           <h1 style={{ fontFamily: 'monospace', fontSize: 'clamp(24px,6vw,36px)', fontWeight: 900, color: '#fff', margin: '0 0 8px', letterSpacing: 2 }}>AETHER AIRDROP</h1>
           <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6, margin: '0 0 6px' }}>You were here before the signal reached them.</p>
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.25)', lineHeight: 1.5, margin: 0 }}>Early Conduit users earned AETH for every post, signal, and reply.</p>
@@ -239,6 +287,13 @@ export function AirdropPage() {
 
         {/* ── CTA ── */}
         <div style={{ background: 'linear-gradient(135deg,rgba(124,58,237,0.1),rgba(255,215,0,0.04))', border: '1px solid rgba(124,58,237,0.25)', borderRadius: 16, padding: '24px 22px', textAlign: 'center' }}>
+
+          {txError && (
+            <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, padding: '8px 12px', marginBottom: 14, fontSize: 12, color: '#fca5a5', fontFamily: 'monospace' }}>
+              ❌ {txError}
+            </div>
+          )}
+
           {phase === 'idle' && (
             <>
               <div style={{ fontSize: 28, marginBottom: 10 }}>🔍</div>
@@ -250,12 +305,14 @@ export function AirdropPage() {
               </button>
             </>
           )}
+
           {phase === 'checking' && (
             <>
               <div style={styles.spinner} />
               <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 14, fontFamily: 'monospace' }}>Scanning activity snapshot…</p>
             </>
           )}
+
           {phase === 'eligible' && (
             <>
               <div style={{ fontSize: 36, marginBottom: 8 }}>🌟</div>
@@ -263,21 +320,43 @@ export function AirdropPage() {
               <div style={{ fontFamily: 'monospace', fontSize: 42, fontWeight: 900, color: '#a78bfa', lineHeight: 1, marginBottom: 4 }}>{allocation.toLocaleString()}</div>
               <div style={{ fontFamily: 'monospace', fontSize: 14, color: 'rgba(255,255,255,0.25)', marginBottom: 4 }}>AETH</div>
               <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', fontFamily: 'monospace', marginBottom: 18 }}>{displayAddress}</div>
-              <button onClick={claimAeth} style={styles.ctaBtn}>Claim AETH →</button>
+              {alreadyClaimed ? (
+                <div style={{ fontSize: 13, color: '#86efac', fontFamily: 'monospace' }}>✓ Already claimed on-chain</div>
+              ) : (
+                <button onClick={claimAeth} disabled={isTxPending || isConfirming} style={{ ...styles.ctaBtn, opacity: isTxPending || isConfirming ? 0.6 : 1 }}>
+                  {claimButtonLabel}
+                </button>
+              )}
+              {txHash && (
+                <a href={`https://sepolia.etherscan.io/tx/${txHash}`} target="_blank" rel="noreferrer"
+                  style={{ display: 'block', marginTop: 10, fontSize: 11, color: '#a78bfa', fontFamily: 'monospace' }}>
+                  View tx on Etherscan ↗
+                </a>
+              )}
             </>
           )}
+
           {phase === 'claiming' && (
             <>
               <div style={styles.spinner} />
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 14, fontFamily: 'monospace' }}>Submitting transaction…</p>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 14, fontFamily: 'monospace' }}>
+                {isTxPending ? 'Waiting for wallet…' : isConfirming ? 'Confirming on-chain…' : 'Submitting transaction…'}
+              </p>
             </>
           )}
+
           {phase === 'claimed' && (
             <>
               <div style={{ fontSize: 48, marginBottom: 8 }}>⚡</div>
               <div style={{ fontFamily: 'monospace', fontSize: 20, fontWeight: 900, color: '#ffd700', marginBottom: 4, letterSpacing: 2 }}>CLAIMED</div>
               <div style={{ fontFamily: 'monospace', fontSize: 36, fontWeight: 900, color: '#a78bfa', lineHeight: 1 }}>{allocation.toLocaleString()} AETH</div>
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 10 }}>🔓 #aether room unlocked.</p>
+              {txHash && (
+                <a href={`https://sepolia.etherscan.io/tx/${txHash}`} target="_blank" rel="noreferrer"
+                  style={{ display: 'block', marginTop: 8, fontSize: 11, color: '#a78bfa', fontFamily: 'monospace' }}>
+                  View tx on Etherscan ↗
+                </a>
+              )}
               {demoMode && (
                 <button onClick={resetDemo} style={{ ...styles.ctaBtn, marginTop: 14, background: 'rgba(255,255,255,0.06)', fontSize: 12 }}>← Try Again</button>
               )}
