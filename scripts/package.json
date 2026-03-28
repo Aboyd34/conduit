@@ -1,0 +1,14 @@
+{
+  "name": "conduit-scripts",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "generate": "node generateMerkleTree.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "merkletreejs": "^0.3.11",
+    "node-fetch": "^3.3.2",
+    "viem": "^2.0.0"
+  }
+}
