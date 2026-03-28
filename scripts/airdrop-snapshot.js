@@ -15,12 +15,12 @@ const path = require('path')
 // ── EDIT THIS: your activity-based allocations ───────────────────────────
 // Format: [walletAddress, aethAmountInWei]
 const ALLOCATIONS = [
-  // Example entries — replace with real data from your DB
-  // ['0xWALLET_ADDRESS', ethers.parseEther('1200').toString()],
+  // Test recipient — replace with real user wallets before mainnet
+  ['0xAB1CAa7D5dA5AA797b3e00B6bd56aFf516079b80', '1000000000000000000000'], // 1000 AETH
 ]
 
 if (ALLOCATIONS.length === 0) {
-  console.error('⚠️  No allocations defined in ALLOCATIONS array.')
+  console.error('\u26a0\ufe0f  No allocations defined in ALLOCATIONS array.')
   console.error('   Add wallet addresses + AETH amounts before running.')
   process.exit(1)
 }
@@ -46,7 +46,7 @@ const snapshot = {
 const outPath = path.join(__dirname, '..', 'airdrop-snapshot.json')
 fs.writeFileSync(outPath, JSON.stringify(snapshot, null, 2))
 
-console.log('✅ Snapshot written to airdrop-snapshot.json')
+console.log('\u2705 Snapshot written to airdrop-snapshot.json')
 console.log('   Merkle root:', tree.root)
 console.log('   Recipients:', ALLOCATIONS.length)
 console.log('')
