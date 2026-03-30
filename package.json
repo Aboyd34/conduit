@@ -47,6 +47,7 @@
     "ethers": "^6.12.0",
     "hardhat": "^2.22.0",
     "keccak": "^3.0.4",
-    "merkletreejs": "^0.3.11"
+    "merkletreejs": "^0.3.11",
+    "serve": "^14.2.6"
   }
 }
