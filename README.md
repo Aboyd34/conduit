@@ -1,51 +1,72 @@
-# ⚡ Conduit
+# Conduit
 
-> Encrypted, decentralized social network — real-time rooms, AI assistant, AETH token economy.
+A Web3 platform built on Base Sepolia — featuring wallet connect, ERC-20 token integration, and real-time WebSocket communication.
 
 ## Stack
 
-| Layer | Tech |
-|---|---|
-| Frontend | React 18 + Vite + React Router v6 |
-| Backend | Node.js + Express + WebSocket (ws) |
-| Database | SQLite (WAL mode) — persisted in `data/` on Render |
-| AI | Groq API — llama-3.3-70b-versatile (free tier) |
-| Auth | Browser-side cryptographic keypair (ECDSA P-256) |
-| Token | AETH — earned by posting, replies, signals |
+- **Frontend**: React 18 + Vite + Tailwind CSS
+- **Blockchain**: wagmi v2 + viem v2 + OnchainKit (Base)
+- **Backend**: Express + WebSocket (ws)
+- **Smart Contracts**: Hardhat + OpenZeppelin
+- **Deployment**: Render (API) + Vercel (frontend)
 
-## Local Dev
+## Token
+
+| | |
+|---|---|
+| **Name** | ConduitToken |
+| **Symbol** | CDT |
+| **Network** | Base Sepolia Testnet |
+| **Chain ID** | 84532 |
+| **Contract** | `0x719d3f3E01E365F9aa73374674499539fdD0f82E` |
+| **Supply** | 1,000,000 CDT |
+| **Deployer** | `0xAB1CAa7D5dA5AA797b3e00B6bd56aFf516079b80` |
+
+## Getting Started
 
 ```bash
-cp .env.example .env          # add GROQ_API_KEY
+# Install dependencies
 npm install
-npm run dev:all               # Vite :5173 + Node :3001 concurrently
+
+# Copy environment file
+cp .env.example .env
+# Fill in your values
+
+# Run frontend + backend
+npm run dev:all
 ```
-
-## Production Deploy (Render)
-
-1. Connect `Aboyd34/conduit` repo on [render.com](https://render.com)
-2. Build command: `npm install && npm run build`
-3. Start command: `node server.js`
-4. Add env var: `GROQ_API_KEY=gsk_...`
-5. Push to `main` → auto-deploy
-
-Live: **https://conduit-api1.onrender.com**
 
 ## Environment Variables
 
-| Key | Required | Description |
+See `.env.example` for all required variables.
+
+## Deploy Contract
+
+```bash
+# Set deployer key
+$env:DEPLOYER_KEY = "your_private_key"
+
+# Compile
+npx hardhat compile
+
+# Deploy to Base Sepolia
+npx hardhat run .\scripts\deploy.cjs --network base-sepolia
+```
+
+## Network Config
+
+| Network | RPC | Chain ID |
 |---|---|---|
-| `GROQ_API_KEY` | Yes | Free key from [console.groq.com/keys](https://console.groq.com/keys) |
-| `NODE_ENV` | Auto | Set to `production` by Render |
-| `PORT` | Auto | Set by Render (10000) |
-| `ALLOWED_ORIGIN` | Optional | Extra CORS origin to whitelist |
+| Base Sepolia | https://sepolia.base.org | 84532 |
+| Base Mainnet | https://mainnet.base.org | 8453 |
+| Sepolia | https://rpc.sepolia.org | 11155111 |
 
-## Features
+## Scripts
 
-- 🔑 Self-sovereign identity (keypair in browser, never leaves device)
-- 💬 Real-time rooms + DMs over WebSocket
-- ⚡ AETH token economy (50 post / 20 signal / 10 reply, 2× Pioneer)
-- 🤖 Aether AI (Groq llama-3.3-70b, 20 req/min)
-- 🔞 Age gate with signed local token
-- 📱 PWA — installs on mobile
-- 🎯 3-step onboarding for new users
+| Command | Description |
+|---|---|
+| `npm run dev` | Vite frontend only |
+| `npm run dev:server` | Express backend only |
+| `npm run dev:all` | Both concurrently |
+| `npm run build` | Production build |
+| `npm run start` | Production server |
