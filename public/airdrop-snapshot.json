@@ -1,0 +1,12 @@
+{
+  "merkleRoot": "0x06ff9f231cfef75b72a02c963d4e148a6b6f32301cb5e256bb9ddd968df796e5",
+  "totalRecipients": 1,
+  "generatedAt": "2026-03-28T02:06:07.859Z",
+  "recipients": [
+    {
+      "address": "0xAB1CAa7D5dA5AA797b3e00B6bd56aFf516079b80",
+      "amount": "1000000000000000000000",
+      "proof": []
+    }
+  ]
+}

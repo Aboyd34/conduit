@@ -1,0 +1,28 @@
+{
+  "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266": {
+    "amountAeth": 360,
+    "amountWei": "360000000000000000000",
+    "isPioneer": true,
+    "proof": [
+      "0x6c42bf702427c5ed395c66a7fd3c65db67a8d344c195c8669199409cc459a895",
+      "0x3721599de96fe278ecdc97d54ace909e0340c6b9148fadea566fb713bed76ca1"
+    ]
+  },
+  "0x70997970c51812dc3a010c7d01b50e0d17dc79c8": {
+    "amountAeth": 340,
+    "amountWei": "340000000000000000000",
+    "isPioneer": true,
+    "proof": [
+      "0x541d529bfbfd2514fa61884bc4e67cfff449e09e44eef8699601235b64e3a527",
+      "0x3721599de96fe278ecdc97d54ace909e0340c6b9148fadea566fb713bed76ca1"
+    ]
+  },
+  "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc": {
+    "amountAeth": 60,
+    "amountWei": "60000000000000000000",
+    "isPioneer": false,
+    "proof": [
+      "0xba1ecc9e7ee07e846c487a986687ff090f5f080e094fce864868d3ad5118404d"
+    ]
+  }
+}

@@ -1,0 +1,29 @@
+[
+  {
+    "wallet": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+    "amountAeth": 360,
+    "amountWei": "360000000000000000000",
+    "isPioneer": true,
+    "posts": 1,
+    "boosts": 5,
+    "replies": 3
+  },
+  {
+    "wallet": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+    "amountAeth": 340,
+    "amountWei": "340000000000000000000",
+    "isPioneer": true,
+    "posts": 1,
+    "boosts": 2,
+    "replies": 8
+  },
+  {
+    "wallet": "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
+    "amountAeth": 60,
+    "amountWei": "60000000000000000000",
+    "isPioneer": false,
+    "posts": 1,
+    "boosts": 0,
+    "replies": 1
+  }
+]
