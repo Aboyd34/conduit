@@ -1,4 +1,4 @@
-import hre from "hardhat";
+const hre = require("hardhat");
 
 async function main() {
   const [deployer] = await hre.ethers.getSigners();
@@ -10,7 +10,6 @@ async function main() {
   await token.waitForDeployment();
   const address = await token.getAddress();
   console.log("ConduitToken deployed to:", address);
-  console.log("Copy this into thirdweb Import Token on Base Sepolia!");
 }
 
 main().catch((err) => { console.error(err); process.exitCode = 1; });
