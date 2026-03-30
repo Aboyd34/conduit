@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { WagmiProvider, createConfig, http } from 'wagmi'
-import { sepolia } from 'wagmi/chains'
+import { baseSepolia } from 'wagmi/chains'
 import { metaMask, coinbaseWallet } from 'wagmi/connectors'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import App from './App.jsx'
@@ -10,13 +10,13 @@ import SplashScreen from './components/SplashScreen.jsx'
 import './index.css'
 
 const wagmiConfig = createConfig({
-  chains: [sepolia],
+  chains: [baseSepolia],
   connectors: [
     metaMask(),
     coinbaseWallet({ appName: 'Conduit', preference: 'smartWalletOnly' }),
   ],
   transports: {
-    [sepolia.id]: http(),
+    [baseSepolia.id]: http(),
   },
 })
 
