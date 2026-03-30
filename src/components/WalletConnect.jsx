@@ -1,5 +1,24 @@
 import React from 'react';
-import { useAccount, useConnect, useDisconnect } from 'wagmi';
+import { useAccount, useConnect, useDisconnect, useReadContract } from 'wagmi';
+import { formatUnits } from 'viem';
+
+const CDT_ADDRESS = '0x719d3f3E01E365F9aa73374674499539fdD0f82E';
+const ERC20_BALANCE_ABI = [
+  {
+    name: 'balanceOf',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'account', type: 'address' }],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+  {
+    name: 'decimals',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: '', type: 'uint8' }],
+  },
+];
 
 const WalletIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -15,6 +34,25 @@ export default function WalletConnect({ compact = false }) {
   const { address, isConnected } = useAccount();
   const { connect, connectors }  = useConnect();
   const { disconnect }           = useDisconnect();
+
+  const { data: rawBalance } = useReadContract({
+    address: CDT_ADDRESS,
+    abi: ERC20_BALANCE_ABI,
+    functionName: 'balanceOf',
+    args: [address],
+    query: { enabled: !!address },
+  });
+
+  const { data: decimals } = useReadContract({
+    address: CDT_ADDRESS,
+    abi: ERC20_BALANCE_ABI,
+    functionName: 'decimals',
+    query: { enabled: !!address },
+  });
+
+  const cdtBalance = rawBalance != null && decimals != null
+    ? parseFloat(formatUnits(rawBalance, decimals)).toLocaleString(undefined, { maximumFractionDigits: 2 })
+    : null;
 
   if (isConnected) {
     return (
@@ -46,6 +84,17 @@ export default function WalletConnect({ compact = false }) {
             {address?.slice(0, 4)}…{address?.slice(-3)}
           </span>
         </button>
+        {cdtBalance !== null && (
+          <span style={{
+            fontSize: 8,
+            fontFamily: 'monospace',
+            color: 'rgba(0,212,255,0.5)',
+            marginTop: 3,
+            letterSpacing: 0.5,
+          }}>
+            {cdtBalance} CDT
+          </span>
+        )}
       </div>
     );
   }
