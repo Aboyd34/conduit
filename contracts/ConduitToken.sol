@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title ConduitToken (CDT)
-/// @notice ERC-20 token for the Conduit platform
+/// @notice ERC20 token for the Conduit platform
 /// @dev Deployed on Base Sepolia: 0x719d3f3E01E365F9aa73374674499539fdD0f82E
 contract ConduitToken is ERC20, Ownable {
     constructor(address initialOwner)
@@ -18,10 +18,5 @@ contract ConduitToken is ERC20, Ownable {
     /// @notice Mint additional tokens (owner only)
     function mint(address to, uint256 amount) external onlyOwner {
         _mint(to, amount);
-    }
-
-    /// @notice Burn tokens from caller's balance
-    function burn(uint256 amount) external {
-        _burn(msg.sender, amount);
     }
 }

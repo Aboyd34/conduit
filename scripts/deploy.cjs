@@ -13,9 +13,7 @@ async function main() {
 
   const address = await token.getAddress();
   console.log("ConduitToken deployed to:", address);
-  console.log("Network:", hre.network.name);
-  console.log("\nAdd to .env:");
-  console.log(`VITE_CDT_TOKEN_ADDRESS=${address}`);
+  console.log("Copy this address into thirdweb Import Token on Base Sepolia!");
 }
 
 main().catch((err) => {
