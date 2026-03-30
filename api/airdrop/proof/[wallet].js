@@ -5,7 +5,7 @@
  *
  * Deploy proofs.json alongside this function or store in Vercel KV / Supabase
  */
-import proofsData from '../../../scripts/output/proofs.json' assert { type: 'json' }
+import proofsData from '../../../scripts/output/proofs.json' with { type: 'json' }
 
 export default function handler(req, res) {
   const { wallet } = req.query
