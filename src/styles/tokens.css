@@ -1,0 +1,161 @@
+/* Conduit Design Tokens — 2026 Unified Spec */
+@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* Backgrounds */
+  --bg: #0A0A0C;
+  --surface: #111317;
+  --surface-raised: #16191F;
+  --border: rgba(255, 255, 255, 0.06);
+  --border-hover: rgba(255, 255, 255, 0.12);
+
+  /* Accents */
+  --primary: #7DF9FF;
+  --primary-dim: rgba(125, 249, 255, 0.12);
+  --primary-glow: rgba(125, 249, 255, 0.25);
+  --success: #4DFFB4;
+  --danger: #FF3B55;
+  --warning: #FFB547;
+
+  /* Text */
+  --text-primary: #F5F7FA;
+  --text-secondary: rgba(245, 247, 250, 0.65);
+  --text-muted: rgba(245, 247, 250, 0.35);
+
+  /* Typography */
+  --font-ui: 'Inter Tight', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Spacing */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  /* Transitions */
+  --transition: 0.15s ease;
+  --transition-slow: 0.3s ease;
+
+  /* Layout */
+  --topbar-height: 52px;
+  --rail-width: 220px;
+  --rail-collapsed: 60px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+/* Utility classes */
+.mono { font-family: var(--font-mono); }
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted { color: var(--text-muted); }
+.text-accent { color: var(--primary); }
+.text-success { color: var(--success); }
+.text-danger { color: var(--danger); }
+
+.surface {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  background: var(--primary-dim);
+  color: var(--primary);
+  border: 1px solid rgba(125, 249, 255, 0.2);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+
+.chip.success {
+  background: rgba(77, 255, 180, 0.1);
+  color: var(--success);
+  border-color: rgba(77, 255, 180, 0.2);
+}
+
+.chip.danger {
+  background: rgba(255, 59, 85, 0.1);
+  color: var(--danger);
+  border-color: rgba(255, 59, 85, 0.2);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all var(--transition);
+  outline: none;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #0A0A0C;
+}
+.btn-primary:hover { filter: brightness(1.1); }
+.btn-primary:active { transform: scale(0.97); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  border-color: var(--border-hover);
+}
+
+.btn-danger {
+  background: rgba(255, 59, 85, 0.12);
+  color: var(--danger);
+  border: 1px solid rgba(255, 59, 85, 0.2);
+}
+.btn-danger:hover { background: rgba(255, 59, 85, 0.2); }

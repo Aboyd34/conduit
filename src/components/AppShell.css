@@ -1,0 +1,112 @@
+.app-shell {
+  min-height: 100vh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+
+.app-body {
+  display: flex;
+  flex: 1;
+  padding-top: var(--topbar-height);
+}
+
+.app-rail {
+  width: var(--rail-width);
+  min-height: calc(100vh - var(--topbar-height));
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  position: fixed;
+  top: var(--topbar-height);
+  left: 0;
+  bottom: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 8px;
+  gap: 2px;
+  z-index: 50;
+}
+
+.app-main {
+  flex: 1;
+  margin-left: var(--rail-width);
+  padding: 24px;
+  max-width: 100%;
+  overflow-y: auto;
+}
+
+/* Rail nav items */
+.rail-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  position: relative;
+  text-decoration: none;
+}
+
+.rail-item:hover {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+.rail-item.active {
+  background: var(--primary-dim);
+  color: var(--primary);
+}
+
+.rail-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 20%;
+  bottom: 20%;
+  width: 3px;
+  background: var(--primary);
+  border-radius: 0 3px 3px 0;
+  animation: railIndicator 0.2s ease;
+}
+
+@keyframes railIndicator {
+  from { opacity: 0; transform: scaleY(0); }
+  to { opacity: 1; transform: scaleY(1); }
+}
+
+.rail-item .badge {
+  margin-left: auto;
+}
+
+.rail-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: var(--font-mono);
+  padding: 12px 12px 4px;
+}
+
+@media (max-width: 768px) {
+  .app-rail {
+    width: var(--rail-collapsed);
+  }
+  .app-main {
+    margin-left: var(--rail-collapsed);
+    padding: 16px;
+  }
+  .rail-item span:not(.badge) {
+    display: none;
+  }
+  .rail-section-label { display: none; }
+}
