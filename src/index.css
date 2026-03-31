@@ -1,56 +1,131 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import './styles/tokens.css';
+@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+/* Reset */
+*, *::before, *::after { box-sizing: border-box; }
+html, body, #root { height: 100%; }
 
 body {
-  background: #07060f;
-  color: #f0f0f0;
-  font-family: Inter, system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  min-height: 100vh;
+  overflow-x: hidden;
 }
 
-.font-mono { font-family: 'Space Grotesk', monospace; }
+a { color: var(--primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
 
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #1e1e3a; border-radius: 4px; }
-
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.3; transform: scale(0.75); }
-}
-.pulse { animation: pulse-dot 1.8s ease-in-out infinite; }
-
-#compliance-badge {
-  position: fixed; bottom: 16px; right: 16px; z-index: 9000;
-  background: rgba(15,14,31,0.92);
-  border: 1px solid rgba(239,68,68,0.4);
-  border-radius: 10px; padding: 6px 12px;
-  font-size: 11px; color: #f87171;
-  cursor: pointer; backdrop-filter: blur(12px);
-  display: flex; align-items: center; gap: 6px;
-  transition: all 0.2s;
-}
-#compliance-badge:hover { background: rgba(239,68,68,0.1); }
-.bdot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: #ef4444; box-shadow: 0 0 6px rgba(239,68,68,0.8);
-  animation: pulse-dot 1.8s ease-in-out infinite;
+input, textarea, select, button {
+  font-family: var(--font-ui);
+  font-size: 14px;
 }
 
-#cookie-banner {
-  display: none;
-  position: fixed; bottom: 0; left: 0; right: 0; z-index: 8999;
-  background: rgba(7,6,15,0.97);
-  border-top: 1px solid #1e1e2e;
-  backdrop-filter: blur(16px);
-  padding: 10px 20px;
-  align-items: center; justify-content: space-between;
-  gap: 12px; flex-wrap: wrap;
-  font-size: 12px; color: #71717a;
+/* Focus ring */
+*:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
-#cookie-banner a { color: #4fc3f7; text-decoration: none; }
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+/* Global transitions */
+button, a, input, textarea {
+  transition: all var(--transition);
+}
+
+/* Feed layout */
+.feed-layout {
+  max-width: 640px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 40px;
+}
+
+/* PostBox frosted glass */
+.post-box {
+  background: rgba(17, 19, 23, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.post-box:focus-within {
+  border-color: rgba(125, 249, 255, 0.3);
+  box-shadow: 0 0 0 3px var(--primary-dim);
+}
+
+.post-box textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 14px;
+  resize: none;
+  min-height: 72px;
+}
+
+.post-box textarea::placeholder { color: var(--text-muted); }
+
+/* Empty state */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  gap: 12px;
+  text-align: center;
+}
+
+.empty-state-icon {
+  width: 48px;
+  height: 48px;
+  opacity: 0.3;
+  color: var(--text-secondary);
+}
+
+.empty-state-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.empty-state-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  max-width: 280px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.animate-fade { animation: fadeIn 0.2s ease; }
+.animate-slide { animation: slideUp 0.25s ease; }
+.animate-pulse { animation: pulse 1.5s ease infinite; }
