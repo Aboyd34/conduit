@@ -1,20 +1,64 @@
 import React from 'react'
 
-export default function Button({ children, variant = 'primary', className = '', ...props }) {
-  const base =
-    'inline-flex items-center justify-center px-4 py-2 rounded-xl text-sm font-medium transition transform duration-150 cursor-pointer'
+const VARIANTS = {
+  primary: {
+    background: 'var(--primary)',
+    color: '#0A0A0C',
+    border: 'none',
+  },
+  ghost: {
+    background: 'transparent',
+    color: 'var(--text-secondary)',
+    border: '1px solid var(--border)',
+  },
+  danger: {
+    background: 'rgba(255,59,85,0.12)',
+    color: 'var(--danger)',
+    border: '1px solid rgba(255,59,85,0.2)',
+  },
+  success: {
+    background: 'rgba(77,255,180,0.1)',
+    color: 'var(--success)',
+    border: '1px solid rgba(77,255,180,0.2)',
+  },
+}
 
-  const styles = {
-    primary:
-      'bg-gradient-to-r from-primary to-secondary text-white hover:-translate-y-0.5 hover:shadow-glow',
-    ghost:
-      'text-textDim hover:bg-white/5 border border-transparent hover:border-border',
-    danger:
-      'bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20',
-  }
+export default function Button({
+  children,
+  variant = 'ghost',
+  size = 'md',
+  onClick,
+  disabled = false,
+  icon,
+  style = {},
+  ...props
+}) {
+  const v = VARIANTS[variant] || VARIANTS.ghost
+  const padding = size === 'sm' ? '5px 12px' : size === 'lg' ? '10px 24px' : '7px 16px'
+  const fontSize = size === 'sm' ? 11 : size === 'lg' ? 15 : 13
 
   return (
-    <button className={`${base} ${styles[variant] || styles.primary} ${className}`} {...props}>
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        padding,
+        borderRadius: 'var(--radius-sm)',
+        fontFamily: 'var(--font-ui)',
+        fontWeight: 600,
+        fontSize,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.4 : 1,
+        transition: 'all var(--transition)',
+        ...v,
+        ...style,
+      }}
+      {...props}
+    >
+      {icon && <span style={{ display: 'flex', alignItems: 'center' }}>{icon}</span>}
       {children}
     </button>
   )

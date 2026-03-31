@@ -1,29 +1,30 @@
-import React, { useState } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
-import SignalKeyLogin, { loadSession, clearSession } from './components/SignalKeyLogin.jsx'
+import React, { useState, lazy, Suspense } from 'react'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { useSessionStore } from './store/sessionStore.js'
 import { useConduit } from './hooks/useConduit.js'
 import { registerSW } from './registerSW.js'
 
-// Layout
-import TopBar    from './components/TopBar.jsx'
-import NavRail   from './components/NavRail.jsx'
+// Layout — always loaded
+import TopBar  from './components/TopBar.jsx'
+import NavRail from './components/NavRail.jsx'
 
-// Views
-import RoomsView          from './components/RoomsView.jsx'
-import YouView            from './components/YouView.jsx'
-import SearchView         from './components/SearchView.jsx'
-import AdminShell         from './components/AdminShell.jsx'
-import DMView             from './components/DMView.jsx'
-import PulseView          from './components/PulseView.jsx'
-import ThreadView         from './components/ThreadView.jsx'
-import Onboarding         from './components/Onboarding.jsx'
+// Overlays — always loaded (small)
 import NotificationsPanel from './components/NotificationsPanel.jsx'
-import InstallBanner      from './components/InstallBanner.jsx'
 import ProfileCard        from './components/ProfileCard.jsx'
-import { AirdropPage }   from './components/AirdropPage.jsx'
-import AetherAI          from './components/AetherAI.jsx'
+import InstallBanner      from './components/InstallBanner.jsx'
+import SignalKeyLogin     from './components/SignalKeyLogin.jsx'
+import Onboarding         from './components/Onboarding.jsx'
 
-registerSW()
+// Lazy-loaded routes
+const RoomsView   = lazy(() => import('./components/RoomsView.jsx'))
+const PulseView   = lazy(() => import('./components/PulseView.jsx'))
+const SearchView  = lazy(() => import('./components/SearchView.jsx'))
+const YouView     = lazy(() => import('./components/YouView.jsx'))
+const DMView      = lazy(() => import('./components/DMView.jsx'))
+const ThreadView  = lazy(() => import('./components/ThreadView.jsx'))
+const AetherAI    = lazy(() => import('./components/AetherAI.jsx'))
+const AdminShell  = lazy(() => import('./components/AdminShell.jsx'))
+const AirdropPage = lazy(() => import('./components/AirdropPage.jsx').then(m => ({ default: m.AirdropPage })))
 
 const ROUTE_TITLES = {
   '/rooms':   'Rooms',
@@ -31,45 +32,47 @@ const ROUTE_TITLES = {
   '/search':  'Search',
   '/airdrop': 'Airdrop',
   '/you':     'You',
-  '/ai':      'AI',
+  '/ai':      'AI — Aether',
   '/admin':   'Admin',
 }
 
+function Loader() {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      height: '60vh', color: 'var(--text-muted)',
+      fontFamily: 'var(--font-mono)', fontSize: 12,
+    }}>
+      <span className="animate-pulse">Loading…</span>
+    </div>
+  )
+}
+
+registerSW()
+
 export default function App() {
-  const [session, setSession]           = useState(() => loadSession())
-  const [onboarded, setOnboarded]       = useState(() => !!localStorage.getItem('conduit_onboarded'))
+  const { session, onboarded, login, logout, finishOnboarding } = useSessionStore()
   const [notifOpen, setNotifOpen]       = useState(false)
   const [profileFp, setProfileFp]       = useState(null)
   const [dmFp, setDmFp]                 = useState(null)
   const [activeThread, setActiveThread] = useState(null)
 
-  const conduit = useConduit()
+  const conduit  = useConduit()
+  const location = useLocation()
 
-  const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/rooms'
-  const pageTitle   = ROUTE_TITLES[currentPath] || 'Conduit'
-  const isAdmin     = session?.role === 'admin'
+  const pageTitle = ROUTE_TITLES[location.pathname] || 'Conduit'
+  const isAdmin   = session?.role === 'admin'
+  const navMode   = location.pathname.startsWith('/admin') ? 'admin' : 'user'
+  const activeNav = location.pathname.replace('/', '') || 'rooms'
+  const unread    = conduit.unreadCount || 0
 
-  function handleLogin(s)  { setSession(s) }
-  function handleLogout()  { clearSession(); setSession(null); setOnboarded(false) }
-  function finishOnboarding() {
-    localStorage.setItem('conduit_onboarded', '1')
-    setOnboarded(true)
-  }
+  function goTo(id) { window.location.href = `/${id}` }
 
   function guard(el) {
-    if (!session)  return <SignalKeyLogin onLogin={handleLogin} />
+    if (!session)   return <SignalKeyLogin onLogin={login} />
     if (!onboarded) return <Onboarding session={session} onFinish={finishOnboarding} />
     return el
   }
-
-  const navMode = currentPath.startsWith('/admin') ? 'admin' : 'user'
-  const activeNav = currentPath.replace('/', '') || 'rooms'
-
-  function goTo(id) {
-    window.location.href = `/${id}`
-  }
-
-  const unread = conduit.unreadCount || 0
 
   const rightSlot = session && onboarded ? (
     <>
@@ -77,8 +80,8 @@ export default function App() {
         onClick={() => setNotifOpen(o => !o)}
         style={{
           position: 'relative', background: 'transparent', border: 'none',
-          color: 'var(--text-secondary)', cursor: 'pointer', padding: '6px 8px',
-          borderRadius: 'var(--radius-sm)', fontSize: 16,
+          color: 'var(--text-secondary)', cursor: 'pointer',
+          padding: '6px 8px', borderRadius: 'var(--radius-sm)', fontSize: 16,
         }}
       >
         🔔
@@ -88,9 +91,9 @@ export default function App() {
           </span>
         )}
       </button>
-      <div className="chip">
-        {session.fingerprint ? session.fingerprint.slice(0, 6) : '??'}
-      </div>
+      <span className="chip mono">
+        {session.fingerprint ? session.fingerprint.slice(0, 8) : '??'}
+      </span>
     </>
   ) : null
 
@@ -105,12 +108,9 @@ export default function App() {
         display: 'flex',
         paddingTop: session && onboarded ? 'var(--topbar-height)' : 0,
       }}>
-
-        {/* Left Rail */}
         {session && onboarded && (
           <aside style={{
             width: 'var(--rail-width)',
-            minHeight: 'calc(100vh - var(--topbar-height))',
             background: 'var(--surface)',
             borderRight: '1px solid var(--border)',
             position: 'fixed',
@@ -129,77 +129,63 @@ export default function App() {
           </aside>
         )}
 
-        {/* Main content */}
         <main style={{
           flex: 1,
           marginLeft: session && onboarded ? 'var(--rail-width)' : 0,
-          padding: session && onboarded ? '24px' : 0,
           minHeight: '100vh',
         }}>
-          <Routes>
-            <Route path="/" element={
-              !session
-                ? <SignalKeyLogin onLogin={handleLogin} />
-                : !onboarded
-                ? <Onboarding session={session} onFinish={finishOnboarding} />
-                : <Navigate to="/rooms" />
-            } />
+          <Suspense fallback={<Loader />}>
+            <Routes>
+              <Route path="/" element={
+                !session
+                  ? <SignalKeyLogin onLogin={login} />
+                  : !onboarded
+                  ? <Onboarding session={session} onFinish={finishOnboarding} />
+                  : <Navigate to="/rooms" />
+              } />
 
-            <Route path="/rooms" element={guard(
-              <RoomsView
-                userRole={session?.role || 'user'}
-                currentUser={session}
-                posts={conduit.posts}
-                onAddPost={conduit.addPost}
-                onRemovePost={conduit.removePost}
-                onFlagPost={conduit.flagPost}
-                onReact={conduit.reactToPost}
-                onTyping={conduit.setTyping}
-                typingMap={conduit.typingMap}
-                onlineMap={conduit.onlineMap}
-                onViewProfile={fp => setProfileFp(fp)}
-                onOpenThread={(post, roomId) => setActiveThread({ post, roomId })}
-                onDM={fp => setDmFp(fp)}
-              />
-            )} />
+              <Route path="/rooms" element={guard(
+                <RoomsView
+                  userRole={session?.role || 'user'}
+                  currentUser={session}
+                  posts={conduit.posts}
+                  onAddPost={conduit.addPost}
+                  onRemovePost={conduit.removePost}
+                  onFlagPost={conduit.flagPost}
+                  onReact={conduit.reactToPost}
+                  onTyping={conduit.setTyping}
+                  typingMap={conduit.typingMap}
+                  onlineMap={conduit.onlineMap}
+                  onViewProfile={fp => setProfileFp(fp)}
+                  onOpenThread={(post, roomId) => setActiveThread({ post, roomId })}
+                  onDM={fp => setDmFp(fp)}
+                />
+              )} />
 
-            <Route path="/pulse" element={guard(
-              <PulseView
-                posts={conduit.posts}
-                onGoToRoom={room => { window.location.href = `/rooms?room=${room}` }}
-                onViewProfile={fp => setProfileFp(fp)}
-                onOpenThread={(post, roomId) => setActiveThread({ post, roomId })}
-                onReact={conduit.reactToPost}
-              />
-            )} />
+              <Route path="/pulse" element={guard(
+                <PulseView
+                  posts={conduit.posts}
+                  onGoToRoom={room => { window.location.href = `/rooms?room=${room}` }}
+                  onViewProfile={fp => setProfileFp(fp)}
+                  onOpenThread={(post, roomId) => setActiveThread({ post, roomId })}
+                  onReact={conduit.reactToPost}
+                />
+              )} />
 
-            <Route path="/search" element={guard(
-              <SearchView
-                posts={conduit.posts}
-                onGoToRoom={room => { window.location.href = `/rooms?room=${room}` }}
-              />
-            )} />
+              <Route path="/search"  element={guard(<SearchView posts={conduit.posts} onGoToRoom={r => { window.location.href = `/rooms?room=${r}` }} />)} />
+              <Route path="/airdrop" element={guard(<AirdropPage />)} />
+              <Route path="/you"     element={guard(<YouView session={session} posts={conduit.posts} onLogout={logout} />)} />
+              <Route path="/ai"      element={guard(<AetherAI session={session} />)} />
 
-            <Route path="/airdrop" element={guard(<AirdropPage />)} />
+              <Route path="/admin" element={
+                isAdmin
+                  ? guard(<AdminShell conduit={conduit} session={session} />)
+                  : <Navigate to="/rooms" />
+              } />
 
-            <Route path="/you" element={guard(
-              <YouView
-                session={session}
-                posts={conduit.posts}
-                onLogout={handleLogout}
-              />
-            )} />
-
-            <Route path="/ai" element={guard(<AetherAI session={session} />)} />
-
-            <Route path="/admin" element={
-              isAdmin
-                ? guard(<AdminShell conduit={conduit} session={session} />)
-                : <Navigate to="/rooms" />
-            } />
-
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </Suspense>
         </main>
       </div>
 
@@ -212,7 +198,6 @@ export default function App() {
           onClose={() => setNotifOpen(false)}
         />
       )}
-
       {profileFp && (
         <ProfileCard
           fingerprint={profileFp}
@@ -221,24 +206,20 @@ export default function App() {
           onDM={fp => { setProfileFp(null); setDmFp(fp) }}
         />
       )}
-
-      {dmFp && (
-        <DMView
-          targetFp={dmFp}
-          myFp={session?.fingerprint}
-          onClose={() => setDmFp(null)}
-        />
-      )}
-
-      {activeThread && (
-        <ThreadView
-          post={activeThread.post}
-          roomId={activeThread.roomId}
-          myFp={session?.fingerprint}
-          onClose={() => setActiveThread(null)}
-          onReact={conduit.reactToPost}
-        />
-      )}
+      <Suspense fallback={null}>
+        {dmFp && (
+          <DMView targetFp={dmFp} myFp={session?.fingerprint} onClose={() => setDmFp(null)} />
+        )}
+        {activeThread && (
+          <ThreadView
+            post={activeThread.post}
+            roomId={activeThread.roomId}
+            myFp={session?.fingerprint}
+            onClose={() => setActiveThread(null)}
+            onReact={conduit.reactToPost}
+          />
+        )}
+      </Suspense>
 
       <InstallBanner />
     </div>
