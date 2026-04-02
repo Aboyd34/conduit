@@ -6,7 +6,7 @@ import { registerSW } from './registerSW.js'
 
 // Layout — always loaded
 import Header from './components/Header.jsx'
-import LeftRail from './components/LeftRail.jsx
+import LeftRail from "./components/LeftRail.jsx"
 
 // Overlays — always loaded (small)
 import NotificationsPanel from './components/NotificationsPanel.jsx'
