@@ -1,3 +1,4 @@
+/* NavRail — full styles */
 .nav-rail {
   display: flex;
   flex-direction: column;
@@ -7,7 +8,7 @@
 }
 
 .nav-rail-section {
-  font-size: 9px;
+  font-size: var(--text-xs, 10px);
   font-weight: 800;
   color: var(--danger);
   text-transform: uppercase;
@@ -16,4 +17,119 @@
   padding: 4px 12px 8px;
   border-bottom: 1px solid var(--border);
   margin-bottom: 4px;
+}
+
+.nav-rail-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 6px 8px;
+}
+
+.nav-rail-bottom {
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+/* Rail items — pulled from AppShell.css and unified here */
+.rail-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: var(--text-sm, 13px);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  position: relative;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.rail-item:hover {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+.rail-item:active {
+  transform: scale(0.97);
+}
+
+.rail-item:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+
+.rail-item.active {
+  background: var(--primary-dim);
+  color: var(--primary);
+}
+
+.rail-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 20%;
+  bottom: 20%;
+  width: 3px;
+  background: var(--primary);
+  border-radius: 0 3px 3px 0;
+  animation: railIndicator 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes railIndicator {
+  from { opacity: 0; transform: scaleY(0.4); }
+  to   { opacity: 1; transform: scaleY(1); }
+}
+
+.rail-item .badge {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.rail-item svg {
+  flex-shrink: 0;
+  opacity: 0.7;
+  transition: opacity var(--transition);
+}
+.rail-item:hover svg,
+.rail-item.active svg {
+  opacity: 1;
+}
+
+.rail-section-label {
+  font-size: var(--text-xs, 10px);
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: var(--font-mono);
+  padding: 12px 12px 4px;
+}
+
+/* Collapsed (mobile icon-only) */
+@media (max-width: 768px) {
+  .rail-item span:not(.badge) {
+    display: none;
+  }
+  .nav-rail-section,
+  .rail-section-label { display: none; }
+  .rail-item {
+    justify-content: center;
+    padding: 10px;
+  }
+  .rail-item svg { opacity: 0.8; }
+  .rail-item .badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    margin-left: 0;
+  }
 }
