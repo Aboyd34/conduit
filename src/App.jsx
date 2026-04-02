@@ -5,8 +5,8 @@ import { useConduit } from './hooks/useConduit.js'
 import { registerSW } from './registerSW.js'
 
 // Layout — always loaded
-import TopBar  from './components/TopBar.jsx'
-import NavRail from './components/NavRail.jsx'
+import Header from './components/Header.jsx'
+import LeftRail from './components/LeftRail.jsx
 
 // Overlays — always loaded (small)
 import NotificationsPanel from './components/NotificationsPanel.jsx'
@@ -101,7 +101,7 @@ export default function App() {
     <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text-primary)' }}>
 
       {session && onboarded && (
-        <TopBar title={pageTitle} rightSlot={rightSlot} />
+        <Header title={pageTitle} rightSlot={rightSlot} />
       )}
 
       <div style={{
@@ -120,12 +120,12 @@ export default function App() {
             overflowY: 'auto',
             zIndex: 50,
           }}>
-            <NavRail
-              mode={navMode}
-              active={activeNav}
-              onNav={goTo}
-              badges={{ direct: unread }}
-            />
+           <LeftRail 
+             mode={navMode} 
+             active={activeNav} 
+             onNav={goTo} 
+             badges={{ direct: unread }} 
+          />
           </aside>
         )}
 
