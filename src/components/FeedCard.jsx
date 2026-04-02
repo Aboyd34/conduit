@@ -1,96 +1,250 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import './FeedCard.css';
 
-export default function FeedCard({ post = {} }) {
+/* ─── Media grid ─── */
+function MediaGrid({ media = [] }) {
+  if (!media.length) return null;
+  const visible = media.slice(0, 4);
+  const overflow = media.length - 4;
+  return (
+    <div className={`feed-media-grid feed-media-grid--${Math.min(visible.length, 4)}`}>
+      {visible.map((src, i) => (
+        <div key={i} className="feed-media-cell">
+          <img src={src} alt="" loading="lazy" />
+          {i === 3 && overflow > 0 && (
+            <div className="feed-media-overflow">+{overflow}</div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ─── Reactions bar ─── */
+const REACTIONS = [
+  { emoji: '👍', label: 'like' },
+  { emoji: '🔥', label: 'fire' },
+  { emoji: '💡', label: 'insight' },
+  { emoji: '🔒', label: 'secure' },
+];
+
+function ReactionPicker({ onReact }) {
+  return (
+    <div className="reaction-picker" role="menu" aria-label="Pick a reaction">
+      {REACTIONS.map(r => (
+        <button key={r.label} className="reaction-option" onClick={() => onReact(r.label)} aria-label={r.label}>
+          {r.emoji}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/* ─── Main FeedCard ─── */
+export default function FeedCard({
+  post = {},
+  onViewProfile,
+  onComment,
+  onShare,
+  onFlag,
+}) {
   const {
-    avatar, name, handle, timestamp, keyFragment,
-    text, images = [], reactions = 0, comments = 0,
-    shares = 0, views = 0
+    id,
+    alias       = 'Anon',
+    handle      = '',
+    sender      = '',
+    avatar      = null,
+    timestamp,
+    ts,
+    content     = '',
+    text        = '',
+    media       = [],
+    signals     = 0,
+    amplifies   = 0,
+    comments    = 0,
+    views       = 0,
+    replies     = [],
+    topic       = 'public',
+    pubkey      = '',
+    verified    = false,
   } = post;
 
-  const [liked, setLiked] = useState(false);
+  const [localSignals,   setLocalSignals]   = useState(Number(signals));
+  const [localAmplifies, setLocalAmplifies] = useState(Number(amplifies));
+  const [signaled,       setSignaled]       = useState(false);
+  const [amplified,      setAmplified]      = useState(false);
+  const [showReplies,    setShowReplies]    = useState(false);
+  const [showReactions,  setShowReactions]  = useState(false);
+  const [myReaction,     setMyReaction]     = useState(null);
 
-  const displayImages = images.slice(0, 4);
-  const extra = images.length > 4 ? images.length - 4 : 0;
+  const rawTime     = timestamp || ts;
+  const displayText = content || text || '';
+  const displayAlias= alias || (sender ? sender.slice(0, 12) + '…' : 'Anon');
+  const displayTime = rawTime
+    ? new Date(rawTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : 'now';
+  const keyShort    = pubkey ? pubkey.slice(0, 6) + '…' + pubkey.slice(-4) : null;
+
+  const handleSignal = useCallback(() => {
+    if (signaled) return;
+    setSignaled(true);
+    setLocalSignals(s => s + 1);
+  }, [signaled]);
+
+  const handleAmplify = useCallback(() => {
+    if (amplified) return;
+    setAmplified(true);
+    setLocalAmplifies(a => a + 1);
+  }, [amplified]);
+
+  const handleReact = (label) => {
+    setMyReaction(label);
+    setShowReactions(false);
+    setLocalSignals(s => s + 1);
+  };
 
   return (
-    <article className="feed-card">
-      <div className="feed-card-header">
-        <div className="feed-card-avatar">
+    <article className="feed-card" aria-label={`Post by ${displayAlias}`}>
+
+      {/* ── Header ── */}
+      <header className="feed-card__header">
+        <button
+          className="feed-card__avatar"
+          onClick={() => onViewProfile && onViewProfile(sender)}
+          aria-label={`View profile of ${displayAlias}`}
+        >
           {avatar
-            ? <img src={avatar} alt={name} />
-            : <span>{(name || '?')[0].toUpperCase()}</span>
+            ? <img src={avatar} alt={displayAlias} width="36" height="36" />
+            : <span className="feed-card__avatar-initials">{displayAlias[0].toUpperCase()}</span>
           }
+          {verified && <span className="feed-card__verified" aria-label="Verified">✓</span>}
+        </button>
+
+        <div className="feed-card__meta">
+          <div className="feed-card__name-row">
+            <span className="feed-card__name">{displayAlias}</span>
+            {handle && <span className="feed-card__handle">@{handle}</span>}
+            {keyShort && (
+              <span className="feed-card__key mono" title={pubkey}>Key: {keyShort}</span>
+            )}
+          </div>
+          <div className="feed-card__sub-row">
+            <time className="feed-card__time" dateTime={rawTime}>{displayTime}</time>
+            <span className="chip" style={{ fontSize: '10px', padding: '1px 7px' }}>#{topic}</span>
+          </div>
         </div>
-        <div className="feed-card-meta">
-          <span className="feed-card-name">{name || 'Anonymous'}</span>
-          <span className="feed-card-handle">@{handle || 'anon'}</span>
-          <span className="feed-card-dot">·</span>
-          <span className="feed-card-time">{timestamp || 'now'}</span>
-        </div>
-        {keyFragment && (
-          <span className="feed-card-key mono">Key: {keyFragment}</span>
-        )}
+
+        <button className="feed-card__more" aria-label="More options">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/>
+          </svg>
+        </button>
+      </header>
+
+      {/* ── Body ── */}
+      {displayText && (
+        <p className="feed-card__text">{displayText}</p>
+      )}
+
+      {/* ── Media ── */}
+      <MediaGrid media={media} />
+
+      {/* ── Stats ── */}
+      <div className="feed-card__stats">
+        <span>⚡ {localSignals} signals</span>
+        <span>💬 {comments} comments</span>
+        <span>⟳ {localAmplifies} shares</span>
+        <span>👁 {views} views</span>
       </div>
 
-      {text && <p className="feed-card-text">{text}</p>}
+      {/* ── Actions ── */}
+      <footer className="feed-card__actions">
+        <div style={{ position: 'relative' }}>
+          <button
+            className={`feed-card__action ${signaled ? 'feed-card__action--active' : ''}`}
+            onClick={() => !myReaction ? setShowReactions(v => !v) : handleSignal()}
+            aria-label={signaled ? 'Signaled' : 'Signal this post'}
+            aria-pressed={signaled}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/>
+              <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+            </svg>
+            {myReaction ? REACTIONS.find(r => r.label === myReaction)?.emoji : 'Like'}
+          </button>
+          {showReactions && (
+            <ReactionPicker onReact={handleReact} />
+          )}
+        </div>
 
-      {displayImages.length > 0 && (
-        <div className={`feed-card-images count-${Math.min(displayImages.length, 4)}`}>
-          {displayImages.map((src, i) => (
-            <div key={i} className="feed-card-img-wrap">
-              <img src={src} alt="" />
-              {extra > 0 && i === 3 && (
-                <div className="feed-card-img-more">+{extra}</div>
-              )}
+        <button
+          className="feed-card__action"
+          onClick={() => onComment && onComment(id)}
+          aria-label="Comment"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          Comment
+        </button>
+
+        <button
+          className={`feed-card__action ${amplified ? 'feed-card__action--amplified' : ''}`}
+          onClick={handleAmplify}
+          aria-label={amplified ? 'Amplified' : 'Amplify (repost)'}
+          aria-pressed={amplified}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+            <polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+          </svg>
+          Repost
+        </button>
+
+        <button
+          className="feed-card__action"
+          onClick={() => onShare && onShare(id)}
+          aria-label="Share privately"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+            <polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
+          </svg>
+          Share
+        </button>
+
+        <button
+          className="feed-card__action feed-card__action--flag"
+          onClick={() => onFlag && onFlag(id)}
+          aria-label="Flag post"
+          style={{ marginLeft: 'auto' }}
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>
+          </svg>
+        </button>
+      </footer>
+
+      {/* ── Replies ── */}
+      {replies.length > 0 && (
+        <button
+          className="feed-card__replies-toggle"
+          onClick={() => setShowReplies(v => !v)}
+          aria-expanded={showReplies}
+        >
+          {showReplies ? 'Hide' : `Show ${replies.length}`} repl{replies.length === 1 ? 'y' : 'ies'}
+        </button>
+      )}
+      {showReplies && (
+        <div className="feed-card__replies" role="list">
+          {replies.map((r, i) => (
+            <div key={r.id || i} className="feed-card__reply" role="listitem">
+              <span className="feed-card__reply-alias mono">{r.alias || 'Anon'}</span>
+              <p>{r.content || r.text || ''}</p>
             </div>
           ))}
         </div>
       )}
-
-      <div className="feed-card-stats">
-        <span>⚡ {reactions}</span>
-        <span>💬 {comments}</span>
-        <span>🔁 {shares}</span>
-        <span>👁 {views}</span>
-      </div>
-
-      <div className="feed-card-actions">
-        <button
-          className={`feed-action-btn ${liked ? 'active' : ''}`}
-          onClick={() => setLiked(l => !l)}
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-          </svg>
-          Signal
-        </button>
-        <button className="feed-action-btn">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-          </svg>
-          Comment
-        </button>
-        <button className="feed-action-btn">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="17 1 21 5 17 9" />
-            <path d="M3 11V9a4 4 0 0 1 4-4h14" />
-            <polyline points="7 23 3 19 7 15" />
-            <path d="M21 13v2a4 4 0 0 1-4 4H3" />
-          </svg>
-          Amplify
-        </button>
-        <button className="feed-action-btn">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="18" cy="5" r="3" />
-            <circle cx="6" cy="12" r="3" />
-            <circle cx="18" cy="19" r="3" />
-            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-          </svg>
-          Share Privately
-        </button>
-      </div>
     </article>
   );
 }
