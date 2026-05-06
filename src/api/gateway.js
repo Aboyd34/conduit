@@ -1,6 +1,26 @@
 // Auto-detect API base URL — works on localhost and any deployed host
-const BASE = import.meta.env.VITE_API_URL ||
-  (typeof window !== 'undefined' ? window.location.origin : '');
+import { getSigningPublicKey } from '../ConduitKeyManager.js';
+
+const PRODUCTION_API_URL = 'https://conduit-api1.onrender.com';
+
+function getDefaultApiUrl() {
+  if (typeof window === 'undefined') return '';
+  if (import.meta.env.DEV || window.location.hostname === 'localhost') {
+    return 'http://localhost:3001';
+  }
+  if (window.location.hostname === new URL(PRODUCTION_API_URL).hostname) {
+    return window.location.origin;
+  }
+  return PRODUCTION_API_URL;
+}
+
+const BASE = import.meta.env.VITE_API_URL || getDefaultApiUrl();
+
+function getSender() {
+  const sender = getSigningPublicKey();
+  if (!sender) throw new Error('No signing key found');
+  return sender;
+}
 
 function getAgeToken() {
   return localStorage.getItem('conduit_age_token') || '';
@@ -27,10 +47,10 @@ export async function broadcastPost(post) {
 }
 
 export async function broadcastSignal(postId) {
-  const res = await fetch(`${BASE}/api/relay/signal`, {
+  const res = await fetch(`${BASE}/api/relay/${encodeURIComponent(postId)}/signal`, {
     method: 'POST',
     headers: headers(),
-    body: JSON.stringify({ postId }),
+    body: JSON.stringify({ sender: getSender() }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
@@ -40,10 +60,10 @@ export async function broadcastSignal(postId) {
 }
 
 export async function broadcastAmplify(postId, amplifierPubkey) {
-  const res = await fetch(`${BASE}/api/relay/amplify`, {
+  const res = await fetch(`${BASE}/api/relay/${encodeURIComponent(postId)}/amplify`, {
     method: 'POST',
     headers: headers(),
-    body: JSON.stringify({ postId, amplifierPubkey }),
+    body: JSON.stringify({ sender: amplifierPubkey || getSender() }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
