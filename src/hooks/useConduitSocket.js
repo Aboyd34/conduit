@@ -3,15 +3,17 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 function getWsUrl() {
   if (import.meta.env.VITE_WS_URL) return import.meta.env.VITE_WS_URL;
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const host = import.meta.env.DEV
+  const host = import.meta.env.DEV || window.location.hostname === 'localhost'
     ? window.location.hostname + ':3001'
-    : window.location.host;
+    : 'conduit-api1.onrender.com';
   return `${protocol}//${host}/ws`;
 }
 
 function getApiUrl() {
   if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
-  return import.meta.env.DEV ? 'http://localhost:3001' : window.location.origin;
+  return import.meta.env.DEV || window.location.hostname === 'localhost'
+    ? 'http://localhost:3001'
+    : 'https://conduit-api1.onrender.com';
 }
 
 const MAX_RETRIES   = 15;
